@@ -1,0 +1,1743 @@
+<title>DeBubble Interface Build</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<style>
+/* ============================================================
+   DEBUBBLE — frontend build
+   Single-theme by intent: this is a dark instrument panel.
+   Every color is painted explicitly so the page never borrows
+   the host's ground.
+   ============================================================ */
+
+:root{
+  /* ground */
+  --void:#06070A;
+  --strata:#0E1116;
+  --ridge:#141821;
+  --raise:#1A1F2A;
+  --edge:#232A38;
+  --edge-soft:#181D27;
+
+  /* cool-biased neutrals, pulled toward the access axis */
+  --ink:#E9EEF6;
+  --ash:#8792A6;
+  --dim:#525C6E;
+  --faint:#333B49;
+
+  /* pillars */
+  --access:#2F6BFF;
+  --activity:#B4FF25;
+  --social:#FF2D55;
+  --ember:#FF8A1F;
+
+  --access-soft:rgba(47,107,255,.14);
+  --activity-soft:rgba(180,255,37,.12);
+  --social-soft:rgba(255,45,85,.13);
+  --ember-soft:rgba(255,138,31,.13);
+
+  /* type roles */
+  --grotesque:-apple-system,BlinkMacSystemFont,"Segoe UI Variable Display","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --instrument:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"DejaVu Sans Mono",monospace;
+
+  --step:clamp(.9rem,.85rem + .2vw,1rem);
+  --gut:clamp(20px,4vw,64px);
+  --r:14px;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+
+body{
+  margin:0;
+  background:var(--void);
+  color:var(--ink);
+  font-family:var(--grotesque);
+  font-size:16px;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+
+/* page-scale ambient field */
+#field{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.55}
+
+.wrap{position:relative;z-index:1}
+
+/* ---------- primitives ---------- */
+.shell{width:min(1240px,100% - var(--gut)*2);margin-inline:auto}
+
+.mono{
+  font-family:var(--instrument);
+  font-size:10.5px;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  font-weight:600;
+}
+
+.rule{height:1px;background:var(--edge-soft);border:0;margin:0}
+
+a{color:inherit}
+
+h1,h2,h3,h4{margin:0;text-wrap:balance;font-weight:800;letter-spacing:-.035em;line-height:1.02}
+
+p{margin:0}
+
+.lede{color:var(--ash);font-size:clamp(1rem,.95rem + .35vw,1.18rem);line-height:1.6;max-width:62ch}
+
+:focus-visible{outline:2px solid var(--access);outline-offset:3px;border-radius:4px}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important}
+}
+
+/* ---------- fixed tier ruler ---------- */
+.ruler{
+  position:fixed;left:0;top:0;bottom:0;width:64px;z-index:6;
+  display:none;pointer-events:none;
+  border-right:1px solid var(--edge-soft);
+  background:linear-gradient(180deg,rgba(6,7,10,.9),rgba(6,7,10,.4));
+  backdrop-filter:blur(6px);
+}
+@media (min-width:1180px){.ruler{display:block}}
+.ruler__ticks{position:absolute;inset:14vh 0 14vh 0}
+.ruler__tick{position:absolute;left:0;height:1px;background:var(--faint);width:9px}
+.ruler__tick.maj{width:20px;background:var(--dim)}
+.ruler__label{
+  position:absolute;left:26px;transform:translateY(-50%);
+  font-family:var(--instrument);font-size:9px;letter-spacing:.14em;color:var(--dim);
+}
+.ruler__head{
+  position:absolute;left:0;width:64px;height:26px;transform:translateY(-50%);
+  transition:top .18s linear;
+}
+.ruler__head::before{content:"";position:absolute;left:0;top:13px;width:34px;height:1px;background:var(--ink)}
+.ruler__head::after{content:"";position:absolute;left:34px;top:9px;width:9px;height:9px;background:var(--ink);transform:rotate(45deg)}
+.ruler__read{
+  position:absolute;left:8px;top:-9px;font-family:var(--instrument);font-size:10px;
+  letter-spacing:.1em;color:var(--ink);font-weight:700;background:var(--void);padding:0 3px;
+}
+.ruler__cap{
+  position:absolute;left:14px;bottom:5vh;writing-mode:vertical-rl;
+  font-family:var(--instrument);font-size:9px;letter-spacing:.32em;color:var(--faint);text-transform:uppercase;
+}
+
+/* ---------- masthead ---------- */
+.top{
+  position:sticky;top:0;z-index:20;
+  background:rgba(6,7,10,.82);
+  backdrop-filter:blur(14px) saturate(140%);
+  border-bottom:1px solid var(--edge-soft);
+}
+.top__in{display:flex;align-items:center;gap:22px;height:56px}
+.mark{display:flex;align-items:center;gap:10px;text-decoration:none;flex:0 0 auto}
+.mark__glyph{width:26px;height:18px;display:block;overflow:visible}
+.mark__txt{font-family:var(--instrument);font-size:12px;letter-spacing:.34em;font-weight:700;color:var(--ink)}
+.top nav{margin-left:auto;display:flex;gap:4px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+.top nav::-webkit-scrollbar{display:none}
+.top nav a{flex:0 0 auto}
+.top nav a{
+  font-family:var(--instrument);font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--ash);text-decoration:none;padding:7px 10px;border-radius:7px;
+  transition:color .16s ease,background .16s ease;
+}
+.top nav a:hover{color:var(--ink);background:var(--ridge)}
+
+/* ---------- hero ---------- */
+.hero{padding:clamp(48px,9vh,104px) 0 clamp(56px,8vh,96px)}
+.hero__grid{display:grid;grid-template-columns:minmax(0,1.05fr) auto;gap:clamp(32px,5vw,80px);align-items:center}
+@media (max-width:960px){.hero__grid{grid-template-columns:1fr;justify-items:start}}
+
+.eyebrow{display:flex;align-items:flex-start;gap:10px;color:var(--dim)}
+.eyebrow .dot{width:5px;height:5px;border-radius:50%;background:var(--activity);box-shadow:0 0 10px var(--activity);flex:0 0 auto;margin-top:6px}
+
+.hero h1{
+  font-size:clamp(3.1rem,2rem + 5.4vw,6.6rem);
+  letter-spacing:-.055em;line-height:.9;margin:20px 0 0;
+}
+.hero h1 em{font-style:normal;color:var(--dim)}
+.hero__sub{margin-top:24px}
+.hero__meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:30px}
+.chip{
+  font-family:var(--instrument);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  padding:6px 11px;border-radius:999px;border:1px solid var(--edge);color:var(--ash);
+  display:inline-flex;align-items:center;gap:7px;
+}
+.chip i{width:6px;height:6px;border-radius:50%;display:block}
+
+/* ---------- device ---------- */
+.device{
+  --wmax:346px;
+  --w:min(var(--wmax),calc(100vw - 44px));
+  width:var(--w);flex:0 0 auto;position:relative;
+}
+.device--sm{--wmax:302px}
+.device__body{
+  width:var(--w);aspect-ratio:346/730;border-radius:42px;
+  background:linear-gradient(160deg,#20242E,#0B0D12 42%);
+  padding:10px;position:relative;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.055),
+    0 44px 90px -30px rgba(0,0,0,.95),
+    0 0 90px -40px rgba(47,107,255,.35);
+}
+.device__screen{
+  position:relative;width:100%;height:100%;border-radius:33px;overflow:hidden;
+  background:var(--void);display:flex;flex-direction:column;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.05);
+}
+.device__notch{
+  position:absolute;top:16px;left:50%;transform:translateX(-50%);
+  width:92px;height:22px;border-radius:14px;background:#05060A;z-index:9;
+}
+.device__cap{
+  margin-top:14px;display:flex;align-items:baseline;gap:9px;
+  font-family:var(--instrument);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);
+}
+.device__cap b{color:var(--ash);font-weight:700}
+
+/* status bar */
+.sbar{
+  height:44px;flex:0 0 auto;display:flex;align-items:flex-end;justify-content:space-between;
+  padding:0 22px 5px;font-family:var(--instrument);font-size:10px;letter-spacing:.06em;color:var(--ash);
+}
+.sbar__r{display:flex;gap:5px;align-items:center}
+.sbar__bat{width:19px;height:9px;border:1px solid var(--ash);border-radius:2px;position:relative;opacity:.8}
+.sbar__bat::after{content:"";position:absolute;inset:1.5px;right:5px;background:var(--ash)}
+
+/* generic screen body */
+.view{flex:1;min-height:0;display:flex;flex-direction:column;position:relative}
+.view__scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}
+.view__scroll::-webkit-scrollbar{display:none}
+.pad{padding-inline:22px}
+
+/* =================== ONBOARDING =================== */
+.cal{flex:1;display:flex;flex-direction:column;padding:6px 22px 22px}
+.cal__bar{display:flex;gap:5px;margin-bottom:22px}
+.cal__seg{flex:1;height:2px;background:var(--faint);border-radius:2px;overflow:hidden}
+.cal__seg.on{background:var(--ink)}
+.cal__q{font-size:26px;letter-spacing:-.04em;line-height:1.06;margin-top:6px}
+.cal__hint{color:var(--dim);font-size:12.5px;margin-top:10px;line-height:1.45}
+.cal__bar,.cal__q,.cal__hint,.cal__foot{flex:0 0 auto}
+.cal__body{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;justify-content:center;gap:26px;padding:14px 0}
+
+.togs{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.tog{
+  border:1px solid var(--edge);background:var(--ridge);color:var(--ash);
+  border-radius:12px;padding:14px 12px;text-align:left;cursor:pointer;
+  font-family:var(--instrument);font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;font-weight:600;
+  transition:border-color .15s ease,color .15s ease,background .15s ease,transform .1s ease;
+}
+.tog:hover{color:var(--ink);border-color:var(--dim)}
+.tog:active{transform:scale(.98)}
+.tog[aria-pressed="true"]{background:var(--pill-soft);border-color:var(--pill);color:var(--ink)}
+.tog[aria-pressed="true"]::after{content:" ●";color:var(--pill);letter-spacing:0}
+
+.slider{display:flex;flex-direction:column;gap:12px}
+.slider__top{display:flex;justify-content:space-between;align-items:baseline}
+.slider__val{
+  font-family:var(--instrument);font-size:30px;letter-spacing:-.02em;font-weight:700;color:var(--pill);
+  font-variant-numeric:tabular-nums;
+}
+.slider__unit{font-family:var(--instrument);font-size:10px;letter-spacing:.18em;color:var(--dim);text-transform:uppercase}
+input[type=range]{
+  -webkit-appearance:none;appearance:none;width:100%;height:26px;background:transparent;cursor:grab;margin:0;
+}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:var(--faint);border-radius:2px}
+input[type=range]::-moz-range-track{height:2px;background:var(--faint);border-radius:2px}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:22px;height:22px;border-radius:50%;
+  background:var(--void);border:2px solid var(--pill);margin-top:-10px;
+  box-shadow:0 0 16px -2px var(--pill);
+}
+input[type=range]::-moz-range-thumb{
+  width:18px;height:18px;border-radius:50%;background:var(--void);border:2px solid var(--pill);
+  box-shadow:0 0 16px -2px var(--pill);
+}
+.slider__scale{display:flex;justify-content:space-between;font-family:var(--instrument);font-size:9px;letter-spacing:.12em;color:var(--faint);text-transform:uppercase}
+
+.cal__foot{display:flex;flex-direction:column;gap:12px}
+
+.btn{
+  width:100%;border:0;border-radius:14px;padding:17px;cursor:pointer;
+  font-family:var(--instrument);font-size:11px;letter-spacing:.22em;text-transform:uppercase;font-weight:700;
+  background:var(--ink);color:var(--void);
+  transition:transform .1s ease,opacity .15s ease;
+}
+.btn:hover{opacity:.9}
+.btn:active{transform:scale(.985)}
+.btn--ghost{background:transparent;color:var(--dim);border:1px solid var(--edge)}
+.btn--ghost:hover{color:var(--ash);border-color:var(--dim)}
+.btn--ember{background:transparent;color:var(--ember);border:1px solid rgba(255,138,31,.35)}
+.btn--ember:hover{background:var(--ember-soft)}
+
+/* calibration result */
+.res{padding:22px;display:flex;flex-direction:column;height:100%}
+.res__k{margin-top:auto}
+.res h2{font-size:30px;letter-spacing:-.045em;line-height:1;margin:12px 0 8px}
+.res__rows{display:flex;flex-direction:column;gap:2px;margin:26px 0}
+.res__row{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--edge-soft)}
+.res__row i{width:7px;height:7px;border-radius:50%;display:block}
+.res__name{font-family:var(--instrument);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ash)}
+.res__tier{font-family:var(--instrument);font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.res__note{color:var(--dim);font-size:12.5px;line-height:1.5;margin-bottom:20px}
+
+/* =================== DASHBOARD =================== */
+.map{position:relative;flex:0 0 auto;aspect-ratio:1.16;width:100%}
+.map canvas{display:block;width:100%;height:100%}
+.map__hud{position:absolute;inset:0;pointer-events:none;padding:14px 22px;display:flex;flex-direction:column}
+.map__day{display:flex;align-items:baseline;gap:9px}
+.map__day b{font-size:19px;font-weight:800;letter-spacing:-.03em}
+.map__day span{font-family:var(--instrument);font-size:9.5px;letter-spacing:.2em;color:var(--dim);text-transform:uppercase}
+.map__legend{margin-top:auto;display:flex;gap:14px}
+.map__leg{display:flex;align-items:center;gap:6px;font-family:var(--instrument);font-size:9px;letter-spacing:.12em;color:var(--ash);text-transform:uppercase}
+.map__leg i{width:5px;height:5px;border-radius:50%}
+.map__leg b{font-variant-numeric:tabular-nums;color:var(--ink);font-weight:700}
+
+.serve{padding:4px 22px 20px;display:flex;flex-direction:column;gap:9px}
+.serve__hdr{display:flex;justify-content:space-between;align-items:center;padding:8px 0 4px}
+.serve__hdr span{font-family:var(--instrument);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
+
+.card{
+  position:relative;text-align:left;width:100%;cursor:pointer;
+  background:var(--ridge);border:1px solid var(--edge-soft);border-left:2px solid var(--pill);
+  border-radius:12px;padding:14px 15px;color:var(--ink);font-family:inherit;
+  transition:transform .13s cubic-bezier(.2,.8,.3,1),border-color .15s ease,background .15s ease;
+}
+.card:hover{transform:translateX(3px);background:var(--raise);border-color:var(--edge)}
+.card:active{transform:scale(.99)}
+.card__top{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
+.card__pill{font-family:var(--instrument);font-size:9px;letter-spacing:.2em;text-transform:uppercase;font-weight:700;color:var(--pill)}
+.card__tier{font-family:var(--instrument);font-size:9px;letter-spacing:.13em;color:var(--dim);font-variant-numeric:tabular-nums}
+.card__txt{font-size:14.5px;line-height:1.38;letter-spacing:-.012em;font-weight:500}
+.card__foot{display:flex;gap:12px;margin-top:11px;font-family:var(--instrument);font-size:9px;letter-spacing:.1em;color:var(--dim);text-transform:uppercase}
+.card.done{opacity:.42;pointer-events:none}
+.card.done .card__txt{text-decoration:line-through;text-decoration-color:var(--dim)}
+
+.tabbar{
+  flex:0 0 auto;height:66px;display:flex;align-items:flex-start;justify-content:space-around;
+  padding-top:9px;border-top:1px solid var(--edge-soft);background:rgba(10,12,16,.7);
+}
+.tab{
+  background:none;border:0;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;
+  color:var(--faint);font-family:var(--instrument);font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;
+  padding:4px 14px;transition:color .15s ease;
+}
+.tab svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.5}
+.tab:hover{color:var(--ash)}
+.tab.on{color:var(--ink)}
+
+/* =================== CHALLENGE =================== */
+.act{flex:1;min-height:0;display:flex;flex-direction:column;padding:8px 22px 24px;position:relative;overflow-y:auto;scrollbar-width:none}
+.act::-webkit-scrollbar{display:none}
+.act > *{flex-shrink:0}
+.act__nav{display:flex;justify-content:space-between;align-items:center;padding-bottom:26px}
+.act__back{background:none;border:0;color:var(--dim);cursor:pointer;font-family:var(--instrument);font-size:10px;letter-spacing:.16em;text-transform:uppercase;padding:4px 0}
+.act__back:hover{color:var(--ash)}
+.act__id{font-family:var(--instrument);font-size:10px;letter-spacing:.16em;color:var(--pill);font-weight:700}
+.act__label{font-family:var(--instrument);font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--dim)}
+.act__txt{
+  font-size:26px;line-height:1.11;letter-spacing:-.045em;font-weight:800;margin-top:16px;
+}
+.device--sm .act__txt{font-size:22px}
+.device--sm .act__nav{padding-bottom:18px}
+.device--sm .act__params{margin-top:18px}
+.device--sm .act__coach{margin-top:14px;padding:12px 13px;font-size:12.5px}
+.device--sm .hold{padding-top:16px;gap:11px}
+.hold{flex:0 0 auto}
+.act__params{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--edge-soft);border-radius:11px;overflow:hidden;margin-top:26px}
+.act__p{background:var(--strata);padding:13px 11px}
+.act__p span{display:block;font-family:var(--instrument);font-size:8.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--dim)}
+.act__p b{display:block;font-family:var(--instrument);font-size:13px;margin-top:6px;font-weight:700;font-variant-numeric:tabular-nums}
+.act__coach{
+  margin-top:22px;padding:14px 15px;border-radius:11px;background:var(--pill-soft);
+  border:1px solid var(--pill-line);font-size:13px;line-height:1.5;color:var(--ink);
+}
+.act__coach em{font-style:normal;display:block;font-family:var(--instrument);font-size:8.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--pill);margin-bottom:7px}
+
+.hold{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:14px;padding-top:26px}
+.hold__btn{
+  position:relative;width:104px;height:104px;border-radius:50%;cursor:pointer;
+  background:var(--pill-soft);border:1px solid var(--pill-line);
+  display:grid;place-items:center;touch-action:none;-webkit-tap-highlight-color:transparent;
+  transition:transform .12s ease;
+}
+.hold__btn:active{transform:scale(.97)}
+.hold__ring{position:absolute;inset:-1px;transform:rotate(-90deg)}
+.hold__ring circle{fill:none;stroke-width:2;stroke-linecap:round}
+.hold__ring .trk{stroke:var(--edge)}
+.hold__ring .bar{stroke:var(--pill);filter:drop-shadow(0 0 6px var(--pill))}
+.hold__ico{width:30px;height:30px;stroke:var(--pill);fill:none;stroke-width:1.6}
+.hold__lbl{font-family:var(--instrument);font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--ash)}
+.hold__alt{background:none;border:0;color:var(--ember);cursor:pointer;font-family:var(--instrument);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;padding:6px;opacity:.85}
+.hold__alt:hover{opacity:1;text-decoration:underline}
+
+/* =================== COMPLETION =================== */
+.done{flex:1;display:flex;flex-direction:column;padding:22px;position:relative;overflow:hidden}
+.burst{position:absolute;top:36%;left:50%;width:1px;height:1px;pointer-events:none}
+.burst i{
+  position:absolute;left:50%;top:50%;border:1px solid var(--pill);
+  transform:translate(-50%,-50%) rotate(45deg) scale(0);opacity:0;
+}
+.burst i:nth-child(1){width:120px;height:120px;animation:pop 1.5s cubic-bezier(.16,1,.3,1) .04s forwards}
+.burst i:nth-child(2){width:190px;height:190px;animation:pop 1.7s cubic-bezier(.16,1,.3,1) .16s forwards}
+.burst i:nth-child(3){width:280px;height:280px;animation:pop 2s cubic-bezier(.16,1,.3,1) .3s forwards;border-radius:14px}
+.burst i:nth-child(4){width:380px;height:380px;animation:pop 2.3s cubic-bezier(.16,1,.3,1) .46s forwards;border-radius:50%}
+@keyframes pop{
+  0%{transform:translate(-50%,-50%) rotate(45deg) scale(.2);opacity:.85}
+  70%{opacity:.22}
+  100%{transform:translate(-50%,-50%) rotate(45deg) scale(1);opacity:0}
+}
+.done > *{flex-shrink:0}
+.done__mid{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:12px;position:relative}
+.done__mid h2{font-size:31px;letter-spacing:-.05em;line-height:1}
+.done__delta{font-family:var(--instrument);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--pill);font-weight:700}
+.done__sub{color:var(--ash);font-size:13.5px;line-height:1.5;max-width:26ch}
+
+/* journal */
+.jr{display:flex;flex-direction:column;gap:11px;padding-top:20px;border-top:1px solid var(--edge-soft)}
+.jr__lbl{display:flex;justify-content:space-between;align-items:center}
+.jr__lbl span{font-family:var(--instrument);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
+.jr__count{font-family:var(--instrument);font-size:9px;color:var(--faint);font-variant-numeric:tabular-nums}
+.jr input{
+  width:100%;background:var(--ridge);border:1px solid var(--edge);border-radius:11px;
+  padding:14px;color:var(--ink);font-family:inherit;font-size:14px;
+}
+.jr input::placeholder{color:var(--faint)}
+.jr input:focus{outline:none;border-color:var(--pill)}
+
+/* =================== PROFILE =================== */
+.pro{padding:8px 22px 24px;display:flex;flex-direction:column;gap:20px}
+.pro__hdr{display:flex;justify-content:space-between;align-items:baseline}
+.pro__hdr h2{font-size:23px;letter-spacing:-.04em}
+.friction{
+  border:1px solid rgba(255,138,31,.3);background:
+    radial-gradient(120% 100% at 100% 0%,rgba(255,138,31,.16),transparent 62%),var(--ridge);
+  border-radius:14px;padding:17px;
+}
+.friction__top{display:flex;justify-content:space-between;align-items:flex-start}
+.friction__n{font-family:var(--instrument);font-size:47px;font-weight:700;line-height:.9;color:var(--ember);font-variant-numeric:tabular-nums;letter-spacing:-.03em}
+.friction__lbl{font-family:var(--instrument);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--ember);font-weight:700}
+.friction__badge{
+  border:1px solid rgba(255,138,31,.4);border-radius:999px;padding:5px 10px;
+  font-family:var(--instrument);font-size:8.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--ember);
+}
+.friction__cap{color:var(--ash);font-size:12.5px;line-height:1.5;margin-top:12px}
+.friction__cap b{color:var(--ink);font-weight:600}
+
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.stat{background:var(--ridge);border:1px solid var(--edge-soft);border-radius:12px;padding:14px}
+.stat span{font-family:var(--instrument);font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+.stat b{display:block;font-family:var(--instrument);font-size:25px;font-weight:700;margin-top:6px;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar__top{display:flex;justify-content:space-between;font-family:var(--instrument);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:7px}
+.bar__trk{height:4px;background:var(--edge-soft);border-radius:3px;overflow:hidden}
+.bar__fil{height:100%;border-radius:3px}
+
+.log{display:flex;flex-direction:column}
+.log__row{display:grid;grid-template-columns:auto 1fr auto;gap:11px;align-items:baseline;padding:11px 0;border-top:1px solid var(--edge-soft)}
+.log__row i{width:6px;height:6px;border-radius:50%;transform:translateY(-1px)}
+.log__txt{font-size:12.5px;line-height:1.4;color:var(--ash)}
+.log__txt b{color:var(--ink);font-weight:600;display:block;font-size:13px;letter-spacing:-.01em}
+.log__d{font-family:var(--instrument);font-size:9px;color:var(--faint);font-variant-numeric:tabular-nums}
+.log__row.fr .log__d{color:var(--ember)}
+
+/* boot */
+.boot{flex:1;display:grid;place-items:center;padding:22px;text-align:center}
+.boot__in{display:flex;flex-direction:column;align-items:center;gap:18px}
+.boot__mk{width:96px;height:66px}
+.boot h2{font-family:var(--instrument);font-size:13px;letter-spacing:.4em;font-weight:700}
+.boot p{color:var(--dim);font-size:12.5px;max-width:24ch;line-height:1.5}
+
+/* =================== page sections =================== */
+.sect{padding:clamp(56px,9vh,110px) 0;border-top:1px solid var(--edge-soft)}
+.sect__head{display:grid;grid-template-columns:auto minmax(0,1fr);gap:clamp(18px,4vw,54px);align-items:start;margin-bottom:clamp(34px,5vw,60px)}
+@media (max-width:760px){.sect__head{grid-template-columns:1fr;gap:14px}}
+.sect__num{font-family:var(--instrument);font-size:10.5px;letter-spacing:.2em;color:var(--dim);padding-top:9px}
+.sect__head h2{font-size:clamp(1.9rem,1.3rem + 2.4vw,3.2rem);letter-spacing:-.045em}
+.sect__sub{margin-top:16px}
+
+/* live build */
+.build{display:grid;grid-template-columns:220px auto minmax(0,1fr);gap:clamp(22px,3.5vw,48px);align-items:start}
+@media (max-width:1080px){.build{grid-template-columns:1fr;justify-items:start}}
+
+.steps{display:flex;flex-direction:column;gap:1px;position:sticky;top:78px}
+@media (max-width:1080px){.steps{position:static;flex-direction:row;flex-wrap:wrap;gap:6px}}
+.step{
+  display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:9px;cursor:pointer;
+  background:none;border:1px solid transparent;color:var(--dim);text-align:left;width:100%;
+  font-family:var(--instrument);font-size:10px;letter-spacing:.13em;text-transform:uppercase;
+  transition:color .15s ease,background .15s ease,border-color .15s ease;
+}
+@media (max-width:1080px){.step{width:auto}}
+.step:hover{color:var(--ash);background:var(--strata)}
+.step em{font-style:normal;color:var(--faint);font-size:9px}
+.step.on{color:var(--ink);background:var(--ridge);border-color:var(--edge)}
+.step.on em{color:var(--activity)}
+
+.readout{
+  background:var(--strata);border:1px solid var(--edge-soft);border-radius:var(--r);
+  padding:20px;display:flex;flex-direction:column;gap:16px;position:sticky;top:78px;
+}
+@media (max-width:1080px){.readout{position:static;width:min(520px,100%)}}
+.readout h3{font-family:var(--instrument);font-size:10px;letter-spacing:.2em;color:var(--dim);font-weight:700}
+.kv{display:flex;flex-direction:column;gap:0}
+.kv__r{display:flex;justify-content:space-between;gap:14px;padding:9px 0;border-bottom:1px solid var(--edge-soft);font-family:var(--instrument);font-size:10.5px;letter-spacing:.06em}
+.kv__r span{color:var(--dim);text-transform:uppercase;letter-spacing:.14em;font-size:9.5px}
+.kv__r b{font-weight:700;font-variant-numeric:tabular-nums;text-align:right}
+.readout__note{font-size:12.5px;line-height:1.55;color:var(--ash)}
+.readout__note code{font-family:var(--instrument);font-size:11px;color:var(--activity);background:rgba(180,255,37,.08);padding:1px 5px;border-radius:4px}
+
+/* screen-by-screen */
+.spec{display:grid;grid-template-columns:auto minmax(0,1fr);gap:clamp(28px,4.5vw,72px);align-items:start;padding:clamp(34px,5vw,58px) 0;border-top:1px solid var(--edge-soft)}
+.spec:nth-child(odd){grid-template-columns:minmax(0,1fr) auto}
+.spec:nth-child(odd) .spec__frame{order:2}
+@media (max-width:980px){
+  .spec,.spec:nth-child(odd){grid-template-columns:1fr}
+  .spec:nth-child(odd) .spec__frame{order:0}
+}
+.spec__frame{position:sticky;top:78px}
+@media (max-width:980px){.spec__frame{position:static}}
+.spec__hd{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.spec__hd h3{font-size:clamp(1.35rem,1.1rem + 1vw,1.9rem);letter-spacing:-.04em}
+.spec__hd .mono{color:var(--dim)}
+.spec__intro{margin-top:14px;color:var(--ash);font-size:15px;line-height:1.6;max-width:56ch}
+.anno{margin:26px 0 0;padding:0;list-style:none;display:flex;flex-direction:column}
+.anno li{display:grid;grid-template-columns:112px minmax(0,1fr);gap:16px;padding:13px 0;border-top:1px solid var(--edge-soft)}
+@media (max-width:560px){.anno li{grid-template-columns:1fr;gap:5px}}
+.anno b{
+  font-family:var(--instrument);font-size:9.5px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--dim);font-weight:600;padding-top:2px;
+}
+.anno p{font-size:14px;line-height:1.55;color:var(--ash)}
+.anno p strong{color:var(--ink);font-weight:600}
+.anno code{font-family:var(--instrument);font-size:11.5px;color:var(--ink);background:var(--ridge);padding:1px 6px;border-radius:5px;border:1px solid var(--edge-soft)}
+
+/* flow map */
+.flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:1px;background:var(--edge-soft);border:1px solid var(--edge-soft);border-radius:var(--r);overflow:hidden}
+.flow__n{background:var(--strata);padding:20px 18px;display:flex;flex-direction:column;gap:9px;position:relative}
+.flow__n:hover{background:var(--ridge)}
+.flow__i{display:flex;justify-content:space-between;align-items:center;font-family:var(--instrument);font-size:9.5px;letter-spacing:.15em;color:var(--dim)}
+.flow__i b{color:var(--ink)}
+.flow__t{font-size:15px;font-weight:700;letter-spacing:-.025em;line-height:1.2}
+.flow__d{font-size:12.5px;line-height:1.5;color:var(--ash)}
+.flow__k{margin-top:auto;padding-top:9px;font-family:var(--instrument);font-size:9px;letter-spacing:.1em;color:var(--faint);text-transform:uppercase}
+
+/* engine */
+.ladders{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(14px,2vw,26px)}
+@media (max-width:900px){.ladders{grid-template-columns:1fr}}
+.lad{background:var(--strata);border:1px solid var(--edge-soft);border-top:2px solid var(--pill);border-radius:var(--r);overflow:hidden}
+.lad__h{padding:18px 18px 14px}
+.lad__h h3{font-family:var(--instrument);font-size:12px;letter-spacing:.26em;color:var(--pill);font-weight:700}
+.lad__h p{margin-top:9px;font-size:12.5px;line-height:1.5;color:var(--ash)}
+.lad__rows{display:flex;flex-direction:column}
+.lad__r{display:grid;grid-template-columns:44px minmax(0,1fr);gap:12px;padding:12px 18px;border-top:1px solid var(--edge-soft);align-items:start}
+.lad__r:hover{background:var(--ridge)}
+.lad__t{font-family:var(--instrument);font-size:10px;font-weight:700;color:var(--dim);font-variant-numeric:tabular-nums;padding-top:2px}
+.lad__r:hover .lad__t{color:var(--pill)}
+.lad__c{font-size:13px;line-height:1.42;color:var(--ink);letter-spacing:-.01em}
+.lad__gap{padding:8px 18px;border-top:1px solid var(--edge-soft);font-family:var(--instrument);font-size:9px;letter-spacing:.16em;color:var(--faint);text-transform:uppercase;background:rgba(0,0,0,.2)}
+
+.curve{margin-top:clamp(30px,4vw,52px);display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:clamp(22px,3vw,46px);align-items:center}
+@media (max-width:860px){.curve{grid-template-columns:1fr}}
+.curve__box{background:var(--strata);border:1px solid var(--edge-soft);border-radius:var(--r);padding:20px}
+.curve svg{width:100%;height:auto;display:block}
+.rules{display:flex;flex-direction:column;gap:0}
+.rule__r{padding:15px 0;border-top:1px solid var(--edge-soft);display:grid;grid-template-columns:80px minmax(0,1fr);gap:16px}
+@media (max-width:520px){.rule__r{grid-template-columns:1fr;gap:5px}}
+.rule__r b{font-family:var(--instrument);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--activity)}
+.rule__r p{font-size:13.5px;line-height:1.55;color:var(--ash)}
+.rule__r p strong{color:var(--ink);font-weight:600}
+
+.calc{
+  margin-top:clamp(28px,4vw,48px);background:var(--strata);border:1px solid var(--edge-soft);
+  border-radius:var(--r);padding:clamp(18px,3vw,28px);
+}
+.calc h3{font-family:var(--instrument);font-size:10.5px;letter-spacing:.2em;color:var(--dim);font-weight:700}
+.calc__grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin-top:20px}
+.calc__c{background:var(--ridge);border:1px solid var(--edge-soft);border-left:2px solid var(--pill);border-radius:11px;padding:15px}
+.calc__c span{font-family:var(--instrument);font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--pill);font-weight:700}
+.calc__c pre{
+  margin:11px 0 0;font-family:var(--instrument);font-size:11.5px;line-height:1.65;color:var(--ink);
+  white-space:pre-wrap;word-break:break-word;
+}
+.calc__c em{display:block;font-style:normal;margin-top:11px;font-size:12px;color:var(--ash);line-height:1.5}
+
+/* design system */
+.sys{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:clamp(14px,2vw,22px)}
+.panel{background:var(--strata);border:1px solid var(--edge-soft);border-radius:var(--r);padding:20px}
+.panel h3{font-family:var(--instrument);font-size:10px;letter-spacing:.2em;color:var(--dim);font-weight:700;margin-bottom:16px}
+.sw{display:flex;flex-direction:column;gap:1px}
+.sw__r{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:12px;align-items:center;padding:9px 0;border-bottom:1px solid var(--edge-soft)}
+.sw__c{width:34px;height:22px;border-radius:5px;border:1px solid rgba(255,255,255,.09)}
+.sw__n{font-family:var(--instrument);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--ash)}
+.sw__h{font-family:var(--instrument);font-size:10px;color:var(--dim)}
+.tscale{display:flex;flex-direction:column;gap:14px}
+.tscale div{display:flex;align-items:baseline;gap:14px;border-bottom:1px solid var(--edge-soft);padding-bottom:12px}
+.tscale span{font-family:var(--instrument);font-size:9px;letter-spacing:.12em;color:var(--faint);flex:0 0 92px}
+.tlist{display:flex;flex-direction:column;gap:0}
+.tlist__r{padding:10px 0;border-bottom:1px solid var(--edge-soft);display:flex;justify-content:space-between;gap:14px;align-items:baseline}
+.tlist__r span{font-family:var(--instrument);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);flex:0 0 auto}
+.tlist__r p{font-size:12.5px;color:var(--ash);text-align:right;line-height:1.45}
+
+.voice{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--edge-soft);border:1px solid var(--edge-soft);border-radius:11px;overflow:hidden;margin-top:6px}
+@media (max-width:520px){.voice{grid-template-columns:1fr}}
+.voice__c{background:var(--strata);padding:15px}
+.voice__c b{font-family:var(--instrument);font-size:9px;letter-spacing:.16em;text-transform:uppercase;display:block;margin-bottom:9px}
+.voice__c.no b{color:var(--social)}
+.voice__c.yes b{color:var(--activity)}
+.voice__c p{font-size:13px;line-height:1.5;color:var(--ash)}
+.voice__c.no p{text-decoration:line-through;text-decoration-color:var(--faint);color:var(--dim)}
+
+/* footer */
+.foot{padding:52px 0 70px;border-top:1px solid var(--edge-soft);display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:center}
+.foot p{font-family:var(--instrument);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+</style>
+
+<canvas id="field" aria-hidden="true"></canvas>
+
+<div class="ruler" aria-hidden="true">
+  <div class="ruler__ticks" id="rulerTicks"></div>
+  <div class="ruler__head" id="rulerHead"><span class="ruler__read" id="rulerRead">001</span></div>
+  <span class="ruler__cap">Tier depth</span>
+</div>
+
+<div class="wrap">
+
+<header class="top">
+  <div class="shell top__in">
+    <a class="mark" href="#top">
+      <svg class="mark__glyph" viewBox="0 0 34 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="9" fill="none" stroke="#2F6BFF" stroke-width="1.4" opacity=".95"/>
+        <circle cx="20" cy="9" r="7" fill="none" stroke="#B4FF25" stroke-width="1.4" opacity=".95"/>
+        <circle cx="21" cy="16" r="6" fill="none" stroke="#FF2D55" stroke-width="1.4" opacity=".95"/>
+      </svg>
+      <span class="mark__txt">DEBUBBLE</span>
+    </a>
+    <nav>
+      <a href="#build">Live build</a>
+      <a href="#screens">Screens</a>
+      <a href="#flow">Flow</a>
+      <a href="#engine">Engine</a>
+      <a href="#system">System</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ============ HERO ============ -->
+<section class="hero shell" id="top">
+  <div class="hero__grid">
+    <div>
+      <div class="eyebrow mono"><span class="dot"></span>Frontend build · v0.1 · 3 pillars · 100 tiers</div>
+      <h1>Your life<br />has a radius.<br /><em>Push it.</em></h1>
+      <p class="lede hero__sub">
+        DeBubble measures the perimeter you actually live inside — where you go, what you do,
+        who you talk to — then serves one challenge per pillar per day, calibrated to start
+        so small you cannot fail and end somewhere you would not recognise yourself.
+      </p>
+      <div class="hero__meta">
+        <span class="chip"><i style="background:#2F6BFF;box-shadow:0 0 8px #2F6BFF"></i>Access</span>
+        <span class="chip"><i style="background:#B4FF25;box-shadow:0 0 8px #B4FF25"></i>Activity</span>
+        <span class="chip"><i style="background:#FF2D55;box-shadow:0 0 8px #FF2D55"></i>Social</span>
+        <span class="chip">Day 001 → Day 100</span>
+      </div>
+    </div>
+    <div>
+      <div class="device" data-device="hero"></div>
+      <div class="device__cap"><b>Live</b> — tap through it. Everything here runs.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ LIVE BUILD ============ -->
+<section class="sect shell" id="build">
+  <div class="sect__head">
+    <div class="sect__num">01</div>
+    <div>
+      <h2>The build, wired end to end</h2>
+      <p class="lede sect__sub">
+        Cold open to first completed Level 1 challenge. Jump to any state, or run it straight
+        through — the calibration you set genuinely determines the tier the dashboard serves.
+      </p>
+    </div>
+  </div>
+
+  <div class="build">
+    <div class="steps" id="steps" role="tablist" aria-label="Prototype states"></div>
+    <div>
+      <div class="device" data-device="main"></div>
+      <div class="device__cap"><b>State</b> <span id="stateName">boot</span></div>
+    </div>
+    <aside class="readout">
+      <h3>Engine readout</h3>
+      <div class="kv" id="readout"></div>
+      <p class="readout__note">
+        Tiers advance per pillar, not globally. Completing an Access challenge moves
+        <code>access.tier</code> only — a user can be on Day 040 of Access and still on
+        Day 003 of Social. The Bubble Map renders exactly that asymmetry.
+      </p>
+      <button class="btn btn--ghost" id="resetBtn">Reset session</button>
+    </aside>
+  </div>
+</section>
+
+<!-- ============ SCREENS ============ -->
+<section class="sect shell" id="screens">
+  <div class="sect__head">
+    <div class="sect__num">02</div>
+    <div>
+      <h2>Screen by screen</h2>
+      <p class="lede sect__sub">
+        Four surfaces. Every one of them is the same component tree as the live build above —
+        these frames are pinned to a state, not redrawn as pictures.
+      </p>
+    </div>
+  </div>
+
+  <div class="spec">
+    <div class="spec__frame"><div class="device device--sm" data-device="cal" data-pin="cal"></div></div>
+    <div>
+      <div class="spec__hd"><h3>Baseline Calibration</h3><span class="mono">Onboarding · 4 cards · ~40s</span></div>
+      <p class="spec__intro">
+        No text inputs, no account wall, no value-prop carousel. Four rapid-fire cards, each one
+        question, each answerable with a thumb. The only job is finding where Level 1 sits for
+        this specific person.
+      </p>
+      <ul class="anno">
+        <li><b>Layout</b><p>Fixed three-zone column: <strong>segment bar</strong> pinned top (progress is the only chrome), <strong>question + control</strong> vertically centred in the free space, <strong>advance button</strong> pinned bottom at thumb height.</p></li>
+        <li><b>Hierarchy</b><p>Question at 26px/-.04em is the loudest thing on screen. The control sits second. The hint sits at 12.5px in <code>--dim</code> and can be skipped without loss.</p></li>
+        <li><b>Controls</b><p>Two types only — <strong>multi-select chips</strong> in a 2-up grid, and a <strong>single slider</strong> with a live oversized numeric readout in the pillar's accent. The number is the feedback; there is no confirmation state.</p></li>
+        <li><b>Accent logic</b><p>Each card adopts its pillar's accent via <code>--pill</code>, so the user learns blue/green/crimson as a vocabulary before they ever reach the dashboard.</p></li>
+        <li><b>Exit</b><p>Card 5 is not a question — it's the <strong>calibration result</strong>. It states the three starting tiers plainly and hands over with one button: <code>BEGIN DAY 001</code>. No tour, no permissions prompt.</p></li>
+        <li><b>Friction</b><p>Back is available on cards 2–4 but rendered as a ghost. Nothing is required; skipping a card takes the conservative midpoint and says so.</p></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="spec">
+    <div class="spec__frame"><div class="device device--sm" data-device="dash" data-pin="dash"></div></div>
+    <div>
+      <div class="spec__hd"><h3>The Expanding Reality</h3><span class="mono">Dashboard · home · tab 1</span></div>
+      <p class="spec__intro">
+        Split hard down the middle. Top half is the Bubble Map and belongs to feeling; bottom
+        half is the day's three offers and belongs to deciding. Nothing else competes.
+      </p>
+      <ul class="anno">
+        <li><b>Bubble Map</b><p>Canvas, 300px tall, three additively-blended spheres on a faint polar grid. Radius is bound to tier; overlaps light up where pillars reinforce each other. It drifts continuously so the screen is never dead.</p></li>
+        <li><b>HUD</b><p>Overlaid, non-interactive: <strong>DAY 001</strong> top-left, per-pillar radius legend bottom-left. The map itself has no controls — resisting the urge to make it a toy is what keeps it feeling like an instrument.</p></li>
+        <li><b>The offer</b><p>Exactly three cards, one per pillar, in fixed order Access → Activity → Social so muscle memory forms. Each carries pillar name, tier code, the directive, and its three cost tags.</p></li>
+        <li><b>Card anatomy</b><p>2px left border in the pillar accent is the only chrome that identifies it. Tap anywhere on the card to activate — no separate CTA button, the card <em>is</em> the button. Hover/press nudges 3px right toward the action.</p></li>
+        <li><b>Completed state</b><p>Card drops to 42% opacity with a struck directive and goes pointer-inert. It stays on screen: the day's record should show what was taken as well as what remains.</p></li>
+        <li><b>Nav</b><p>Three tabs, bottom-fixed, 66px. Today / Map / Profile. No hamburger, no settings gear on the home surface.</p></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="spec">
+    <div class="spec__frame"><div class="device device--sm" data-device="act" data-pin="challenge"></div></div>
+    <div>
+      <div class="spec__hd"><h3>The Action Screen</h3><span class="mono">Challenge · locked focus</span></div>
+      <p class="spec__intro">
+        One challenge, full bleed, nothing else reachable. The tab bar is gone. This screen has
+        two exits: complete it, or log the friction.
+      </p>
+      <ul class="anno">
+        <li><b>Focus</b><p>Tab bar unmounts on entry. The only way back is an explicit ghost <code>← ABORT</code>, deliberately colder than a chevron.</p></li>
+        <li><b>Directive</b><p>26px/800/-.045em, top-left aligned, max four lines. Written as an instruction, never a suggestion — "Step outside your front door", not "Try stepping outside".</p></li>
+        <li><b>Parameters</b><p>Three-cell strip: <strong>TIME · COST · EXPOSURE</strong>. Exposure is the vulnerability rating, 1–10, and it is the number that climbs hardest across 100 tiers.</p></li>
+        <li><b>Coach block</b><p>Tinted in the pillar accent. One or two sentences of framing — why this specific tier exists. This is where the voice lives.</p></li>
+        <li><b>Commit</b><p><strong>Long-press, 900ms</strong>, 104px target, bottom-centred. A stroked ring fills clockwise; releasing early snaps it back to zero. Completion must cost a deliberate second — a tap is too cheap to mean anything.</p></li>
+        <li><b>Haptics</b><p><code>vibrate([6,26,10,40,18])</code> — a rising pattern fired at ring close, so the phone confirms before the eye does.</p></li>
+        <li><b>Second exit</b><p><code>TOO MUCH TODAY</code> in ember, directly under the commit ring. Not hidden, not shamed. It logs a Friction point and returns to the dashboard.</p></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="spec">
+    <div class="spec__frame"><div class="device device--sm" data-device="done" data-pin="complete"></div></div>
+    <div>
+      <div class="spec__hd"><h3>Completion &amp; Micro-Journal</h3><span class="mono">Reward · one sentence</span></div>
+      <p class="spec__intro">
+        The reward loop. No confetti — four concentric geometric frames expanding outward from the
+        press point, rotating 45°, easing on <code>cubic-bezier(.16,1,.3,1)</code> and fading at the
+        edge. The bubble behind it visibly grows by the delta.
+      </p>
+      <ul class="anno">
+        <li><b>Sequence</b><p>Ring closes → haptic → burst (4 frames, staggered 120ms) → headline sets → radius delta counts up → journal field slides in from below. Whole beat lands in ~1.4s.</p></li>
+        <li><b>Headline</b><p><strong>PERIMETER EXTENDED</strong> at 31px, with the measured delta beneath in the pillar accent: <code>+0.4 KM ACCESS RADIUS</code>. Progress is stated as a physical measurement, never as points.</p></li>
+        <li><b>Journal</b><p>Single-line input, hard cap 90 characters, live counter. One sentence maximum is a design constraint, not a suggestion — the field physically cannot hold a paragraph.</p></li>
+        <li><b>Prompt</b><p>Placeholder reads "What actually happened?" — outcome, not feeling. Feelings are inferred from the Friction log; the journal captures fact.</p></li>
+        <li><b>Skip</b><p>Journal is optional and the skip is a plain ghost. Blocking the reward behind writing would make people stop completing challenges.</p></li>
+        <li><b>Return</b><p>Lands back on the dashboard with the completed card already struck and the map already grown — the user sees the consequence, not a summary of it.</p></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="spec">
+    <div class="spec__frame"><div class="device device--sm" data-device="pro" data-pin="profile"></div></div>
+    <div>
+      <div class="spec__hd"><h3>Profile &amp; the Anti-Score</h3><span class="mono">Friction · streaks · history</span></div>
+      <p class="spec__intro">
+        The screen that decides whether the product actually works. Streaks reward compliance;
+        Friction rewards contact with the edge. Friction is placed <em>above</em> the streak, in
+        the largest numeral on the surface, so the hierarchy states the thesis without a word of copy.
+      </p>
+      <ul class="anno">
+        <li><b>Friction Score</b><p>Ember card, 47px numeral, top of scroll. Increments on three events: <strong>a challenge abandoned as too hard</strong>, <strong>a social attempt refused</strong>, <strong>an outcome logged as awkward</strong>. Nothing here can go down.</p></li>
+        <li><b>Reframe</b><p>Caption reads: "<strong>27 points of contact with the edge.</strong> A zero here means the tiers are too easy." A courage badge tier sits in the corner as a pill.</p></li>
+        <li><b>Ember rule</b><p>Ember is used <em>only</em> for Friction, anywhere in the app. It never appears as a warning or an error, so the colour permanently reads as credit rather than fault.</p></li>
+        <li><b>Stats</b><p>2-up tiles — day streak, tiers cleared — kept deliberately smaller than the Friction card. Compliance is real but secondary.</p></li>
+        <li><b>Per-pillar bars</b><p>Three thin progress bars to 100, each in its accent. Shows imbalance honestly; a user 40 tiers deep in Access and 3 deep in Social should feel that gap here.</p></li>
+        <li><b>History log</b><p>Reverse chronological rows: dot, directive, journal line, day index. Friction entries render their index in ember and sit in the same stream as completions — never a separate "failures" list.</p></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FLOW ============ -->
+<section class="sect shell" id="flow">
+  <div class="sect__head">
+    <div class="sect__num">03</div>
+    <div>
+      <h2>Cold open to first completion</h2>
+      <p class="lede sect__sub">
+        The whole path, in order, with the state each step writes. Nine steps, roughly four
+        minutes, and the user has already changed their behaviour once.
+      </p>
+    </div>
+  </div>
+  <div class="flow" id="flowMap"></div>
+</section>
+
+<!-- ============ ENGINE ============ -->
+<section class="sect shell" id="engine">
+  <div class="sect__head">
+    <div class="sect__num">04</div>
+    <div>
+      <h2>The escalation ladder</h2>
+      <p class="lede sect__sub">
+        100 tiers per pillar. Sampled here at the inflection points — where the challenge changes
+        category rather than just degree. Between samples the engine interpolates: same action
+        shape, one fractional turn harder.
+      </p>
+    </div>
+  </div>
+
+  <div class="ladders" id="ladders"></div>
+
+  <div class="curve">
+    <div class="curve__box">
+      <svg viewBox="0 0 520 260" role="img" aria-label="Difficulty curve across 100 tiers for the three pillars">
+        <defs>
+          <linearGradient id="gA" x1="0" y1="1" x2="1" y2="0">
+            <stop offset="0" stop-color="#2F6BFF" stop-opacity=".15"/><stop offset="1" stop-color="#2F6BFF" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <g stroke="#232A38" stroke-width="1">
+          <line x1="44" y1="220" x2="500" y2="220"/>
+          <line x1="44" y1="20" x2="44" y2="220"/>
+        </g>
+        <g stroke="#181D27" stroke-width="1" stroke-dasharray="2 4">
+          <line x1="44" y1="170" x2="500" y2="170"/><line x1="44" y1="120" x2="500" y2="120"/><line x1="44" y1="70" x2="500" y2="70"/>
+          <line x1="158" y1="20" x2="158" y2="220"/><line x1="272" y1="20" x2="272" y2="220"/><line x1="386" y1="20" x2="386" y2="220"/>
+        </g>
+        <g id="curvePaths"></g>
+        <g font-family="ui-monospace,monospace" font-size="9" fill="#525C6E" letter-spacing="1">
+          <text x="44" y="238">001</text><text x="146" y="238">025</text><text x="260" y="238">050</text>
+          <text x="374" y="238">075</text><text x="480" y="238">100</text>
+          <text x="8" y="224">LOW</text><text x="8" y="26">MAX</text>
+          <text x="8" y="128" transform="rotate(-90 8 128)" text-anchor="middle">EXPOSURE</text>
+        </g>
+      </svg>
+    </div>
+    <div class="rules">
+      <div class="rule__r"><b>Rule 01</b><p><strong>Micro-beginnings.</strong> Tier 1 costs zero money, zero planning, and under two minutes. Failure has to be nearly impossible or the user never reaches tier 5.</p></div>
+      <div class="rule__r"><b>Rule 02</b><p><strong>Invisible escalation.</strong> Difficulty rises on <code>(t/100)^1.9</code> — the first 30 tiers are almost flat. The user is 40 days in before the curve is felt.</p></div>
+      <div class="rule__r"><b>Rule 03</b><p><strong>Macro-endings.</strong> Tier 100 is geographic displacement, public exposure, or a conversation that changes a relationship. It is supposed to be frightening from tier 1.</p></div>
+      <div class="rule__r"><b>Rule 04</b><p><strong>Calibration.</strong> Onboarding sets the entry index per pillar, so a cyclist with a 40km radius never gets served "walk to the end of your street".</p></div>
+    </div>
+  </div>
+
+  <div class="calc">
+    <h3>Calibration → entry tier</h3>
+    <div class="calc__grid">
+      <div class="calc__c" style="--pill:#2F6BFF">
+        <span>Access</span>
+        <pre>t₀ = clamp(1
+   + floor(radius_km / 6)
+   + transport_modes
+   , 1, 14)</pre>
+        <em>Owning a car and a bike and having ranged 30km last month enters at tier 8, not tier 1.</em>
+      </div>
+      <div class="calc__c" style="--pill:#B4FF25">
+        <span>Activity</span>
+        <pre>t₀ = clamp(1
+   + floor((100 − routine) / 11)
+   + novelty_recency
+   , 1, 14)</pre>
+        <em>Routine is the % of this week identical to last. Novelty recency scores 0–4 by how recently they last tried something new.</em>
+      </div>
+      <div class="calc__c" style="--pill:#FF2D55">
+        <span>Social</span>
+        <pre>t₀ = clamp(1
+   + floor((10 − anxiety) * 0.8)
+   + floor(long_convos / 4)
+   , 1, 14)</pre>
+        <em>Anxiety is self-reported 0–10. High anxiety plus zero long conversations pins entry at tier 1 — the eye-contact tier.</em>
+      </div>
+    </div>
+    <div class="calc__grid" style="margin-top:14px">
+      <div class="calc__c" style="--pill:#8792A6">
+        <span>Runtime adjustment</span>
+        <pre>on friction  → hold tier, re-serve variant
+on 2× friction → step back one tier
+on 3× clean   → allow +2 tier jump</pre>
+        <em>The ladder is not a rail. Repeated friction at a tier drops the user down rather than stalling them; three clean completions unlock a double step so fast movers aren't held back.</em>
+      </div>
+      <div class="calc__c" style="--pill:#FF8A1F">
+        <span>Daily serve</span>
+        <pre>serve(pillar) = ladder[pillar][ tier ]
+skipped days do not advance tier
+max 3 active challenges per day</pre>
+        <em>Tier is bound to completions, not to the calendar. Day 100 of the app is not day 100 of the ladder unless it was earned.</em>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SYSTEM ============ -->
+<section class="sect shell" id="system">
+  <div class="sect__head">
+    <div class="sect__num">05</div>
+    <div>
+      <h2>Design system</h2>
+      <p class="lede sect__sub">
+        Dark by intent, not by fashion — the Bubble Map is additive light, and additive light needs
+        a black ground to read as energy.
+      </p>
+    </div>
+  </div>
+
+  <div class="sys">
+    <div class="panel">
+      <h3>Palette</h3>
+      <div class="sw">
+        <div class="sw__r"><span class="sw__c" style="background:#06070A"></span><span class="sw__n">Void — page ground</span><span class="sw__h">#06070A</span></div>
+        <div class="sw__r"><span class="sw__c" style="background:#0E1116"></span><span class="sw__n">Strata — panel</span><span class="sw__h">#0E1116</span></div>
+        <div class="sw__r"><span class="sw__c" style="background:#141821"></span><span class="sw__n">Ridge — card</span><span class="sw__h">#141821</span></div>
+        <div class="sw__r"><span class="sw__c" style="background:#2F6BFF"></span><span class="sw__n">Access</span><span class="sw__h">#2F6BFF</span></div>
+        <div class="sw__r"><span class="sw__c" style="background:#B4FF25"></span><span class="sw__n">Activity</span><span class="sw__h">#B4FF25</span></div>
+        <div class="sw__r"><span class="sw__c" style="background:#FF2D55"></span><span class="sw__n">Social</span><span class="sw__h">#FF2D55</span></div>
+        <div class="sw__r"><span class="sw__c" style="background:#FF8A1F"></span><span class="sw__n">Ember — friction only</span><span class="sw__h">#FF8A1F</span></div>
+        <div class="sw__r"><span class="sw__c" style="background:#E9EEF6"></span><span class="sw__n">Ink</span><span class="sw__h">#E9EEF6</span></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Type</h3>
+      <div class="tscale">
+        <div><span>DIRECTIVE 26</span><b style="font-size:22px;letter-spacing:-.045em">Step outside</b></div>
+        <div><span>TITLE 26</span><b style="font-size:19px;letter-spacing:-.04em">What moves you?</b></div>
+        <div><span>BODY 14.5</span><span style="font-size:14px;letter-spacing:-.012em;color:var(--ink);flex:1">Ride one stop past your usual.</span></div>
+        <div><span>INSTRUMENT 10</span><span class="mono" style="color:var(--ink)">TIER 001 · A</span></div>
+        <div style="border:0"><span>NUMERIC 47</span><b style="font-family:var(--instrument);font-size:30px;color:var(--ember);font-variant-numeric:tabular-nums">27</b></div>
+      </div>
+      <p style="margin-top:16px;font-size:12.5px;line-height:1.55;color:var(--ash)">
+        Two roles. A heavy grotesque at −.045em tracking for anything the user must <em>do</em>,
+        and a wide-tracked uppercase mono for everything the system <em>reports</em>. If it's a
+        measurement, it's mono and tabular.
+      </p>
+    </div>
+
+    <div class="panel">
+      <h3>Motion &amp; haptics</h3>
+      <div class="tlist">
+        <div class="tlist__r"><span>Card press</span><p>3px translate, 130ms<br />cubic-bezier(.2,.8,.3,1)</p></div>
+        <div class="tlist__r"><span>Commit ring</span><p>900ms linear fill<br />snap-back 180ms on release</p></div>
+        <div class="tlist__r"><span>Burst</span><p>4 frames, 120ms stagger<br />1.5–2.3s ease-out, fade at edge</p></div>
+        <div class="tlist__r"><span>Bubble growth</span><p>Spring to new radius, 1.1s<br />overshoot 6%, one shockwave ring</p></div>
+        <div class="tlist__r"><span>Haptic — commit</span><p>[6, 26, 10, 40, 18] rising</p></div>
+        <div class="tlist__r"><span>Haptic — friction</span><p>[30] single blunt pulse</p></div>
+        <div class="tlist__r"><span>Reduced motion</span><p>Drift and burst disabled;<br />radius jumps, ring still fills</p></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Voice</h3>
+      <p style="font-size:12.5px;line-height:1.55;color:var(--ash);margin-bottom:14px">
+        Stoic, direct, supportive, never soft. It states what happened and what's next. It does
+        not celebrate on the user's behalf.
+      </p>
+      <div class="voice">
+        <div class="voice__c no"><b>Never</b><p>Amazing work! 🎉 You crushed it today!</p></div>
+        <div class="voice__c yes"><b>Always</b><p>Sixty seconds outside. The perimeter moved. Tomorrow it moves again.</p></div>
+        <div class="voice__c no"><b>Never</b><p>Don't worry, we all have off days!</p></div>
+        <div class="voice__c yes"><b>Always</b><p>Logged as friction. That's the point of the counter. Same tier tomorrow.</p></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Component inventory</h3>
+      <div class="tlist">
+        <div class="tlist__r"><span>BubbleMap</span><p>canvas · tiers → radii</p></div>
+        <div class="tlist__r"><span>ChallengeCard</span><p>pillar · tier · costs · state</p></div>
+        <div class="tlist__r"><span>HoldToCommit</span><p>900ms · ring · haptic</p></div>
+        <div class="tlist__r"><span>CalibrationCard</span><p>slider | chip-grid</p></div>
+        <div class="tlist__r"><span>ExpansionBurst</span><p>4 frames · pillar-tinted</p></div>
+        <div class="tlist__r"><span>MicroJournal</span><p>90 char hard cap</p></div>
+        <div class="tlist__r"><span>FrictionCard</span><p>ember · monotonic</p></div>
+        <div class="tlist__r"><span>PillarBar</span><p>tier / 100</p></div>
+        <div class="tlist__r"><span>LogRow</span><p>completion | friction</p></div>
+        <div class="tlist__r"><span>TabBar</span><p>3 tabs · hidden in challenge</p></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Rules of the surface</h3>
+      <div class="tlist">
+        <div class="tlist__r"><span>01</span><p>One accent per screen region. Never two pillars in one card.</p></div>
+        <div class="tlist__r"><span>02</span><p>Ember is Friction. Nothing else, ever.</p></div>
+        <div class="tlist__r"><span>03</span><p>Progress is stated in physical units — km, people, minutes — never points.</p></div>
+        <div class="tlist__r"><span>04</span><p>The map is never interactive. It reports; it isn't a toy.</p></div>
+        <div class="tlist__r"><span>05</span><p>Nothing celebratory is auto-shared. No streak-loss notifications.</p></div>
+        <div class="tlist__r"><span>06</span><p>Every destructive or committing action costs a deliberate 900ms.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="shell foot">
+  <p>DeBubble · frontend build · 3 pillars × 100 tiers</p>
+  <p>Access #2F6BFF · Activity #B4FF25 · Social #FF2D55 · Friction #FF8A1F</p>
+</footer>
+
+</div>
+
+<script>
+(() => {
+"use strict";
+
+const RM = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ============================================================
+   PILLARS + LADDERS
+   ============================================================ */
+const PILLARS = {
+  access:   {name:"Access",   code:"A", tag:"Geographic",   color:"#2F6BFF", soft:"rgba(47,107,255,.13)",  line:"rgba(47,107,255,.32)",  unit:"km radius"},
+  activity: {name:"Activity", code:"B", tag:"Experiential", color:"#B4FF25", soft:"rgba(180,255,37,.10)",  line:"rgba(180,255,37,.30)",  unit:"novel acts"},
+  social:   {name:"Social",   code:"C", tag:"Interpersonal",color:"#FF2D55", soft:"rgba(255,45,85,.12)",   line:"rgba(255,45,85,.32)",   unit:"contacts"}
+};
+const ORDER = ["access","activity","social"];
+
+// tier, directive, time, money, exposure(1-10), coach line
+const LADDER = {
+  access:[
+    [1,"Step outside your front door. Stand there for sixty seconds. Go back in.","2 min","£0",1,"You are not going anywhere today. You are proving the door opens."],
+    [2,"Walk to the end of your street and back.","8 min","£0",1,"Same street, deliberate trip. The distinction matters more than the distance."],
+    [3,"Turn down one street you have never turned down. One block, then home.","12 min","£0",2,"Novel geography starts one block from your door. It always did."],
+    [6,"Walk a full loop of your block — in the opposite direction to habit.","20 min","£0",2,"Reversed, a known route stops being known. Cheap way to see your own street."],
+    [11,"Walk into a shop you have never entered. You do not have to buy anything.","25 min","£0",3,"Entering without a reason is the skill. Buying is optional and always was."],
+    [17,"Ride one stop past your usual and walk back.","35 min","£3",3,"One stop is the smallest possible act of overshooting. Learn what it feels like."],
+    [24,"Take a bus or train line you have never taken. Ride to its halfway point.","1.5 hr","£6",4,"You are collecting lines now, not destinations. Nothing waits for you there."],
+    [33,"Spend an afternoon in a district you have never had a reason to visit.","4 hr","£10",5,"No reason is the reason. Walk it until the map in your head redraws."],
+    [45,"Ride a line to its final stop. Whatever is there, walk it for one hour.","5 hr","£12",6,"The end of the line is where the city stops performing. Go look."],
+    [58,"Take a train to a town you cannot state one fact about. Stay four hours.","8 hr","£40",7,"Ignorance is the selection criterion. Do not research it before you go."],
+    [70,"Sleep one night somewhere you have never slept. Under 100km is fine.","24 hr","£70",7,"Waking somewhere unfamiliar resets more than a day trip ever will."],
+    [82,"Three days in a city where you know nobody. Book it before you sleep tonight.","72 hr","£300",8,"Booked tonight, or it becomes a thing you were going to do."],
+    [91,"One week somewhere you cannot read the signage.","7 days","£800",9,"Illiteracy is temporary and instructive. You will navigate by pattern and nerve."],
+    [100,"Leave for thirty days on a one-way ticket with no return date booked.","30 days","Var.",10,"The unbooked return is the whole challenge. Everything else is logistics."]
+  ],
+  activity:[
+    [1,"Brush your teeth with your other hand tonight.","2 min","£0",1,"Your hands have a hierarchy you never chose. Break it for ninety seconds."],
+    [2,"Sit in a different chair for one meal.","20 min","£0",1,"Every room you own has an assigned seat. Nobody assigned it."],
+    [3,"End your shower with thirty seconds of cold.","1 min","£0",2,"Small, unpleasant, entirely reversible. Discomfort you chose behaves differently."],
+    [6,"Eat something you have never eaten. One bite counts.","15 min","£4",2,"One bite. This is a data point, not a meal."],
+    [10,"Spend twenty minutes on a skill you have never touched. Anything.","20 min","£0",3,"Being bad at something new is the only entry fee. Pay it early."],
+    [16,"Do the thing you always do — somewhere you have never done it.","1 hr","£0",3,"Same act, new context. Your routine is more portable than it feels."],
+    [23,"Cook a dish from a cuisine you have never cooked. Badly is acceptable.","1.5 hr","£12",4,"Inedible still counts. The technique is the point, not the dinner."],
+    [31,"Attend one in-person session of a class. Any class.","2 hr","£15",5,"Turning up as a visible beginner in a room of strangers is the actual tier."],
+    [42,"Perform the skill in front of exactly one person.","30 min","£0",6,"One witness converts a hobby into something with stakes."],
+    [55,"Enter a public arena — open mic, jam night, tournament, showcase.","4 hr","£10",7,"Strangers who did not choose to watch you are the escalation here."],
+    [68,"Commit to a six-week course with attendance you cannot quietly drop.","6 wk","£180",7,"Six weeks outlasts enthusiasm. That is why it is on the list."],
+    [80,"Teach the thing you were useless at eighty days ago.","3 hr","£0",8,"Teaching is the audit. You cannot fake competence in front of a beginner."],
+    [90,"Enter something you can publicly and visibly fail at.","1 day","£45",9,"A recorded, ranked, witnessed outcome. Placing last still clears the tier."],
+    [100,"Drop a defining routine for thirty days. Replace it with what you built here.","30 days","Var.",10,"You have spent ninety-nine tiers proving you are not your habits. Prove it once at scale."]
+  ],
+  social:[
+    [1,"Make eye contact with one stranger. One second. That is the entire task.","1 min","£0",1,"One second. No smile required, no words. Contact, then look away."],
+    [2,"Say thank you out loud, with eye contact, to someone who serves you today.","2 min","£0",2,"You already say it. Today you say it to a face."],
+    [3,"Ask one stranger a question with a factual answer. \"Is this the queue?\"","2 min","£0",2,"A question you already know the answer to is still a conversation opened."],
+    [5,"Compliment a stranger on something they chose. Shoes, bag, jacket.","3 min","£0",3,"Chosen things only. Never bodies. Then leave — no follow-up required."],
+    [9,"Ask whoever serves you how their shift is going. Wait for the actual answer.","5 min","£4",3,"The waiting is the challenge. Most people leave before the answer arrives."],
+    [14,"Sit in a café for one hour. No headphones, no phone.","1 hr","£4",4,"Ambient presence. You are not talking to anyone; you are available to."],
+    [20,"Hold a conversation with a stranger for three full exchanges.","10 min","£0",5,"Three exchanges is where small talk either dies or turns into something."],
+    [28,"Text someone you have drifted from. Propose a specific day and time.","10 min","£0",5,"\"We should catch up\" is not the task. A date and a time is the task."],
+    [36,"Go to a group event alone. Speak to two people.","3 hr","£10",6,"Arriving alone removes the exit. That is the mechanism, not a side effect."],
+    [48,"Get a stranger's contact details, then follow up within forty-eight hours.","1 day","£0",7,"The follow-up is the tier. Collecting a number and never using it is tier 20."],
+    [60,"Invite three people who do not know each other to the same table.","4 hr","£40",7,"You become responsible for the room. New skill, higher exposure."],
+    [72,"Tell one person something true about yourself you have never said out loud.","1 hr","£0",9,"No rehearsal. Vulnerability rehearsed is performance."],
+    [86,"Ask someone for something you are genuinely afraid they will refuse.","1 hr","£0",9,"A real no is a successful completion. Log it and move up."],
+    [100,"Say the thing you have not been saying — to the person it is about.","Var.","£0",10,"You have known what this one is since day one. It has been waiting at the top of the ladder."]
+  ]
+};
+
+const entryFor = (p,t) => {
+  const L = LADDER[p]; let out = L[0];
+  for (const row of L) { if (row[0] <= t) out = row; else break; }
+  return {tier:t, base:out[0], text:out[1], time:out[2], money:out[3], exp:out[4], coach:out[5]};
+};
+const pad = n => String(n).padStart(3,"0");
+const clamp = (n,a,b) => Math.max(a,Math.min(b,n));
+
+/* ============================================================
+   CALIBRATION
+   ============================================================ */
+const CAL_CARDS = [
+  {pillar:"access", q:"What moves you?", hint:"Everything you can use without asking permission or paying a fare you cannot afford.",
+   type:"chips", key:"transport", opts:["On foot","Bicycle","Public transit","Car / moto"]},
+  {pillar:"access", q:"How far did you actually get this month?", hint:"Furthest point from home in the last thirty days. Guess honestly — the engine only gets this wrong once.",
+   type:"slider", key:"radius", min:0, max:60, step:1, val:4, unit:"km from home"},
+  {pillar:"activity", q:"How much of this week repeated last week?", hint:"Same rooms, same order, same hours. Predictability is not a moral failure — it is a starting coordinate.",
+   type:"slider", key:"routine", min:0, max:100, step:5, val:80, unit:"% identical"},
+  {pillar:"social", q:"Talking to a stranger feels…", hint:"Zero is effortless. Ten is physically difficult. Nobody sees this number.",
+   type:"slider", key:"anxiety", min:0, max:10, step:1, val:7, unit:"resistance"}
+];
+
+function entryTiers(c){
+  const modes = (c.transport||[]).length;
+  const access   = clamp(1 + Math.floor((c.radius ?? 4)/6) + modes, 1, 14);
+  const activity = clamp(1 + Math.floor((100 - (c.routine ?? 80))/11) + 1, 1, 14);
+  const social   = clamp(1 + Math.floor((10 - (c.anxiety ?? 7))*0.8), 1, 14);
+  return {access, activity, social};
+}
+
+/* ============================================================
+   STATE
+   ============================================================ */
+const seedLog = () => ([]);
+function freshState(){
+  return {
+    screen:"boot", calStep:0,
+    cal:{transport:["On foot"], radius:4, routine:80, anxiety:7},
+    tier:{access:1, activity:1, social:1},
+    done:{access:false, activity:false, social:false},
+    active:null, journal:"", friction:0, streak:0, cleared:0, day:1,
+    log:seedLog(), tab:"today", pulse:null, lastCleared:null
+  };
+}
+
+/* ============================================================
+   BUBBLE MAP
+   ============================================================ */
+let scenes = [];
+function makeScene(canvas, getState){
+  const s = {canvas, ctx:canvas.getContext("2d"), getState, t:Math.random()*100, vis:true,
+             r:{access:0,activity:0,social:0}, wave:null, io:null};
+  s.io = new IntersectionObserver(es => { s.vis = es[0].isIntersecting; }, {threshold:0});
+  s.io.observe(canvas);
+  scenes.push(s);
+  return s;
+}
+function dropScene(s){
+  if (!s) return;
+  s.io?.disconnect();
+  scenes = scenes.filter(x => x !== s);
+}
+function sizeCanvas(c){
+  const dpr = Math.min(window.devicePixelRatio||1, 2);
+  const r = c.getBoundingClientRect();
+  if (!r.width) return false;
+  c.width = Math.round(r.width*dpr); c.height = Math.round(r.height*dpr);
+  return true;
+}
+function targetRadius(tier, w){ return w*(0.115 + Math.pow(tier/100,0.62)*0.30); }
+
+function drawScene(s){
+  const {ctx, canvas} = s, w = canvas.width, h = canvas.height;
+  if (!w) return;
+  const st = s.getState();
+  const cx = w/2, cy = h*0.5, unit = Math.min(w,h);
+
+  ctx.clearRect(0,0,w,h);
+
+  // polar grid
+  ctx.save();
+  ctx.strokeStyle = "#1A2029"; ctx.lineWidth = 1;
+  for (let i=1;i<=4;i++){ ctx.beginPath(); ctx.arc(cx,cy,unit*0.11*i,0,Math.PI*2); ctx.stroke(); }
+  ctx.strokeStyle = "#141A22";
+  for (let a=0;a<12;a++){
+    const th = a*Math.PI/6;
+    ctx.beginPath(); ctx.moveTo(cx+Math.cos(th)*unit*0.08, cy+Math.sin(th)*unit*0.08);
+    ctx.lineTo(cx+Math.cos(th)*unit*0.48, cy+Math.sin(th)*unit*0.48); ctx.stroke();
+  }
+  ctx.restore();
+
+  ctx.globalCompositeOperation = "lighter";
+  ORDER.forEach((p,i) => {
+    const tgt = targetRadius(st.tier[p], unit);
+    s.r[p] = RM ? tgt : s.r[p] + (tgt - s.r[p])*0.07;
+    const r = s.r[p];
+    const base = -Math.PI/2 + i*(Math.PI*2/3);
+    const drift = RM ? 0 : Math.sin(s.t/58 + i*2.1)*0.09;
+    const off = unit*(0.085 + Math.sin(s.t/71 + i)*0.012);
+    const x = cx + Math.cos(base+drift)*off, y = cy + Math.sin(base+drift)*off;
+    const col = PILLARS[p].color;
+
+    const g = ctx.createRadialGradient(x,y,r*0.05,x,y,r);
+    g.addColorStop(0, hexA(col,.38)); g.addColorStop(.55, hexA(col,.17)); g.addColorStop(1, hexA(col,0));
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+
+    ctx.strokeStyle = hexA(col,.72); ctx.lineWidth = Math.max(1, unit*0.0035);
+    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.stroke();
+
+    ctx.fillStyle = hexA(col,.9);
+    ctx.beginPath(); ctx.arc(x,y,unit*0.008,0,Math.PI*2); ctx.fill();
+  });
+
+  if (s.wave){
+    const k = (performance.now() - s.wave.t0)/1100;
+    if (k >= 1) s.wave = null;
+    else {
+      const col = PILLARS[s.wave.p].color;
+      ctx.strokeStyle = hexA(col, .55*(1-k)); ctx.lineWidth = Math.max(1, unit*0.006*(1-k));
+      ctx.beginPath(); ctx.arc(cx,cy, unit*0.1 + k*unit*0.55, 0, Math.PI*2); ctx.stroke();
+    }
+  }
+  ctx.globalCompositeOperation = "source-over";
+
+  ctx.fillStyle = "#E9EEF6";
+  ctx.beginPath(); ctx.arc(cx,cy,unit*0.011,0,Math.PI*2); ctx.fill();
+}
+function hexA(hex,a){
+  const n = parseInt(hex.slice(1),16);
+  return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`;
+}
+
+let tick = 0;
+function loop(){
+  tick++;
+  for (const s of scenes){
+    if (!s.vis) continue;
+    if (tick % 2 === 0 || s.wave) { s.t += 1; drawScene(s); }
+  }
+  requestAnimationFrame(loop);
+}
+
+/* ============================================================
+   AMBIENT PAGE FIELD
+   ============================================================ */
+(function field(){
+  const c = document.getElementById("field"), ctx = c.getContext("2d");
+  let w=0,h=0,t=0;
+  const resize = () => {
+    const dpr = Math.min(window.devicePixelRatio||1,1.5);
+    w = c.width = Math.round(innerWidth*dpr); h = c.height = Math.round(innerHeight*dpr);
+    c.style.width = innerWidth+"px"; c.style.height = innerHeight+"px";
+    if (RM) draw();
+  };
+  function draw(){
+    ctx.clearRect(0,0,w,h);
+    ctx.globalCompositeOperation = "lighter";
+    const blobs = [
+      {x:.16,y:.20,r:.42,c:"#2F6BFF",s:0},
+      {x:.86,y:.34,r:.34,c:"#B4FF25",s:2.2},
+      {x:.62,y:.82,r:.38,c:"#FF2D55",s:4.1}
+    ];
+    for (const b of blobs){
+      const dx = RM?0:Math.sin(t/900+b.s)*.03, dy = RM?0:Math.cos(t/1100+b.s)*.025;
+      const x=(b.x+dx)*w, y=(b.y+dy)*h, r=b.r*Math.max(w,h);
+      const g = ctx.createRadialGradient(x,y,0,x,y,r);
+      g.addColorStop(0,hexA(b.c,.055)); g.addColorStop(1,hexA(b.c,0));
+      ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+    }
+    ctx.globalCompositeOperation="source-over";
+  }
+  addEventListener("resize", resize, {passive:true});
+  resize();
+  if (!RM) (function anim(){ t++; if (t%3===0) draw(); requestAnimationFrame(anim); })();
+})();
+
+/* ============================================================
+   SCREEN TEMPLATES
+   ============================================================ */
+const sbar = () => `
+  <div class="sbar"><span>9:41</span>
+    <span class="sbar__r"><span>DEBUBBLE</span><span class="sbar__bat"></span></span>
+  </div>`;
+
+function vBoot(){
+  return `${sbar()}<div class="view"><div class="boot"><div class="boot__in">
+    <svg class="boot__mk" viewBox="0 0 34 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" fill="none" stroke="#2F6BFF" stroke-width="1"/>
+      <circle cx="20" cy="9" r="7" fill="none" stroke="#B4FF25" stroke-width="1"/>
+      <circle cx="21" cy="16" r="6" fill="none" stroke="#FF2D55" stroke-width="1"/>
+    </svg>
+    <h2>DEBUBBLE</h2>
+    <p>Three pillars. One hundred tiers. We need four answers before we can start.</p>
+    <div style="width:100%;margin-top:10px"><button class="btn" data-a="startCal">Calibrate baseline</button></div>
+  </div></div></div>`;
+}
+
+function vCal(st){
+  const i = st.calStep;
+  if (i >= CAL_CARDS.length) return vCalResult(st);
+  const c = CAL_CARDS[i], P = PILLARS[c.pillar];
+  const segs = CAL_CARDS.map((_,k)=>`<span class="cal__seg ${k<=i?"on":""}"></span>`).join("")+`<span class="cal__seg"></span>`;
+  let body = "";
+  if (c.type === "chips"){
+    const sel = st.cal[c.key] || [];
+    body = `<div class="togs">${c.opts.map(o=>`
+      <button class="tog" data-a="chip" data-key="${c.key}" data-v="${o}" aria-pressed="${sel.includes(o)}">${o}</button>`).join("")}</div>`;
+  } else {
+    const v = st.cal[c.key];
+    body = `<div class="slider">
+      <div class="slider__top"><span class="slider__val" data-out="${c.key}">${v}</span><span class="slider__unit">${c.unit}</span></div>
+      <input type="range" min="${c.min}" max="${c.max}" step="${c.step}" value="${v}" data-a="slide" data-key="${c.key}" aria-label="${c.q}" />
+      <div class="slider__scale"><span>${c.min}</span><span>${c.max}${c.max===60?"+":""}</span></div>
+    </div>`;
+  }
+  return `${sbar()}<div class="view"><div class="cal" style="--pill:${P.color};--pill-soft:${P.soft}">
+    <div class="cal__bar">${segs}</div>
+    <div class="mono" style="color:${P.color}">${P.name} · ${P.tag}</div>
+    <h2 class="cal__q">${c.q}</h2>
+    <p class="cal__hint">${c.hint}</p>
+    <div class="cal__body">${body}</div>
+    <div class="cal__foot">
+      <button class="btn" data-a="calNext">${i===CAL_CARDS.length-1?"Compute baseline":"Continue"}</button>
+      ${i>0?`<button class="btn btn--ghost" data-a="calBack">Back</button>`:""}
+    </div>
+  </div></div>`;
+}
+
+function vCalResult(st){
+  const t = entryTiers(st.cal);
+  return `${sbar()}<div class="view"><div class="res">
+    <div class="res__k">
+      <div class="mono" style="color:var(--dim)">Calibration complete</div>
+      <h2>Your bubble,<br />measured.</h2>
+      <p class="res__note">These are your entry tiers — not scores. Day 001 begins here, not at zero.</p>
+      <div class="res__rows">
+        ${ORDER.map(p=>`<div class="res__row">
+          <i style="background:${PILLARS[p].color};box-shadow:0 0 10px ${PILLARS[p].color}"></i>
+          <span class="res__name">${PILLARS[p].name}</span>
+          <span class="res__tier" style="color:${PILLARS[p].color}">TIER ${pad(t[p])}</span>
+        </div>`).join("")}
+      </div>
+    </div>
+    <button class="btn" data-a="begin">Begin day 001</button>
+  </div></div>`;
+}
+
+function vDash(st){
+  return `${sbar()}<div class="view"><div class="view__scroll">
+    <div class="map"><canvas data-map></canvas>
+      <div class="map__hud">
+        <div class="map__day"><b>DAY ${pad(st.day)}</b><span>Perimeter live</span></div>
+        <div class="map__legend">
+          ${ORDER.map(p=>`<span class="map__leg"><i style="background:${PILLARS[p].color};box-shadow:0 0 7px ${PILLARS[p].color}"></i>${PILLARS[p].code}<b>${pad(st.tier[p])}</b></span>`).join("")}
+        </div>
+      </div>
+    </div>
+    <div class="serve">
+      <div class="serve__hdr"><span>Today's serve</span><span>${ORDER.filter(p=>!st.done[p]).length} open</span></div>
+      ${ORDER.map(p=>{
+        const e = entryFor(p, st.tier[p]), P = PILLARS[p];
+        return `<button class="card ${st.done[p]?"done":""}" style="--pill:${P.color}" data-a="open" data-p="${p}">
+          <div class="card__top"><span class="card__pill">${P.name}</span><span class="card__tier">TIER ${pad(e.tier)} · ${P.code}</span></div>
+          <div class="card__txt">${e.text}</div>
+          <div class="card__foot"><span>${e.time}</span><span>${e.money}</span><span>Exposure ${e.exp}/10</span></div>
+        </button>`;
+      }).join("")}
+    </div>
+  </div>${tabbar(st)}</div>`;
+}
+
+function tabbar(st){
+  const T = [
+    ["today","Today",'<path d="M3 9h18M3 4.5h18v15H3z"/>'],
+    ["map","Map",'<circle cx="9.5" cy="10" r="6"/><circle cx="15" cy="14" r="5"/>'],
+    ["profile","Profile",'<circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c1.4-4 4-6 7.5-6s6.1 2 7.5 6"/>']
+  ];
+  return `<nav class="tabbar">${T.map(([k,l,d])=>`
+    <button class="tab ${st.tab===k?"on":""}" data-a="tab" data-t="${k}">
+      <svg viewBox="0 0 24 24" aria-hidden="true">${d}</svg>${l}
+    </button>`).join("")}</nav>`;
+}
+
+function vAct(st){
+  const p = st.active || "access", e = entryFor(p, st.tier[p]), P = PILLARS[p];
+  return `${sbar()}<div class="view"><div class="act" style="--pill:${P.color};--pill-soft:${P.soft};--pill-line:${P.line}">
+    <div class="act__nav">
+      <button class="act__back" data-a="abort">← Abort</button>
+      <span class="act__id">TIER ${pad(e.tier)} · ${P.code}</span>
+    </div>
+    <div class="act__label">${P.name} · ${P.tag}</div>
+    <h2 class="act__txt">${e.text}</h2>
+    <div class="act__params">
+      <div class="act__p"><span>Time</span><b>${e.time}</b></div>
+      <div class="act__p"><span>Cost</span><b>${e.money}</b></div>
+      <div class="act__p"><span>Exposure</span><b style="color:${P.color}">${e.exp}/10</b></div>
+    </div>
+    <div class="act__coach"><em>Why this tier</em>${e.coach}</div>
+    <div class="hold">
+      <button class="hold__btn" data-a="hold" aria-label="Hold to complete">
+        <svg class="hold__ring" viewBox="0 0 104 104"><circle class="trk" cx="52" cy="52" r="50"/>
+          <circle class="bar" cx="52" cy="52" r="50" stroke-dasharray="314.16" stroke-dashoffset="314.16"/></svg>
+        <svg class="hold__ico" viewBox="0 0 24 24"><path d="M4 12.5l5.5 5.5L20 7"/></svg>
+      </button>
+      <span class="hold__lbl">Hold to complete</span>
+      <button class="hold__alt" data-a="friction">Too much today — log friction</button>
+    </div>
+  </div></div>`;
+}
+
+function vDone(st){
+  const p = st.lastCleared ? st.lastCleared.p : (st.active || "access");
+  const P = PILLARS[p];
+  const clearedTier = st.lastCleared ? st.lastCleared.tier : Math.max(1, st.tier[p]-1);
+  const delta = p==="access" ? "+0.4 km access radius"
+              : p==="activity" ? "+1 novel act logged"
+              : "+1 direct contact";
+  return `${sbar()}<div class="view"><div class="done" style="--pill:${P.color};--pill-soft:${P.soft};--pill-line:${P.line}">
+    <div class="burst" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    <div class="done__mid">
+      <span class="mono" style="color:var(--dim)">Tier ${pad(clearedTier)} cleared</span>
+      <h2>Perimeter<br />extended.</h2>
+      <span class="done__delta">${delta}</span>
+      <p class="done__sub">${p==="access"?"The perimeter moved. Tomorrow it moves again."
+        :p==="activity"?"One repetition broken. Your routine is now negotiable."
+        :"Contact made. That is the whole mechanism, repeated a hundred times."}</p>
+    </div>
+    <div class="jr">
+      <div class="jr__lbl"><span>Micro-journal</span><span class="jr__count" data-count>${st.journal.length}/90</span></div>
+      <input type="text" maxlength="90" placeholder="What actually happened?" data-a="journal" value="${st.journal.replace(/"/g,"&quot;")}" />
+      <button class="btn" data-a="saveJournal">Log it</button>
+      <button class="btn btn--ghost" data-a="skipJournal">Skip</button>
+    </div>
+  </div></div>`;
+}
+
+function vPro(st){
+  const badge = st.friction >= 25 ? "Iron" : st.friction >= 10 ? "Tempered" : st.friction >= 3 ? "Contact" : "Untested";
+  return `${sbar()}<div class="view"><div class="view__scroll"><div class="pro">
+    <div class="pro__hdr"><h2>Your friction</h2><span class="mono" style="color:var(--dim)">Day ${pad(st.day)}</span></div>
+
+    <div class="friction">
+      <div class="friction__top">
+        <div><div class="friction__n">${st.friction}</div><div class="friction__lbl" style="margin-top:8px">Friction score</div></div>
+        <span class="friction__badge">${badge}</span>
+      </div>
+      <p class="friction__cap"><b>${st.friction} point${st.friction===1?"":"s"} of contact with the edge.</b>
+        Awkward, refused, or abandoned as too hard. A zero here means the tiers are too easy.</p>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><span>Day streak</span><b>${st.streak}</b></div>
+      <div class="stat"><span>Tiers cleared</span><b>${st.cleared}</b></div>
+    </div>
+
+    <div class="bars">
+      ${ORDER.map(p=>{
+        const P = PILLARS[p], t = st.tier[p];
+        return `<div><div class="bar__top"><span style="color:${P.color}">${P.name}</span><span style="color:var(--dim)">${pad(t)} / 100</span></div>
+        <div class="bar__trk"><div class="bar__fil" style="width:${t}%;background:${P.color};box-shadow:0 0 10px ${P.color}"></div></div></div>`;
+      }).join("")}
+    </div>
+
+    <div>
+      <div class="serve__hdr" style="padding:0 0 4px"><span>History</span><span>${st.log.length} entries</span></div>
+      <div class="log">
+        ${st.log.length ? st.log.map(l=>`
+          <div class="log__row ${l.kind==="friction"?"fr":""}">
+            <i style="background:${l.kind==="friction"?"#FF8A1F":PILLARS[l.p].color}"></i>
+            <div class="log__txt"><b>${l.title}</b>${l.note?`“${l.note}”`:l.kind==="friction"?"Logged as friction. Same tier tomorrow.":"Completed."}</div>
+            <span class="log__d">${l.kind==="friction"?"FR":"D"}${pad(l.day)}</span>
+          </div>`).join("")
+        : `<div class="log__row"><i style="background:var(--faint)"></i>
+             <div class="log__txt"><b>Nothing logged yet</b>Complete a challenge and it lands here.</div>
+             <span class="log__d">—</span></div>`}
+      </div>
+    </div>
+  </div></div>${tabbar(st)}</div>`;
+}
+
+const VIEWS = {boot:vBoot, cal:vCal, dash:vDash, challenge:vAct, complete:vDone, profile:vPro};
+
+/* ============================================================
+   DEVICE INSTANCE
+   ============================================================ */
+function makeDevice(mount, {pin=null, seed=null} = {}){
+  const st = seed ? seed : freshState();
+  if (pin) primeFor(st, pin);
+
+  mount.innerHTML = `<div class="device__body"><div class="device__notch"></div><div class="device__screen"></div></div>`;
+  const screenEl = mount.querySelector(".device__screen");
+
+  const api = {state:st, el:screenEl, pin, scene:null, onChange:null};
+
+  api.render = () => {
+    dropScene(api.scene); api.scene = null;
+    const v = VIEWS[st.screen] || vBoot;
+    screenEl.innerHTML = v(st);
+    const cv = screenEl.querySelector("[data-map]");
+    if (cv){
+      requestAnimationFrame(()=>{
+        if (!cv.isConnected || !sizeCanvas(cv)) return;
+        api.scene = makeScene(cv, ()=>st);
+        if (st.pulse){ api.scene.wave = {p:st.pulse, t0:performance.now()}; st.pulse = null; }
+        drawScene(api.scene);
+      });
+    }
+    if (api.onChange) api.onChange(st);
+  };
+
+  screenEl.addEventListener("click", e => {
+    const el = e.target.closest("[data-a]"); if (!el) return;
+    const a = el.dataset.a;
+    if (a === "startCal"){ st.screen="cal"; st.calStep=0; api.render(); }
+    else if (a === "chip"){
+      const arr = st.cal[el.dataset.key] || [];
+      const v = el.dataset.v;
+      st.cal[el.dataset.key] = arr.includes(v) ? arr.filter(x=>x!==v) : arr.concat(v);
+      api.render();
+    }
+    else if (a === "calNext"){ st.calStep++; api.render(); }
+    else if (a === "calBack"){ st.calStep=Math.max(0,st.calStep-1); api.render(); }
+    else if (a === "begin"){
+      st.tier = entryTiers(st.cal); st.screen="dash"; st.tab="today"; api.render();
+    }
+    else if (a === "open"){ st.active = el.dataset.p; st.screen="challenge"; api.render(); }
+    else if (a === "abort"){ st.screen="dash"; api.render(); }
+    else if (a === "friction"){
+      const p = st.active, e2 = entryFor(p, st.tier[p]);
+      st.friction++;
+      st.log.unshift({kind:"friction", p, day:st.day, title:e2.text, note:""});
+      navigator.vibrate?.(30);
+      st.screen="dash"; st.tab="today"; api.render();
+    }
+    else if (a === "saveJournal" || a === "skipJournal"){
+      const c = st.lastCleared || {p:st.active, tier:st.tier[st.active], text:entryFor(st.active, st.tier[st.active]).text};
+      const note = a==="saveJournal" ? st.journal.trim() : "";
+      st.log.unshift({kind:"done", p:c.p, day:st.day, title:c.text, note});
+      st.journal=""; st.screen="dash"; api.render();
+    }
+    else if (a === "tab"){
+      st.tab = el.dataset.t;
+      st.screen = st.tab==="profile" ? "profile" : "dash";
+      api.render();
+    }
+  });
+
+  screenEl.addEventListener("input", e => {
+    const el = e.target.closest("[data-a]"); if (!el) return;
+    if (el.dataset.a === "slide"){
+      st.cal[el.dataset.key] = Number(el.value);
+      const out = screenEl.querySelector(`[data-out="${el.dataset.key}"]`);
+      if (out) out.textContent = el.value;
+      if (api.onChange) api.onChange(st);
+    }
+    if (el.dataset.a === "journal"){
+      st.journal = el.value;
+      const c = screenEl.querySelector("[data-count]");
+      if (c) c.textContent = `${el.value.length}/90`;
+    }
+  });
+
+  /* hold-to-complete */
+  let raf=null, t0=0;
+  const HOLD = 900;
+  const bar = () => screenEl.querySelector(".hold__ring .bar");
+  const stopHold = () => { if (raf) cancelAnimationFrame(raf); raf=null; const b=bar(); if (b) b.style.strokeDashoffset="314.16"; };
+
+  screenEl.addEventListener("pointerdown", e => {
+    const btn = e.target.closest('[data-a="hold"]'); if (!btn) return;
+    e.preventDefault();
+    t0 = performance.now();
+    const step = () => {
+      const k = Math.min(1,(performance.now()-t0)/HOLD);
+      const b = bar(); if (b) b.style.strokeDashoffset = String(314.16*(1-k));
+      if (k >= 1){ raf=null; complete(); } else raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+  });
+  ["pointerup","pointercancel"].forEach(ev =>
+    window.addEventListener(ev, () => { if (raf) stopHold(); }, {passive:true}));
+
+  function complete(){
+    const p = st.active;
+    const cleared = entryFor(p, st.tier[p]);
+    navigator.vibrate?.([6,26,10,40,18]);
+    st.lastCleared = {p, tier:cleared.tier, text:cleared.text};
+    st.done[p] = true;
+    st.tier[p] = clamp(st.tier[p]+1, 1, 100);
+    st.cleared++; st.streak = Math.max(st.streak,1);
+    st.pulse = p;
+    st.screen = "complete";
+    api.render();
+  }
+
+  api.go = s => { st.screen = s; api.render(); };
+  api.render();
+  return api;
+}
+
+/* seed a device so a pinned screen shows something real */
+function primeFor(st, pin){
+  st.cal = {transport:["On foot","Public transit"], radius:9, routine:75, anxiety:6};
+  if (pin === "cal"){ st.screen="cal"; st.calStep=1; return; }
+  st.tier = entryTiers(st.cal);
+  st.screen = pin; st.active = "access";
+  if (pin === "dash"){ st.day = 12; st.tier = {access:6, activity:4, social:3}; }
+  if (pin === "challenge"){ st.tier.access = 11; }
+  if (pin === "complete"){
+    st.tier.access = 3;
+    st.lastCleared = {p:"access", tier:2, text:"Walk to the end of your street and back."};
+    st.journal = "Went further than the corner. Kept going.";
+  }
+  if (pin === "profile"){
+    st.day = 34; st.tier = {access:19, activity:14, social:7};
+    st.friction = 11; st.streak = 21; st.cleared = 37; st.tab = "profile";
+    st.log = [
+      {kind:"done", p:"social", day:34, title:"Compliment a stranger on something they chose.", note:"She laughed. I left too fast."},
+      {kind:"friction", p:"social", day:33, title:"Ask whoever serves you how their shift is going.", note:""},
+      {kind:"done", p:"access", day:33, title:"Ride one stop past your usual and walk back.", note:"Found a bakery. Went in."},
+      {kind:"done", p:"activity", day:32, title:"Eat something you have never eaten.", note:"Natto. Once is enough."},
+      {kind:"friction", p:"access", day:31, title:"Walk into a shop you have never entered.", note:""},
+      {kind:"done", p:"social", day:31, title:"Ask one stranger a question with a factual answer.", note:"Asked about the queue. It was the queue."}
+    ];
+  }
+}
+
+/* ============================================================
+   PAGE WIRING
+   ============================================================ */
+const heroDev = makeDevice(document.querySelector('[data-device="hero"]'));
+heroDev.go("boot");
+
+const mainDev = makeDevice(document.querySelector('[data-device="main"]'));
+
+document.querySelectorAll("[data-pin]").forEach(el => makeDevice(el, {pin: el.dataset.pin}));
+
+/* step rail */
+const STEPS = [
+  ["boot","Cold open","00"],["cal","Calibration","01"],["dash","Dashboard","02"],
+  ["challenge","Challenge","03"],["complete","Completion","04"],["profile","Profile","05"]
+];
+const stepsEl = document.getElementById("steps");
+stepsEl.innerHTML = STEPS.map(([k,l,n])=>`<button class="step" data-s="${k}" role="tab"><em>${n}</em>${l}</button>`).join("");
+stepsEl.addEventListener("click", e => {
+  const b = e.target.closest("[data-s]"); if (!b) return;
+  const k = b.dataset.s, st = mainDev.state;
+  if (k === "cal" && st.screen !== "cal") st.calStep = 0;
+  if (k !== "boot" && k !== "cal") st.tier = entryTiers(st.cal);
+  if (k === "challenge" || k === "complete") st.active = st.active || "access";
+  if (k === "profile") st.tab = "profile"; else if (k === "dash") st.tab = "today";
+  mainDev.go(k);
+});
+
+const readoutEl = document.getElementById("readout");
+const stateNameEl = document.getElementById("stateName");
+mainDev.onChange = st => {
+  const t = entryTiers(st.cal);
+  const live = st.screen === "boot" || st.screen === "cal" ? t : st.tier;
+  readoutEl.innerHTML = `
+    <div class="kv__r"><span>Screen</span><b>${st.screen}</b></div>
+    <div class="kv__r"><span>Transport modes</span><b>${(st.cal.transport||[]).length}</b></div>
+    <div class="kv__r"><span>Radius / routine / anxiety</span><b>${st.cal.radius} · ${st.cal.routine}% · ${st.cal.anxiety}</b></div>
+    ${ORDER.map(p=>`<div class="kv__r"><span>${PILLARS[p].name} tier</span><b style="color:${PILLARS[p].color}">${pad(live[p])}</b></div>`).join("")}
+    <div class="kv__r"><span>Friction</span><b style="color:#FF8A1F">${st.friction}</b></div>
+    <div class="kv__r"><span>Cleared</span><b>${st.cleared}</b></div>`;
+  stateNameEl.textContent = st.screen;
+  stepsEl.querySelectorAll("[data-s]").forEach(b => b.classList.toggle("on", b.dataset.s === st.screen));
+};
+mainDev.onChange(mainDev.state);
+document.getElementById("resetBtn").addEventListener("click", () => {
+  mainDev.state.screen="boot";
+  Object.assign(mainDev.state, freshState());
+  mainDev.render();
+});
+
+/* flow map */
+const FLOW = [
+  ["Cold open","No signup, no paywall, no carousel. One button: calibrate baseline.","screen = boot"],
+  ["Card 1 — transport","Chip grid. Multi-select. Sets transport_modes.","cal.transport[]"],
+  ["Card 2 — radius","Slider 0–60km, live numeral in Access blue.","cal.radius"],
+  ["Card 3 — routine","Slider 0–100%, live numeral in Activity green.","cal.routine"],
+  ["Card 4 — resistance","Slider 0–10, live numeral in Social crimson.","cal.anxiety"],
+  ["Baseline result","Three entry tiers stated plainly. One button out.","tier = f(cal)"],
+  ["Dashboard","Map paints in. Three cards served, Access first.","screen = dash"],
+  ["Challenge","Tab bar unmounts. Directive, params, coach block, commit ring.","active = pillar"],
+  ["Completion","900ms hold → haptic → burst → radius delta → one-line journal.","tier += 1"]
+];
+document.getElementById("flowMap").innerHTML = FLOW.map(([t,d,k],i)=>`
+  <div class="flow__n">
+    <div class="flow__i"><b>${pad(i+1)}</b><span>${i===0?"ENTRY":i===FLOW.length-1?"LOOP CLOSE":"STEP"}</span></div>
+    <div class="flow__t">${t}</div>
+    <div class="flow__d">${d}</div>
+    <div class="flow__k">${k}</div>
+  </div>`).join("");
+
+/* ladders */
+document.getElementById("ladders").innerHTML = ORDER.map(p => {
+  const P = PILLARS[p], L = LADDER[p];
+  const blurb = p==="access" ? "Front door → one block → one unknown line → one unknown town → no return ticket."
+    : p==="activity" ? "Wrong hand → one new bite → one new skill → one public arena → routine dismantled."
+    : "One second of eye contact → one question → one real conversation → one hosted room → one unsaid thing.";
+  let rows = "";
+  L.forEach((r,i) => {
+    rows += `<div class="lad__r"><span class="lad__t">${pad(r[0])}</span><span class="lad__c">${r[1]}</span></div>`;
+    const next = L[i+1];
+    if (next && next[0] - r[0] > 6) rows += `<div class="lad__gap">${next[0]-r[0]-1} interpolated tiers</div>`;
+  });
+  return `<div class="lad" style="--pill:${P.color}">
+    <div class="lad__h"><h3>${P.name}</h3><p>${blurb}</p></div>
+    <div class="lad__rows">${rows}</div>
+  </div>`;
+}).join("");
+
+/* curve */
+document.getElementById("curvePaths").innerHTML = ORDER.map((p,i) => {
+  const bias = [1.9, 1.75, 2.05][i];
+  const pts = [];
+  for (let t=1;t<=100;t+=2){
+    const x = 44 + (t/100)*456;
+    const y = 220 - Math.pow(t/100, bias)*200;
+    pts.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+  }
+  return `<polyline points="${pts.join(" ")}" fill="none" stroke="${PILLARS[p].color}" stroke-width="1.8" opacity=".92" />`;
+}).join("");
+
+/* ruler */
+(function ruler(){
+  const ticks = document.getElementById("rulerTicks"),
+        head = document.getElementById("rulerHead"),
+        read = document.getElementById("rulerRead");
+  if (!ticks) return;
+  let h = "";
+  for (let i=0;i<=20;i++){
+    const pct = i*5;
+    const maj = i%4===0;
+    h += `<span class="ruler__tick ${maj?"maj":""}" style="top:${pct}%"></span>`;
+    if (maj && i > 0) h += `<span class="ruler__label" style="top:${pct}%">${pad(pct)}</span>`;
+  }
+  ticks.innerHTML = h;
+  const onScroll = () => {
+    const max = document.body.scrollHeight - innerHeight;
+    const k = max>0 ? clamp(scrollY/max,0,1) : 0;
+    head.style.top = `calc(14vh + ${k} * (100% - 28vh))`;
+    read.textContent = pad(Math.max(1, Math.round(k*100)));
+  };
+  addEventListener("scroll", onScroll, {passive:true});
+  onScroll();
+})();
+
+/* resize canvases */
+let rt;
+addEventListener("resize", () => {
+  clearTimeout(rt);
+  rt = setTimeout(() => scenes.forEach(s => { if (sizeCanvas(s.canvas)) drawScene(s); }), 140);
+}, {passive:true});
+
+requestAnimationFrame(loop);
+})();
+</script>
