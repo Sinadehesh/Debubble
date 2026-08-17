@@ -1,10 +1,17 @@
-# DeBubble — frontend build
+# DeBubble
 
 Behavioural expansion engine. Three pillars, 100 tiers each, one challenge per pillar per day.
 
-`index.html` is the complete frontend: a working interactive prototype of every screen plus the
-design specification around it. Single file, no build step, no dependencies, no network requests.
-Open it directly, or publish it as-is.
+| | |
+| --- | --- |
+| [`index.html`](index.html) | Design prototype and specification — every screen running live in one file, no build step. |
+| [`android/`](android/README.md) | The Android app. Kotlin + Compose, 300 authored challenges, adaptive engine. **Not yet compiled** — see its README. |
+
+## The design prototype
+
+`index.html` is the complete frontend spec: a working interactive prototype of every screen plus
+the design specification around it. Single file, no build step, no dependencies, no network
+requests. Open it directly, or publish it as-is.
 
 ## What's in it
 

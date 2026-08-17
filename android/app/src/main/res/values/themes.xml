@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The app commits to a single dark instrument-panel look: additive light in the
+         Bubble Map only reads as energy on a black ground. Splash/window background is
+         painted explicitly so there is no white flash before Compose takes over. -->
+    <style name="Theme.DeBubble" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/void_ground</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+</resources>
