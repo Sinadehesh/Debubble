@@ -32,7 +32,12 @@ object Ink {
 
     val Primary = Color(0xFFE9EEF6)
     val Ash = Color(0xFF8792A6)
-    val Dim = Color(0xFF525C6E)
+
+    /** Default colour for instrument readouts, so it has to clear 4.5:1 as body text on every
+     *  surface it lands on. Measured: 5.56:1 on Void, 4.91:1 on Ridge, 4.56:1 on Raise. */
+    val Dim = Color(0xFF7987A2)
+
+    /** Structure only — progress tracks and inactive dots. Never text: it is below 2:1. */
     val Faint = Color(0xFF333B49)
 
     val Access = Color(0xFF2F6BFF)
