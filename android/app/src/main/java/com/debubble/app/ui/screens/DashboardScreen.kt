@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -17,6 +19,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.debubble.app.data.AppState
 import com.debubble.app.engine.Pillar
@@ -25,6 +30,7 @@ import com.debubble.app.ui.components.BubbleMap
 import com.debubble.app.ui.components.ChallengeCard
 import com.debubble.app.ui.components.Dot
 import com.debubble.app.ui.components.Instrument
+import com.debubble.app.ui.components.rememberReducedMotion
 import com.debubble.app.ui.components.VSpace
 import com.debubble.app.ui.components.tierCode
 import com.debubble.app.ui.theme.Ink
@@ -62,6 +68,9 @@ fun DashboardScreen(
             BubbleMap(
                 tiers = tiers,
                 pulse = pulse,
+                // The map drifts forever, so it is the one surface that must go still when the
+                // user has asked the system for no animation.
+                animate = !rememberReducedMotion(),
                 modifier = Modifier.fillMaxSize()
             )
             // HUD is overlaid and deliberately non-interactive: the map reports, it is not a control.
@@ -148,15 +157,19 @@ fun TabBar(
         Tab.entries.forEach { tab ->
             Column(
                 modifier = Modifier
-                    .clickable { onSelect(tab) }
+                    .clickable(role = Role.Tab) { onSelect(tab) }
+                    .semantics { selected = tab == current }
+                    .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+                    .wrapContentSize(Alignment.Center)
                     .padding(horizontal = 18.dp, vertical = 4.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(5.dp)
             ) {
+                // The dot may stay Faint — it is decoration, and the label carries the meaning.
                 Dot(if (tab == current) Ink.Primary else Ink.Faint, size = 5)
                 Instrument(
                     tab.label,
-                    color = if (tab == current) Ink.Primary else Ink.Faint,
+                    color = if (tab == current) Ink.Primary else Ink.Dim,
                     small = true
                 )
             }
