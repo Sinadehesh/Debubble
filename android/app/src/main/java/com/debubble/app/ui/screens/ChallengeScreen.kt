@@ -18,6 +18,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,13 +33,16 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.debubble.app.engine.Engine
 import com.debubble.app.engine.Served
+import com.debubble.app.ui.components.FractureOverlay
 import com.debubble.app.ui.components.HoldToCommit
 import com.debubble.app.ui.components.Shockwave
+import com.debubble.app.ui.components.fractureEffect
 import com.debubble.app.ui.components.Instrument
 import com.debubble.app.ui.components.VSpace
 import com.debubble.app.ui.components.rememberHaptics
 import com.debubble.app.ui.components.tierCode
 import com.debubble.app.ui.theme.Ink
+import com.debubble.app.ui.theme.InstrumentFamily
 import com.debubble.app.ui.theme.Space
 import com.debubble.app.ui.theme.accent
 import com.debubble.app.ui.theme.line
@@ -53,6 +58,7 @@ import com.debubble.app.ui.theme.tint
 fun ChallengeScreen(
     served: Served,
     canSwap: Boolean,
+    frictionAfter: Int,
     onAbort: () -> Unit,
     onSwap: () -> Unit,
     onComplete: () -> Unit,
@@ -71,10 +77,22 @@ fun ChallengeScreen(
         }
     }
 
+    // The fracture. Snaps open fast and settles slowly, because a discharge has a sharp
+    // leading edge and a long tail — and because the number underneath needs time to be read.
+    val fracture = remember { Animatable(0f) }
+    var fracturing by remember { mutableStateOf(false) }
+    LaunchedEffect(fracturing) {
+        if (!fracturing) return@LaunchedEffect
+        fracture.animateTo(1f, tween(90))
+        fracture.animateTo(0f, tween(620))
+        onFriction()
+    }
+
     Box(modifier = Modifier.fillMaxSize().background(Ink.Void)) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .fractureEffect(fracture.value)
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = Space.gutter)
                 .padding(top = 10.dp, bottom = 24.dp)
@@ -208,6 +226,29 @@ fun ChallengeScreen(
         // the snap needs somewhere to land.
         if (committing) {
             Shockwave(accent = pillar.accent, modifier = Modifier.fillMaxSize())
+        }
+
+        // Friction: the surface tears, and what is standing when it settles is a bigger
+        // number than was there before. Damage would read as an error; this reads as output.
+        if (fracture.value > 0.001f) {
+            FractureOverlay(amount = fracture.value, modifier = Modifier.fillMaxSize())
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = frictionAfter.toString(),
+                    color = Ink.Ember,
+                    style = MaterialTheme.typography.displayLarge.copy(
+                        fontFamily = InstrumentFamily
+                    )
+                )
+                VSpace(8)
+                Instrument("Friction", color = Ink.Ember)
+                VSpace(10)
+                Instrument("Contact with the edge", small = true)
+            }
         }
     }
 }
