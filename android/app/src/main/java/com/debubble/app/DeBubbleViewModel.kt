@@ -40,6 +40,8 @@ sealed interface Route {
     data object Mission : Route
     /** The reading list for the active campaign, and a single principle. */
     data object Principles : Route
+    /** The campaign rendered as terrain. */
+    data object Campaign : Route
     data class ReadPrinciple(val index: Int) : Route
 }
 
@@ -144,6 +146,7 @@ class DeBubbleViewModel(app: Application) : AndroidViewModel(app) {
     fun goRecalibrate() { _route.value = Route.Calibration }
     fun goGoalPicker() { _route.value = Route.GoalPicker(firstRun = false) }
     fun goPrinciples() { _route.value = Route.Principles }
+    fun goCampaign() { _route.value = Route.Campaign }
     fun openPrinciple(index: Int) { _route.value = Route.ReadPrinciple(index) }
     fun openMission() { _route.value = Route.Mission }
 

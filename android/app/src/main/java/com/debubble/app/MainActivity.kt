@@ -21,6 +21,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.debubble.app.engine.Pillar
 import kotlinx.coroutines.delay
 import com.debubble.app.ui.screens.CalibrationScreen
+import com.debubble.app.ui.screens.CampaignScreen
 import com.debubble.app.ui.screens.ChallengeScreen
 import com.debubble.app.ui.screens.CompletionScreen
 import com.debubble.app.ui.screens.DashboardScreen
@@ -95,7 +96,8 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
                             onOpenMission = vm::openMission,
                             onLogRep = { rep -> vm.logRep(rep.key, rep.friction, rep.label) },
                             onPrinciples = vm::goPrinciples,
-                            onPickGoal = vm::goGoalPicker
+                            onPickGoal = vm::goGoalPicker,
+                            onOpenCampaign = vm::goCampaign
                         )
                     }
                     TabBar(
@@ -193,6 +195,24 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
                                     title = mission.directive
                                 )
                             }
+                        )
+                    }
+                }
+            }
+
+            is Route.Campaign -> {
+                BackHandler { vm.goDashboard() }
+                val goal = state.goalEnum
+                if (goal == null) {
+                    LaunchedEffect(Unit) { vm.goDashboard() }
+                } else {
+                    Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
+                        CampaignScreen(
+                            goal = goal,
+                            track = vm.track(goal),
+                            state = state.goalState(goal),
+                            onOpenStep = vm::openMission,
+                            onBack = vm::goDashboard
                         )
                     }
                 }

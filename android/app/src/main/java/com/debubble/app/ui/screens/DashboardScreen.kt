@@ -64,7 +64,8 @@ fun DashboardScreen(
     onOpenMission: () -> Unit,
     onLogRep: (RepType) -> Unit,
     onPrinciples: () -> Unit,
-    onPickGoal: () -> Unit
+    onPickGoal: () -> Unit,
+    onOpenCampaign: () -> Unit
 ) {
     val tiers = Pillar.order.associateWith { state.state(it).tier }
     val open = Pillar.order.count { !state.isDoneToday(it) }
@@ -162,13 +163,16 @@ fun DashboardScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .sizeIn(minHeight = 48.dp)
+                        .clickable(role = Role.Button, onClick = onOpenCampaign)
                         .padding(bottom = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Instrument("Campaign · ${goal.display}")
                     Instrument(
-                        if (mission == null) "Complete"
-                        else "Step ${tierCode(mission.tier)} / 030"
+                        if (mission == null) "Complete →"
+                        else "Step ${tierCode(mission.tier)} / 030 →"
                     )
                 }
 
