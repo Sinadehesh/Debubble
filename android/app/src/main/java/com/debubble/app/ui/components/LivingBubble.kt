@@ -264,9 +264,12 @@ half4 main(float2 fragCoord) {
     float edge   = smoothstep(0.86, 1.00, field) - smoothstep(1.00, 1.20, field);
 
     // Light is the progression. Tier 1 is a dim membrane in a void; tier 100 blooms.
-    float glow = (0.09 + 0.30 * uLuma) * smoothstep(0.25, 1.00, field);
-    float fill = inside * (0.09 + 0.26 * uLuma);
-    float rim  = edge * (0.55 + 0.45 * uLuma);
+    // Chiaroscuro: low on the ladder the membrane is a muted, opaque body barely picked out
+    // of the dark — the glow is nearly absent and the fill carries it. Near the top the glow
+    // takes over and the thing becomes light rather than an object.
+    float glow = (0.03 + 0.42 * uLuma * uLuma) * smoothstep(0.25, 1.00, field);
+    float fill = inside * (0.16 + 0.20 * uLuma);
+    float rim  = edge * (0.34 + 0.62 * uLuma);
 
     float intensity = glow * 0.8 + fill + rim * 1.6;
     float alpha = clamp(intensity, 0.0, 1.0);

@@ -7,17 +7,17 @@
     android:viewportHeight="108">
 
     <path
-        android:strokeColor="#2F6BFF"
+        android:strokeColor="#5E82CC"
         android:strokeWidth="3.2"
         android:fillColor="#00000000"
         android:pathData="M 47,58 m -17,0 a 17,17 0 1,0 34,0 a 17,17 0 1,0 -34,0" />
     <path
-        android:strokeColor="#B4FF25"
+        android:strokeColor="#A8BA5C"
         android:strokeWidth="3.2"
         android:fillColor="#00000000"
         android:pathData="M 62,48 m -14,0 a 14,14 0 1,0 28,0 a 14,14 0 1,0 -28,0" />
     <path
-        android:strokeColor="#FF2D55"
+        android:strokeColor="#CC4E62"
         android:strokeWidth="3.2"
         android:fillColor="#00000000"
         android:pathData="M 63,64 m -12,0 a 12,12 0 1,0 24,0 a 12,12 0 1,0 -24,0" />

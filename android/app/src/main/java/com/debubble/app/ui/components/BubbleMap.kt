@@ -91,8 +91,8 @@ fun BubbleMap(
 
             drawCircle(
                 brush = Brush.radialGradient(
-                    0f to colour.copy(alpha = 0.38f),
-                    0.55f to colour.copy(alpha = 0.17f),
+                    0f to colour.copy(alpha = 0.30f),
+                    0.55f to colour.copy(alpha = 0.13f),
                     1f to Color.Transparent,
                     center = c,
                     radius = r
@@ -134,7 +134,7 @@ fun BubbleMap(
 private fun DrawScope.drawPolarGrid(centre: Offset, unit: Float) {
     repeat(4) { i ->
         drawCircle(
-            color = Color(0xFF1A2029),
+            color = Color(0xFF241D14),
             radius = unit * 0.11f * (i + 1),
             center = centre,
             style = Stroke(width = 1f)
@@ -143,7 +143,7 @@ private fun DrawScope.drawPolarGrid(centre: Offset, unit: Float) {
     repeat(12) { a ->
         val theta = a * PI.toFloat() / 6f
         drawLine(
-            color = Color(0xFF141A22),
+            color = Color(0xFF17120C),
             start = Offset(
                 centre.x + cos(theta) * unit * 0.08f,
                 centre.y + sin(theta) * unit * 0.08f

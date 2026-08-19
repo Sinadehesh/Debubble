@@ -34,6 +34,7 @@ import com.debubble.app.ui.screens.Tab
 import com.debubble.app.ui.screens.TabBar
 import com.debubble.app.ui.screens.TranscendenceScreen
 import com.debubble.app.ui.theme.DeBubbleTheme
+import com.debubble.app.ui.components.Chiaroscuro
 import com.debubble.app.ui.components.LocalAscension
 import com.debubble.app.ui.theme.Ink
 
@@ -70,8 +71,11 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
         modifier = Modifier
             .fillMaxSize()
             .background(Ink.Void)
-            .statusBarsPadding()
     ) {
+        // Behind everything, always. The app is a lit room, and the room is lit once.
+        Chiaroscuro(modifier = Modifier.fillMaxSize())
+
+        Box(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
         when (val r = route) {
             is Route.Loading -> Box(modifier = Modifier.fillMaxSize())
 
@@ -288,5 +292,6 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
             }
         }
     }
+        }
     }
 }

@@ -32,6 +32,7 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
@@ -58,7 +59,7 @@ import com.debubble.app.ui.theme.accent
  */
 val LocalAscension = androidx.compose.runtime.compositionLocalOf { 0f }
 
-/** Wide-tracked uppercase monospace: the voice the system reports in. */
+/** Widely tracked capitals in the serif: labels read as engraving, not as UI chrome. */
 @Composable
 fun Instrument(
     text: String,
@@ -95,15 +96,16 @@ fun ChallengeCard(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(Space.radius + (Space.radius.value * open * 0.8f).dp))
+            .clip(RoundedCornerShape(3.dp))
+            // Sfumato: no outline anywhere. A card is a surface catching light from the upper
+            // left and falling off into the dark, which is what stops the screen reading as a
+            // dashboard of boxes.
             .background(
-                if (done) Ink.Strata
-                else Ink.Ridge.copy(alpha = (1f - open * 0.25f).coerceIn(0f, 1f))
-            )
-            .border(
-                width = 1.dp,
-                color = pillar.accent.copy(alpha = 0.10f + 0.35f * open),
-                shape = RoundedCornerShape(Space.radius + (Space.radius.value * open * 0.8f).dp)
+                Brush.linearGradient(
+                    0f to Ink.Primary.copy(alpha = (if (done) 0.018f else 0.055f) + open * 0.030f),
+                    0.6f to Ink.Primary.copy(alpha = (if (done) 0.004f else 0.012f)),
+                    1f to Color.Transparent
+                )
             )
             .drawLeftRail(pillar.accent)
             // Done is signalled visually by strikethrough and dimming alone, so the state has
@@ -143,14 +145,24 @@ fun ChallengeCard(
     }
 }
 
-/** 2px accent rail down the leading edge — the only chrome that identifies the pillar. */
+/**
+ * The pillar rail: the only chrome identifying a card, and it fades out at both ends rather
+ * than stopping. A hard-terminated bar is a UI element; a rail that dissolves is lit edge.
+ */
 private fun Modifier.drawLeftRail(colour: Color): Modifier =
     drawWithContent {
         drawContent()
+        val inset = size.height * 0.10f
         drawRect(
-            color = colour,
-            topLeft = Offset.Zero,
-            size = Size(2.dp.toPx(), size.height)
+            brush = Brush.verticalGradient(
+                0f to Color.Transparent,
+                0.5f to colour,
+                1f to Color.Transparent,
+                startY = inset,
+                endY = size.height - inset
+            ),
+            topLeft = Offset(0f, inset),
+            size = Size(2.dp.toPx(), size.height - inset * 2f)
         )
     }
 
