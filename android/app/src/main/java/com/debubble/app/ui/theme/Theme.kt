@@ -71,12 +71,6 @@ val Pillar.accent: Color
         Pillar.SOCIAL -> Ink.Social
     }
 
-val Pillar.tint: Color
-    get() = accent.copy(alpha = 0.13f)
-
-val Pillar.line: Color
-    get() = accent.copy(alpha = 0.32f)
-
 /* ------------------------------------------------------------------ type
    A serif carries the app now — the weight of a printed page rather than a dashboard.
    Directives are set large and quietly, at regular weight: an instruction in a book does
@@ -138,8 +132,10 @@ object Space {
     val gutter = 22.dp
     val gap = 9.dp
     val block = 20.dp
-    val radius = 12.dp
-    val radiusLarge = 14.dp
+    // Near-square. A 12dp radius reads as a widget; a painted panel has corners. Pills that
+    // genuinely want to be round ask for it explicitly.
+    val radius = 3.dp
+    val radiusLarge = 4.dp
 }
 
 /** Centre-aligned variant used on the completion screen. */

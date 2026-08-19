@@ -1,7 +1,6 @@
 package com.debubble.app.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -37,6 +36,7 @@ import com.debubble.app.engine.GoalTrack
 import com.debubble.app.engine.Goals
 import com.debubble.app.engine.Principle
 import com.debubble.app.ui.components.Instrument
+import com.debubble.app.ui.components.litSurface
 import com.debubble.app.ui.components.VSpace
 import com.debubble.app.ui.components.tierCode
 import com.debubble.app.ui.theme.Ink
@@ -97,12 +97,12 @@ fun GoalPickerScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = Space.gap)
-                        .clip(RoundedCornerShape(Space.radiusLarge))
-                        .background(if (on) goal.homePillar.accent.copy(alpha = 0.10f) else Ink.Ridge)
-                        .border(
-                            1.dp,
-                            if (on) goal.homePillar.accent else Ink.EdgeSoft,
-                            RoundedCornerShape(Space.radiusLarge)
+                        // Selected surfaces catch more light. The semantics announce the
+                        // selection too, so nothing depends on noticing the brightness.
+                        .litSurface(
+                            tint = goal.homePillar.accent,
+                            emphasis = if (on) 2.4f else 0.6f,
+                            shape = RoundedCornerShape(Space.radiusLarge)
                         )
                         // Selection is signalled by a tint and a border, so it is also spoken.
                         .semantics { selected = on }
@@ -222,9 +222,10 @@ fun PrinciplesScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = Space.gap)
-                    .clip(RoundedCornerShape(Space.radius))
-                    .background(Ink.Ridge)
-                    .border(1.dp, Ink.EdgeSoft, RoundedCornerShape(Space.radius))
+                    .litSurface(
+                        tint = if (unlocked) goal.homePillar.accent else Ink.Primary,
+                        emphasis = if (unlocked) 0.9f else 0.4f
+                    )
                     .sizeIn(minHeight = 48.dp)
                     // Locked rows look dimmed; that has to be spoken too.
                     .semantics {

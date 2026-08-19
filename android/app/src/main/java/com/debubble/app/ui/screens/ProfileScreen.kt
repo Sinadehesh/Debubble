@@ -1,7 +1,6 @@
 package com.debubble.app.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,6 +34,7 @@ import com.debubble.app.engine.Goals
 import com.debubble.app.engine.Pillar
 import com.debubble.app.ui.components.Dot
 import com.debubble.app.ui.components.Instrument
+import com.debubble.app.ui.components.litSurface
 import com.debubble.app.ui.components.PillarBar
 import com.debubble.app.ui.components.StatTile
 import com.debubble.app.ui.components.VSpace
@@ -223,8 +223,7 @@ private fun SettingRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(Space.radius))
-            .background(Ink.Ridge)
+            .litSurface(emphasis = if (on) 1.1f else 0.55f)
             .sizeIn(minHeight = 48.dp)
             .semantics {
                 role = Role.Switch
@@ -252,9 +251,7 @@ private fun FrictionCard(friction: Int) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(Space.radiusLarge))
-            .background(Ink.Ridge)
-            .border(1.dp, Ink.Ember.copy(alpha = 0.3f), RoundedCornerShape(Space.radiusLarge))
+            .litSurface(tint = Ink.Ember, emphasis = 1.5f, shape = RoundedCornerShape(Space.radiusLarge))
             .padding(17.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
@@ -276,9 +273,8 @@ private fun FrictionCard(friction: Int) {
             }
             Box(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(50))
-                    .border(1.dp, Ink.Ember.copy(alpha = 0.4f), RoundedCornerShape(50))
-                    .padding(horizontal = 11.dp, vertical = 6.dp)
+                    .litSurface(tint = Ink.Ember, emphasis = 2.2f, shape = RoundedCornerShape(50))
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
             ) {
                 Instrument(Engine.courageBadge(friction), color = Ink.Ember, small = true)
             }
@@ -317,9 +313,7 @@ private fun CampaignBlock(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(Space.radiusLarge))
-            .background(Ink.Strata)
-            .border(1.dp, accent.copy(alpha = 0.28f), RoundedCornerShape(Space.radiusLarge))
+            .litSurface(tint = accent, emphasis = 1.25f, shape = RoundedCornerShape(Space.radiusLarge))
             .padding(17.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
@@ -412,9 +406,7 @@ private fun EvidenceBlock(state: AppState) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(Space.radiusLarge))
-            .background(Ink.Strata)
-            .border(1.dp, Ink.EdgeSoft, RoundedCornerShape(Space.radiusLarge))
+            .litSurface(emphasis = 0.7f, shape = RoundedCornerShape(Space.radiusLarge))
             .padding(17.dp),
         verticalArrangement = Arrangement.spacedBy(11.dp)
     ) {

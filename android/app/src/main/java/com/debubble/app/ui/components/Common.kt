@@ -5,7 +5,6 @@ import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,6 +33,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.semantics.Role
@@ -58,6 +58,28 @@ import com.debubble.app.ui.theme.accent
  * continuously — nobody should be able to point at the day it changed.
  */
 val LocalAscension = androidx.compose.runtime.compositionLocalOf { 0f }
+
+/**
+ * A surface catching light, which is how every panel in the app is built now.
+ *
+ * There are no outlines anywhere: an object is legible because one edge of it is lit and the
+ * other falls into the dark, not because a 1px rule has been drawn around it. [tint] carries
+ * identity — ember for friction, a pillar accent for a campaign — and [emphasis] is how much
+ * light the surface is catching, which is the only hierarchy this design has.
+ */
+fun Modifier.litSurface(
+    tint: Color = Ink.Primary,
+    emphasis: Float = 1f,
+    shape: Shape = RoundedCornerShape(Space.radius)
+): Modifier = this
+    .clip(shape)
+    .background(
+        Brush.linearGradient(
+            0f to tint.copy(alpha = 0.055f * emphasis),
+            0.55f to tint.copy(alpha = 0.014f * emphasis),
+            1f to Color.Transparent
+        )
+    )
 
 /** Widely tracked capitals in the serif: labels read as engraving, not as UI chrome. */
 @Composable
@@ -295,9 +317,7 @@ fun PillarBar(pillar: Pillar, tier: Int, modifier: Modifier = Modifier) {
 fun StatTile(label: String, value: String, modifier: Modifier = Modifier, accent: Color = Ink.Primary) {
     Column(
         modifier = modifier
-            .clip(RoundedCornerShape(Space.radius))
-            .background(Ink.Ridge)
-            .border(1.dp, Ink.EdgeSoft, RoundedCornerShape(Space.radius))
+            .litSurface(emphasis = 0.8f)
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {

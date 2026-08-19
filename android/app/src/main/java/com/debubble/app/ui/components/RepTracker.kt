@@ -1,7 +1,6 @@
 package com.debubble.app.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -58,9 +57,7 @@ fun RepTracker(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(Space.radiusLarge))
-            .background(Ink.Strata)
-            .border(1.dp, Ink.EdgeSoft, RoundedCornerShape(Space.radiusLarge))
+            .litSurface(emphasis = 0.7f, shape = RoundedCornerShape(Space.radiusLarge))
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
@@ -118,8 +115,7 @@ fun RepTracker(
                 modifier = Modifier
                     .fillMaxWidth()
                     .sizeIn(minHeight = 48.dp)
-                    .clip(RoundedCornerShape(Space.radius))
-                    .background(Ink.Ridge)
+                    .litSurface(tint = if (rep.friction) Ink.Ember else accent, emphasis = 0.75f)
                     // The count and the "+" are visual; the whole row is one button, so it
                     // announces the label, the running total and what tapping will do.
                     .semantics {

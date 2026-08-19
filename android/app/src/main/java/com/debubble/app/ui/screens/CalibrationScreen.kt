@@ -1,7 +1,6 @@
 package com.debubble.app.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,6 +40,7 @@ import com.debubble.app.engine.Needs
 import com.debubble.app.engine.Pillar
 import com.debubble.app.ui.components.Dot
 import com.debubble.app.ui.components.Instrument
+import com.debubble.app.ui.components.litSurface
 import com.debubble.app.ui.components.VSpace
 import com.debubble.app.ui.components.tierCode
 import com.debubble.app.ui.theme.Ink
@@ -302,12 +302,7 @@ private fun ColumnScope.ResultCard(
                         style = MaterialTheme.typography.labelLarge
                     )
                 }
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(1.dp)
-                        .background(Ink.EdgeSoft)
-                )
+                Divider()
             }
             VSpace(20)
         }
@@ -329,13 +324,7 @@ private fun ChipGrid(
                     Box(
                         modifier = Modifier
                             .weight(1f)
-                            .clip(RoundedCornerShape(Space.radius))
-                            .background(if (on) accent.copy(alpha = 0.13f) else Ink.Ridge)
-                            .border(
-                                1.dp,
-                                if (on) accent else Ink.Edge,
-                                RoundedCornerShape(Space.radius)
-                            )
+                            .litSurface(tint = accent, emphasis = if (on) 2.4f else 0.6f)
                             .toggleable(
                                 value = on,
                                 role = Role.Checkbox,
@@ -402,13 +391,7 @@ private fun ToggleRow(label: String, on: Boolean, onChange: (Boolean) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(Space.radius))
-            .background(Ink.Ridge)
-            .border(
-                1.dp,
-                if (on) Ink.Primary.copy(alpha = 0.4f) else Ink.Edge,
-                RoundedCornerShape(Space.radius)
-            )
+            .litSurface(emphasis = if (on) 1.6f else 0.55f)
             .toggleable(
                 value = on,
                 role = Role.Switch,

@@ -23,7 +23,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
@@ -37,6 +36,7 @@ import com.debubble.app.ui.components.LivingBubble
 import com.debubble.app.ui.components.ChallengeCard
 import com.debubble.app.ui.components.Dot
 import com.debubble.app.ui.components.Instrument
+import com.debubble.app.ui.components.litSurface
 import com.debubble.app.ui.components.RepTracker
 import com.debubble.app.ui.components.rememberReducedMotion
 import com.debubble.app.ui.components.VSpace
@@ -216,9 +216,7 @@ private fun NoGoalCard(onPick: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(Space.radiusLarge))
-            .background(Ink.Strata)
-            .border(1.dp, Ink.EdgeSoft, RoundedCornerShape(Space.radiusLarge))
+            .litSurface(emphasis = 0.8f, shape = RoundedCornerShape(Space.radiusLarge))
             .clickable(role = Role.Button, onClick = onPick)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -245,9 +243,7 @@ private fun CampaignComplete(goal: Goal, onPick: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(Space.radiusLarge))
-            .background(Ink.Strata)
-            .border(1.dp, goal.homePillar.accent.copy(alpha = 0.35f), RoundedCornerShape(Space.radiusLarge))
+            .litSurface(tint = goal.homePillar.accent, emphasis = 1.3f, shape = RoundedCornerShape(Space.radiusLarge))
             .clickable(role = Role.Button, onClick = onPick)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -274,8 +270,7 @@ private fun ReadingNudge(goal: Goal, onOpen: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(Space.radius))
-            .background(Ink.Ridge)
+            .litSurface(tint = goal.homePillar.accent, emphasis = 0.8f)
             .sizeIn(minHeight = 48.dp)
             .clickable(role = Role.Button, onClick = onOpen)
             .padding(horizontal = 15.dp, vertical = 14.dp),
@@ -304,8 +299,8 @@ fun TabBar(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(Ink.Strata)
-            .padding(top = 10.dp, bottom = 14.dp),
+            // No fill: the bar is part of the same dark room, not a tray attached to it.
+            .padding(top = 12.dp, bottom = 14.dp),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         Tab.entries.forEach { tab ->

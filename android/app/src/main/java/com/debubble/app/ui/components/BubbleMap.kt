@@ -132,9 +132,11 @@ fun BubbleMap(
 }
 
 private fun DrawScope.drawPolarGrid(centre: Offset, unit: Float) {
+    // The grid is structure, not information. It should surface out of the dark near the
+    // centre and dissolve before it reaches the edge, so nothing in the field has a hard stop.
     repeat(4) { i ->
         drawCircle(
-            color = Color(0xFF241D14),
+            color = Ink.Faint.copy(alpha = 0.20f - i * 0.042f),
             radius = unit * 0.11f * (i + 1),
             center = centre,
             style = Stroke(width = 1f)
@@ -142,16 +144,23 @@ private fun DrawScope.drawPolarGrid(centre: Offset, unit: Float) {
     }
     repeat(12) { a ->
         val theta = a * PI.toFloat() / 6f
+        val start = Offset(
+            centre.x + cos(theta) * unit * 0.08f,
+            centre.y + sin(theta) * unit * 0.08f
+        )
+        val end = Offset(
+            centre.x + cos(theta) * unit * 0.48f,
+            centre.y + sin(theta) * unit * 0.48f
+        )
         drawLine(
-            color = Color(0xFF17120C),
-            start = Offset(
-                centre.x + cos(theta) * unit * 0.08f,
-                centre.y + sin(theta) * unit * 0.08f
+            brush = Brush.linearGradient(
+                0f to Ink.Faint.copy(alpha = 0.16f),
+                1f to Color.Transparent,
+                start = start,
+                end = end
             ),
-            end = Offset(
-                centre.x + cos(theta) * unit * 0.48f,
-                centre.y + sin(theta) * unit * 0.48f
-            ),
+            start = start,
+            end = end,
             strokeWidth = 1f
         )
     }

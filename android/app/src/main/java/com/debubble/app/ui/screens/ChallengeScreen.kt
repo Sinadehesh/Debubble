@@ -1,7 +1,6 @@
 package com.debubble.app.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -29,7 +27,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.debubble.app.audio.rememberSound
@@ -40,6 +39,7 @@ import com.debubble.app.ui.components.HoldToCommit
 import com.debubble.app.ui.components.Shockwave
 import com.debubble.app.ui.components.fractureEffect
 import com.debubble.app.ui.components.Instrument
+import com.debubble.app.ui.components.litSurface
 import com.debubble.app.ui.components.VSpace
 import com.debubble.app.ui.components.rememberHaptics
 import com.debubble.app.ui.components.tierCode
@@ -47,8 +47,6 @@ import com.debubble.app.ui.theme.Ink
 import com.debubble.app.ui.theme.InstrumentFamily
 import com.debubble.app.ui.theme.Space
 import com.debubble.app.ui.theme.accent
-import com.debubble.app.ui.theme.line
-import com.debubble.app.ui.theme.tint
 
 /**
  * The Action Screen.
@@ -150,11 +148,8 @@ fun ChallengeScreen(
             // TIME · COST · EXPOSURE. Exposure is the vulnerability rating and the number that
             // climbs hardest across a hundred tiers.
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(Space.radius))
-                    .background(Ink.EdgeSoft),
-                horizontalArrangement = Arrangement.spacedBy(1.dp)
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Param("Time", Engine.formatMinutes(served.minutes), Modifier.weight(1f))
                 Param("Cost", if (served.cost == 0) "Free" else "${served.cost}", Modifier.weight(1f))
@@ -166,9 +161,7 @@ fun ChallengeScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(Space.radius))
-                    .background(pillar.tint)
-                    .border(1.dp, pillar.line, RoundedCornerShape(Space.radius))
+                    .litSurface(tint = pillar.accent, emphasis = 1.35f)
                     .padding(15.dp),
                 verticalArrangement = Arrangement.spacedBy(7.dp)
             ) {
@@ -276,11 +269,11 @@ private fun Param(
     label: String,
     value: String,
     modifier: Modifier = Modifier,
-    valueColour: androidx.compose.ui.graphics.Color = Ink.Primary
+    valueColour: Color = Ink.Primary
 ) {
     Column(
         modifier = modifier
-            .background(Ink.Strata)
+            .litSurface(emphasis = 0.55f)
             .padding(horizontal = 11.dp, vertical = 13.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
@@ -299,6 +292,12 @@ internal fun Divider(modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxWidth()
             .height(1.dp)
-            .background(Ink.EdgeSoft)
+            .background(
+                Brush.horizontalGradient(
+                    0f to Color.Transparent,
+                    0.5f to Ink.Faint.copy(alpha = 0.42f),
+                    1f to Color.Transparent
+                )
+            )
     )
 }
