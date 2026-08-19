@@ -66,16 +66,43 @@ class SynthTest {
         }
     }
 
+    /**
+     * Tested on raw float buffers rather than through drone(), because finish() normalises to
+     * the ceiling — which restores exactly the amplitude the filter removed and makes any
+     * comparison of the finished PCM meaningless.
+     *
+     * The assertion is relative rather than absolute: what makes something a low-pass is that
+     * it takes far more from 8 kHz than from 60 Hz, not that it hits a particular figure.
+     * Thresholds were measured against a reference implementation before being written down.
+     */
     @Test
-    fun `the low pass actually removes energy`() {
-        val open = Synth.drone(cutoff = 1f)
-        val shut = Synth.drone(cutoff = 0.05f)
-        // Compare sample-to-sample movement: a muffled signal changes more slowly.
-        fun slew(p: ShortArray) = (1 until p.size).sumOf { abs(p[it] - p[it - 1]).toLong() }
+    fun `the low pass attenuates high frequencies far more than low ones`() {
+        fun tone(hz: Float) = FloatArray(Synth.SAMPLE_RATE / 10) {
+            kotlin.math.sin(2.0 * Math.PI * hz * it / Synth.SAMPLE_RATE).toFloat()
+        }
+        fun rms(a: FloatArray) = kotlin.math.sqrt(a.fold(0.0) { acc, v -> acc + v * v } / a.size)
+        fun kept(hz: Float, cutoff: Float): Double {
+            val dry = tone(hz)
+            val wet = dry.copyOf().also { Synth.lowPass(it, cutoff) }
+            return rms(wet) / rms(dry)
+        }
+
+        // Hard cutoff: 8 kHz is annihilated, 60 Hz merely dented.
+        val hardHigh = kept(8000f, 0.05f)
+        val hardLow = kept(60f, 0.05f)
         assertTrue(
-            "closing the filter did not slow the signal down",
-            slew(shut) < slew(open) / 2
+            "filter is not selective: 8kHz kept $hardHigh, 60Hz kept $hardLow",
+            hardLow > hardHigh * 20
         )
+
+        // Moderate cutoff: the bass should come through essentially untouched.
+        assertTrue("60Hz should survive a moderate cutoff", kept(60f, 0.5f) > 0.9)
+        assertTrue("8kHz should still be cut at a moderate cutoff", kept(8000f, 0.5f) < 0.4)
+
+        // Fully open is a no-op.
+        val dry = tone(8000f)
+        val untouched = dry.copyOf().also { Synth.lowPass(it, 1f) }
+        assertTrue("an open filter must not alter the signal", untouched.contentEquals(dry))
     }
 
     @Test
