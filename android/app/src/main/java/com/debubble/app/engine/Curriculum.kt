@@ -49,5 +49,15 @@ data class Served(
     val cost: Int,
     val exposure: Int,
     val substituted: Boolean,
-    val substitutionReason: String? = null
+    val substitutionReason: String? = null,
+    /**
+     * "TIER" for a pillar challenge, "MISSION" for a goal campaign step. Missions reuse the
+     * whole Action Screen rather than duplicating it — the commit gesture, the coach block
+     * and the friction exit are identical acts, only the source of the directive differs.
+     */
+    val kind: String = "TIER",
+    /** Phase label, mission only: "Go first", "Express it", and so on. */
+    val phase: String? = null,
+    /** Suggested reps for the day, mission only. */
+    val repTarget: Int = 0
 )

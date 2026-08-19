@@ -71,11 +71,15 @@ fun ChallengeScreen(
                     .clickable(onClick = onAbort)
                     .padding(vertical = 6.dp, horizontal = 2.dp)
             )
-            Instrument("Tier ${tierCode(served.tier)} · ${pillar.code}", color = pillar.accent)
+            Instrument(
+                if (served.kind == "MISSION") "Step ${tierCode(served.tier)} / 030"
+                else "Tier ${tierCode(served.tier)} · ${pillar.code}",
+                color = pillar.accent
+            )
         }
 
         VSpace(22)
-        Instrument("${pillar.display} · ${pillar.dimension}")
+        Instrument(served.phase ?: "${pillar.display} · ${pillar.dimension}")
         VSpace(14)
 
         Text(
@@ -111,7 +115,7 @@ fun ChallengeScreen(
                 .padding(15.dp),
             verticalArrangement = Arrangement.spacedBy(7.dp)
         ) {
-            Instrument("Why this tier", color = pillar.accent, small = true)
+            Instrument(if (served.kind == "MISSION") "Why this step" else "Why this tier", color = pillar.accent, small = true)
             Text(
                 text = served.coach,
                 color = Ink.Primary,
@@ -122,6 +126,15 @@ fun ChallengeScreen(
         if (served.substituted && served.substitutionReason != null) {
             VSpace(12)
             Instrument(served.substitutionReason, color = pillar.accent.copy(alpha = 0.8f), small = true)
+        }
+
+        if (served.repTarget > 0) {
+            VSpace(14)
+            Instrument(
+                "Then log ${served.repTarget} rep${if (served.repTarget == 1) "" else "s"} today",
+                color = Ink.Ash,
+                small = true
+            )
         }
 
         VSpace(30)

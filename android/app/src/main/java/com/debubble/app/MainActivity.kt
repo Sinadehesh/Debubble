@@ -24,6 +24,9 @@ import com.debubble.app.ui.screens.CalibrationScreen
 import com.debubble.app.ui.screens.ChallengeScreen
 import com.debubble.app.ui.screens.CompletionScreen
 import com.debubble.app.ui.screens.DashboardScreen
+import com.debubble.app.ui.screens.GoalPickerScreen
+import com.debubble.app.ui.screens.PrincipleScreen
+import com.debubble.app.ui.screens.PrinciplesScreen
 import com.debubble.app.ui.screens.ProfileScreen
 import com.debubble.app.ui.screens.Tab
 import com.debubble.app.ui.screens.TabBar
@@ -84,8 +87,14 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
                             state = state,
                             dayIndex = vm.dayIndex(state),
                             served = Pillar.order.associateWith { vm.serve(it, state) },
+                            mission = vm.serveMission(state),
+                            reps = vm.repTypes(state),
                             pulse = pulse,
-                            onOpen = vm::openChallenge
+                            onOpen = vm::openChallenge,
+                            onOpenMission = vm::openMission,
+                            onLogRep = { rep -> vm.logRep(rep.key, rep.friction, rep.label) },
+                            onPrinciples = vm::goPrinciples,
+                            onPickGoal = vm::goGoalPicker
                         )
                     }
                     TabBar(
@@ -103,7 +112,9 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
                         ProfileScreen(
                             state = state,
                             dayIndex = vm.dayIndex(state),
-                            onRecalibrate = vm::goRecalibrate
+                            trackOf = vm::track,
+                            onRecalibrate = vm::goRecalibrate,
+                            onChangeGoal = vm::goGoalPicker
                         )
                     }
                     TabBar(
@@ -140,6 +151,83 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
                             )
                         }
                     )
+                }
+            }
+
+            is Route.GoalPicker -> {
+                if (!r.firstRun) BackHandler { vm.goDashboard() }
+                GoalPickerScreen(
+                    current = state.goalEnum,
+                    firstRun = r.firstRun,
+                    progressOf = { state.goalState(it) },
+                    onChoose = vm::chooseGoal,
+                    onCancel = if (r.firstRun) null else vm::goDashboard
+                )
+            }
+
+            is Route.Mission -> {
+                BackHandler { vm.abort() }
+                val mission = vm.serveMission(state)
+                if (mission == null) {
+                    LaunchedEffect(Unit) { vm.goDashboard() }
+                } else {
+                    Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
+                        ChallengeScreen(
+                            served = mission,
+                            canSwap = false,
+                            onAbort = vm::abort,
+                            onSwap = {},
+                            onComplete = {
+                                vm.completeMission(
+                                    minutes = mission.minutes,
+                                    step = mission.tier,
+                                    title = mission.directive
+                                )
+                            },
+                            onFriction = {
+                                vm.missionFriction(
+                                    step = mission.tier,
+                                    title = mission.directive
+                                )
+                            }
+                        )
+                    }
+                }
+            }
+
+            is Route.Principles -> {
+                BackHandler { vm.goDashboard() }
+                val goal = state.goalEnum
+                if (goal == null) {
+                    LaunchedEffect(Unit) { vm.goDashboard() }
+                } else {
+                    Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
+                        PrinciplesScreen(
+                            goal = goal,
+                            track = vm.track(goal),
+                            state = state.goalState(goal),
+                            onOpen = vm::openPrinciple,
+                            onBack = vm::goDashboard
+                        )
+                    }
+                }
+            }
+
+            is Route.ReadPrinciple -> {
+                BackHandler { vm.goPrinciples() }
+                val goal = state.goalEnum
+                val principle = goal?.let { vm.track(it).principles.getOrNull(r.index) }
+                if (goal == null || principle == null) {
+                    LaunchedEffect(Unit) { vm.goDashboard() }
+                } else {
+                    LaunchedEffect(r.index) { vm.markRead(r.index) }
+                    Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
+                        PrincipleScreen(
+                            goal = goal,
+                            principle = principle,
+                            onDone = vm::goPrinciples
+                        )
+                    }
                 }
             }
 

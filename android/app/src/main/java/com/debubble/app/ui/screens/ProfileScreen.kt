@@ -22,6 +22,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.debubble.app.data.AppState
 import com.debubble.app.engine.Engine
+import com.debubble.app.engine.Goal
+import com.debubble.app.engine.GoalTrack
+import com.debubble.app.engine.Goals
 import com.debubble.app.engine.Pillar
 import com.debubble.app.ui.components.Dot
 import com.debubble.app.ui.components.Instrument
@@ -45,7 +48,9 @@ import com.debubble.app.ui.theme.accent
 fun ProfileScreen(
     state: AppState,
     dayIndex: Long,
-    onRecalibrate: () -> Unit
+    trackOf: (Goal) -> GoalTrack,
+    onRecalibrate: () -> Unit,
+    onChangeGoal: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -97,6 +102,10 @@ fun ProfileScreen(
             }
         }
 
+        state.goalEnum?.let { goal ->
+            CampaignBlock(state, goal, trackOf(goal), onChangeGoal)
+        }
+
         EvidenceBlock(state)
 
         // History: completions and friction in one stream, never a separate failures list.
@@ -140,7 +149,11 @@ fun ProfileScreen(
                             Text(
                                 text = when {
                                     entry.note.isNotBlank() -> "“${entry.note}”"
+                                    entry.kind == "REP" && entry.friction ->
+                                        "Rep logged. This one counts double."
+                                    entry.kind == "REP" -> "Rep logged."
                                     entry.friction -> "Logged as friction. Same tier tomorrow."
+                                    entry.kind == "MISSION" -> "Campaign step cleared."
                                     else -> "Completed."
                                 },
                                 color = Ink.Ash,
@@ -148,7 +161,12 @@ fun ProfileScreen(
                             )
                         }
                         Instrument(
-                            text = (if (entry.friction) "FR" else "T") + tierCode(entry.tier),
+                            text = when {
+                                entry.kind == "REP" -> "REP"
+                                entry.friction -> "FR" + tierCode(entry.tier)
+                                entry.kind == "MISSION" -> "S" + tierCode(entry.tier)
+                                else -> "T" + tierCode(entry.tier)
+                            },
                             color = if (entry.friction) Ink.Ember else Ink.Faint,
                             small = true
                         )
@@ -158,6 +176,7 @@ fun ProfileScreen(
         }
 
         VSpace(4)
+        GhostButton(if (state.goalEnum == null) "Choose a campaign" else "Change campaign") { onChangeGoal() }
         GhostButton("Recalibrate baseline") { onRecalibrate() }
         Text(
             text = "Life changes. Recalibrating re-pitches the ladder to where you are now " +
@@ -212,6 +231,109 @@ private fun FrictionCard(friction: Int) {
                     "awkward, refused, or abandoned as too hard. This number only goes up."
             },
             color = Ink.Ash,
+            style = MaterialTheme.typography.bodyMedium
+        )
+    }
+}
+
+/**
+ * The active campaign: how far through, and how much volume has gone in.
+ *
+ * Reps are given more room than the step counter because they are the number the user can
+ * move today. Steps advance once a day at most; reps have no ceiling, and over a month it is
+ * the rep count that separates someone who used the app from someone the app changed.
+ */
+@Composable
+private fun CampaignBlock(
+    state: AppState,
+    goal: Goal,
+    track: GoalTrack,
+    onChange: () -> Unit
+) {
+    val gs = state.goalState(goal)
+    val accent = goal.homePillar.accent
+    val complete = Goals.isComplete(gs)
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(Space.radiusLarge))
+            .background(Ink.Strata)
+            .border(1.dp, accent.copy(alpha = 0.28f), RoundedCornerShape(Space.radiusLarge))
+            .padding(17.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Top
+        ) {
+            Instrument("Campaign", color = accent)
+            Instrument(
+                if (complete) "Cleared" else track.phaseOf(gs.step),
+                color = Ink.Ash,
+                small = true
+            )
+        }
+        Text(
+            text = goal.display,
+            color = Ink.Primary,
+            style = MaterialTheme.typography.headlineMedium
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.Bottom
+        ) {
+            Text(
+                text = state.repsOnGoal(goal).toString(),
+                color = accent,
+                style = MaterialTheme.typography.displayLarge.copy(
+                    fontFamily = InstrumentFamily,
+                    fontWeight = FontWeight.Bold
+                )
+            )
+            Text(
+                text = "reps logged",
+                color = Ink.Ash,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(bottom = 6.dp)
+            )
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(4.dp)
+                .clip(RoundedCornerShape(3.dp))
+                .background(Ink.EdgeSoft)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(Goals.progress(gs).coerceIn(0.01f, 1f))
+                    .height(4.dp)
+                    .clip(RoundedCornerShape(3.dp))
+                    .background(accent)
+            )
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Instrument(
+                if (complete) "30 / 30 steps" else "Step ${tierCode(gs.step)} of 030",
+                small = true
+            )
+            Instrument("${gs.read.size} / ${track.principles.size} ideas read", small = true)
+        }
+        Text(
+            text = if (complete) {
+                "Campaign cleared. The reps carry on regardless — pick the next thirty steps " +
+                    "whenever you want them."
+            } else {
+                "Steps move once a day. Reps have no ceiling, and over a month they are the " +
+                    "number that actually separates people."
+            },
+            color = Ink.Dim,
             style = MaterialTheme.typography.bodyMedium
         )
     }

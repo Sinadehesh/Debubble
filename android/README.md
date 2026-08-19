@@ -21,6 +21,7 @@ Requires JDK 17+, an Android SDK with API 35, and network access to Google's Mav
 ```
 engine/          pure Kotlin, no Android, fully unit-tested
   Pillar.kt        the three dimensions + the needs vocabulary
+  Goal.kt          the five campaigns: missions, reps, principles
   Calibration.kt   Baseline answers -> entry tier per pillar (Rule 4)
   Curriculum.kt    Challenge / Ladder models, Served result
   Engine.kt        serving, gating, progression, streaks, readouts
@@ -30,8 +31,10 @@ data/
 ui/
   theme/           palette, two type roles, spacing
   components/      BubbleMap, HoldToCommit, ChallengeCard, ExpansionBurst, Haptics
-  screens/         Calibration, Dashboard, Challenge, Completion, Profile
+  screens/         Calibration, GoalPicker, Dashboard, Challenge, Completion,
+                   Principles, Profile
 assets/curriculum/ access.json, activity.json, social.json — 300 authored challenges
+assets/goals/      5 campaigns — 150 missions, 40 principles, 25 rep types
 ```
 
 `DeBubbleViewModel` holds a `StateFlow<AppState>` and an explicit `Route`. Five screens is
@@ -40,6 +43,54 @@ too few to justify a nav graph, so navigation is a sealed `Route` plus `BackHand
 **Persistence is a single JSON blob in DataStore, not Room.** One user, local only, a few
 hundred log rows, and no query beyond "newest first" — Room would add a codegen toolchain
 for no benefit at this size. If the log ever needs real querying, that is the time to switch.
+
+## The goal layer
+
+The three daily challenges expand a bubble in general. A **campaign** points that expansion at
+something the user actually wants, and it is what stops the app running out after three cards.
+
+| Goal | Home pillar | What it is |
+| --- | --- | --- |
+| A life worth describing | Access | Break the weekly loop, collect experiences, become the one who organises things |
+| A real circle | Social | Adult friendship: go first, go deeper, build the room |
+| Find someone | Social | Dating built on vulnerability rather than technique |
+| Closer, and honest about it | Social | Confidence and communication about desire and intimacy |
+| Get good at something | Activity | A hobby taken from curiosity to visible competence |
+
+Each campaign is **30 missions in 3 phases**, 8 unlockable principles, and its own set of rep
+types. Progress is kept per goal, so switching costs nothing and coming back resumes exactly.
+
+### Three mechanics, because one was not enough
+
+The original loop gave you three cards and then nothing. Three things fixed that:
+
+1. **Missions** — a fourth daily card, drawn from the active campaign. Reuses the whole Action
+   Screen (commit ring, coach block, friction exit); only the source of the directive differs.
+2. **Reps** — the unlimited half. Tiers and missions are capped at one a day by design, because
+   a tier should be earned once. Reps are the volume work: log as many as you like, all day.
+   A rep flagged `friction` (got turned down, it went badly, no reply) feeds the anti-score,
+   so being refused is recorded as **output rather than failure**. Each mission suggests a
+   daily rep target; over a month the rep count is what separates people.
+3. **Principles** — short readable ideas that unlock as the campaign advances, so the reading
+   tracks the doing rather than front-loading theory nobody acts on.
+
+### On the dating and intimacy campaigns
+
+Both are built on the actual thesis of *Models* (Mark Manson) — attraction comes from
+vulnerability and honest expression, not from technique — and neither contains anything
+resembling pickup tactics. The through-line is: build a life worth having, say what you want
+plainly, and let people say no.
+
+Two rules are load-bearing and stated explicitly in the principles:
+
+- **A no is final, immediately.** No persuading, no second ask, no going cold. An ask that
+  cannot be refused cleanly was never an honest ask.
+- **The intimacy campaign assumes an enthusiastic, freely given yes** that can be withdrawn at
+  any moment. Asking is the practice, not a formality to get past. It is written as
+  communication, shame and nerve — not as content.
+
+Rejections are logged as reps and counted as credit, which is the same anti-score logic the
+rest of the app already runs on.
 
 ## How the 100-tier ladder works
 
@@ -95,9 +146,16 @@ as the rewards.
 Run without an Android SDK, so the *content and the algorithm* are checked rather than the
 build:
 
+- **150 missions, 40 principles and 25 rep types validated**: 30 missions per campaign, every
+  principle reference resolves and is surfaced by a mission, unlock points ascend, exposure
+  escalates across all three phases of all five campaigns, every campaign can log volume and
+  can log a refusal.
 - **300 challenges validated** against every invariant below. Exposure trend by decade:
   Access `1.6 → 10.0`, Activity `1.8 → 9.6`, Social `2.4 → 9.9`. Composite difficulty
   strictly increasing across all ten decades of all three pillars.
+- **Campaign algorithm transcribed to Java and executed**: this caught a real bug — progress
+  was derived from the campaign step, which caps at 30, so a *finished* campaign showed a bar
+  stuck at 96.7%. It now derives from completions.
 - **Engine algorithm transcribed to Java and executed** on JDK 21: calibration sweep over the
   entire answer space stays inside 1–14, double-step/step-back behave, tier floors at 1 and
   caps at 100, cleared counts survive backsliding, streak restarts at 1, radius is monotonic
@@ -105,7 +163,7 @@ build:
 - **Structural check** on all 20 Kotlin files.
 
 `app/src/test/` carries the same invariants as real JUnit tests (`CurriculumTest`,
-`EngineTest`) reading the shipped asset files, so `./gradlew :app:test` re-checks all of it on
+`EngineTest`, `GoalTest`) reading the shipped asset files, so `./gradlew :app:test` re-checks all of it on
 a machine with an SDK.
 
 ### Curriculum invariants
@@ -141,5 +199,8 @@ someone takes five minutes and costs nothing, but it is a real step up.
 - `Access` progress is reported as tier and evidence count, not measured distance — no
   location permission is requested, by choice. Real km would need GPS and a privacy story.
 - No export of the journal or history.
+- One active campaign at a time. Running two in parallel is not supported.
+- Rep logging is self-reported and unverifiable, which is the correct trade for not asking
+  for location, contacts or any other permission.
 - Instrumented UI tests are not written; only JVM unit tests exist.
 - Typography uses the platform grotesque and monospace rather than a licensed display face.

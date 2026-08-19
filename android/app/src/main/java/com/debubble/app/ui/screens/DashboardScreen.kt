@@ -18,13 +18,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import com.debubble.app.data.AppState
+import com.debubble.app.engine.Goal
 import com.debubble.app.engine.Pillar
+import com.debubble.app.engine.RepType
 import com.debubble.app.engine.Served
 import com.debubble.app.ui.components.BubbleMap
 import com.debubble.app.ui.components.ChallengeCard
 import com.debubble.app.ui.components.Dot
 import com.debubble.app.ui.components.Instrument
+import com.debubble.app.ui.components.RepTracker
 import com.debubble.app.ui.components.VSpace
 import com.debubble.app.ui.components.tierCode
 import com.debubble.app.ui.theme.Ink
@@ -42,8 +49,14 @@ fun DashboardScreen(
     state: AppState,
     dayIndex: Long,
     served: Map<Pillar, Served>,
+    mission: Served?,
+    reps: List<RepType>,
     pulse: Pillar?,
-    onOpen: (Pillar) -> Unit
+    onOpen: (Pillar) -> Unit,
+    onOpenMission: () -> Unit,
+    onLogRep: (RepType) -> Unit,
+    onPrinciples: () -> Unit,
+    onPickGoal: () -> Unit
 ) {
     val tiers = Pillar.order.associateWith { state.state(it).tier }
     val open = Pillar.order.count { !state.isDoneToday(it) }
@@ -118,7 +131,7 @@ fun DashboardScreen(
             }
 
             if (open == 0) {
-                VSpace(6)
+                VSpace(2)
                 Text(
                     text = "Three for three. The perimeter moved on every axis today — " +
                         "that is a rare day, not a normal one.",
@@ -126,8 +139,143 @@ fun DashboardScreen(
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
-            VSpace(16)
+
+            /* ---- the goal layer: a campaign step, then unlimited reps ---- */
+
+            val goal = state.goalEnum
+            VSpace(14)
+
+            if (goal == null) {
+                NoGoalCard(onPickGoal)
+            } else {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Instrument("Campaign · ${goal.display}")
+                    Instrument(
+                        if (mission == null) "Complete"
+                        else "Step ${tierCode(mission.tier)} / 030"
+                    )
+                }
+
+                when {
+                    mission == null -> CampaignComplete(goal, onPickGoal)
+                    state.missionDoneToday -> ChallengeCard(
+                        served = mission,
+                        done = true,
+                        onClick = {}
+                    )
+                    else -> ChallengeCard(
+                        served = mission,
+                        done = false,
+                        onClick = onOpenMission
+                    )
+                }
+
+                VSpace(14)
+                RepTracker(
+                    reps = reps,
+                    today = state.repsToday,
+                    target = mission?.repTarget ?: 0,
+                    lifetime = state.repsOnGoal(goal),
+                    accent = goal.homePillar.accent,
+                    onLog = onLogRep
+                )
+
+                VSpace(14)
+                ReadingNudge(goal, onPrinciples)
+            }
+
+            VSpace(20)
         }
+    }
+}
+
+/** Shown until a campaign is chosen. The daily three work fine without one, but this is
+ *  where the app stops being generic, so it asks once and then stays out of the way. */
+@Composable
+private fun NoGoalCard(onPick: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(Space.radiusLarge))
+            .background(Ink.Strata)
+            .border(1.dp, Ink.EdgeSoft, RoundedCornerShape(Space.radiusLarge))
+            .clickable(onClick = onPick)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Instrument("No campaign running")
+        Text(
+            text = "Point this at something.",
+            color = Ink.Primary,
+            style = MaterialTheme.typography.headlineMedium
+        )
+        Text(
+            text = "Friends, a partner, a craft, a life worth describing. Thirty steps, " +
+                "daily reps and reading of its own on top of the three above.",
+            color = Ink.Ash,
+            style = MaterialTheme.typography.bodyMedium
+        )
+        VSpace(2)
+        Instrument("Choose one →", color = Ink.Primary, small = true)
+    }
+}
+
+@Composable
+private fun CampaignComplete(goal: Goal, onPick: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(Space.radiusLarge))
+            .background(Ink.Strata)
+            .border(1.dp, goal.homePillar.accent.copy(alpha = 0.35f), RoundedCornerShape(Space.radiusLarge))
+            .clickable(onClick = onPick)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Instrument("Campaign cleared", color = goal.homePillar.accent)
+        Text(
+            text = "Thirty steps of
+${goal.display.lowercase()}.",
+            color = Ink.Primary,
+            style = MaterialTheme.typography.headlineMedium
+        )
+        Text(
+            text = "The reps do not stop — keep logging them. When you are ready, point the " +
+                "next thirty steps somewhere else.",
+            color = Ink.Ash,
+            style = MaterialTheme.typography.bodyMedium
+        )
+        VSpace(2)
+        Instrument("Pick the next one →", color = Ink.Primary, small = true)
+    }
+}
+
+@Composable
+private fun ReadingNudge(goal: Goal, onOpen: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(Space.radius))
+            .background(Ink.Ridge)
+            .clickable(onClick = onOpen)
+            .padding(horizontal = 15.dp, vertical = 14.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Instrument("The ideas underneath", color = goal.homePillar.accent, small = true)
+            Text(
+                text = "Why any of this works",
+                color = Ink.Primary,
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium)
+            )
+        }
+        Instrument("→", color = Ink.Dim)
     }
 }
 

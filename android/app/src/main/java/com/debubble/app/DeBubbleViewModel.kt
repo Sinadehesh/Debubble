@@ -10,6 +10,10 @@ import com.debubble.app.engine.Baseline
 import com.debubble.app.engine.Calibration
 import com.debubble.app.engine.Curriculum
 import com.debubble.app.engine.Engine
+import com.debubble.app.engine.Goal
+import com.debubble.app.engine.GoalState
+import com.debubble.app.engine.GoalTrack
+import com.debubble.app.engine.Goals
 import com.debubble.app.engine.Pillar
 import com.debubble.app.engine.Served
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,6 +32,14 @@ sealed interface Route {
     data class Challenge(val pillar: Pillar) : Route
     data class Completion(val pillar: Pillar, val tierCleared: Int) : Route
     data object Profile : Route
+
+    /** Choosing or changing the campaign. */
+    data class GoalPicker(val firstRun: Boolean) : Route
+    /** The day's mission — same Action Screen, different source. */
+    data object Mission : Route
+    /** The reading list for the active campaign, and a single principle. */
+    data object Principles : Route
+    data class ReadPrinciple(val index: Int) : Route
 }
 
 class DeBubbleViewModel(app: Application) : AndroidViewModel(app) {
@@ -36,6 +48,11 @@ class DeBubbleViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Loaded once. If the assets are broken we want to know immediately, not silently. */
     val curriculum: Curriculum = repo.loadCurriculum()
+
+    /** The five goal campaigns, likewise. */
+    val goals: Map<Goal, GoalTrack> = repo.loadGoals()
+
+    fun track(goal: Goal): GoalTrack = goals.getValue(goal)
 
     val state: StateFlow<AppState> = repo.state.stateIn(
         scope = viewModelScope,
@@ -57,7 +74,11 @@ class DeBubbleViewModel(app: Application) : AndroidViewModel(app) {
             // Roll the day over on launch, then decide where the user lands.
             repo.update { it.rolledTo(today()) }
             val loaded = repo.state.first()
-            _route.value = if (loaded.onboarded) Route.Dashboard else Route.Calibration
+            _route.value = when {
+                !loaded.onboarded -> Route.Calibration
+                loaded.goalEnum == null -> Route.GoalPicker(firstRun = true)
+                else -> Route.Dashboard
+            }
         }
     }
 
@@ -71,11 +92,48 @@ class DeBubbleViewModel(app: Application) : AndroidViewModel(app) {
         forceAlternate = pillar.name in s.swappedToday
     )
 
+    /**
+     * The day's mission, or null when no campaign is active or it is already finished.
+     *
+     * Returned as a [Served] so the Action Screen, the completion beat and the friction exit
+     * are shared with pillar challenges rather than reimplemented.
+     */
+    fun serveMission(s: AppState): Served? {
+        val goal = s.goalEnum ?: return null
+        val gs = s.goalState(goal)
+        if (Goals.isComplete(gs)) return null
+        val t = track(goal)
+        val m = t.mission(gs.step)
+        return Served(
+            pillar = goal.homePillar,
+            tier = m.step,
+            directive = m.directive,
+            coach = m.coach,
+            minutes = m.minutes,
+            cost = 0,
+            exposure = m.exposure,
+            substituted = false,
+            kind = "MISSION",
+            phase = t.phaseOf(m.step),
+            repTarget = m.repTarget
+        )
+    }
+
+    /** Rep types available today, empty when no campaign is active. */
+    fun repTypes(s: AppState) = s.goalEnum?.let { track(it).reps } ?: emptyList()
+
+    /** How many reps today's mission asks for. Zero means no target, reps still welcome. */
+    fun repTargetToday(s: AppState): Int = serveMission(s)?.repTarget ?: 0
+
     // ------------------------------------------------------------------ navigation
 
     fun goDashboard() { _route.value = Route.Dashboard }
     fun goProfile() { _route.value = Route.Profile }
     fun goRecalibrate() { _route.value = Route.Calibration }
+    fun goGoalPicker() { _route.value = Route.GoalPicker(firstRun = false) }
+    fun goPrinciples() { _route.value = Route.Principles }
+    fun openPrinciple(index: Int) { _route.value = Route.ReadPrinciple(index) }
+    fun openMission() { _route.value = Route.Mission }
 
     fun openChallenge(pillar: Pillar) { _route.value = Route.Challenge(pillar) }
 
@@ -86,7 +144,10 @@ class DeBubbleViewModel(app: Application) : AndroidViewModel(app) {
 
     fun finishCalibration(baseline: Baseline) {
         viewModelScope.launch {
+            // Decided inside the update, because state.value has not caught up yet out here.
+            var needsGoal = false
             repo.update { s ->
+                needsGoal = s.goalEnum == null
                 val entry = Calibration.entryTiers(baseline)
                 s.copy(
                     onboarded = true,
@@ -104,7 +165,8 @@ class DeBubbleViewModel(app: Application) : AndroidViewModel(app) {
                     }
                 ).rolledTo(today())
             }
-            _route.value = Route.Dashboard
+            _route.value =
+                if (needsGoal) Route.GoalPicker(firstRun = true) else Route.Dashboard
         }
     }
 
@@ -189,6 +251,131 @@ class DeBubbleViewModel(app: Application) : AndroidViewModel(app) {
                     )
             }
             goDashboard()
+        }
+    }
+
+    // ------------------------------------------------------------------ the goal layer
+
+    /**
+     * Choose or change the campaign. Progress on every goal is kept, so someone can run the
+     * friends campaign for a month, switch to craft, and come back to step 14 exactly.
+     */
+    fun chooseGoal(goal: Goal) {
+        viewModelScope.launch {
+            repo.update { s ->
+                s.copy(
+                    goal = goal.name,
+                    goalStates = if (s.goalStates.containsKey(goal.name)) s.goalStates
+                    else s.goalStates + (goal.name to GoalState()),
+                    missionDoneToday = false
+                ).rolledTo(today())
+            }
+            _route.value = Route.Dashboard
+        }
+    }
+
+    fun completeMission(minutes: Int, step: Int, title: String) {
+        val goal = state.value.goalEnum ?: return
+        viewModelScope.launch {
+            repo.update { s ->
+                val rolled = s.rolledTo(today())
+                val advanced = Goals.onMissionCompleted(rolled.goalState(goal))
+                val streak = Engine.updateStreak(rolled.streak, rolled.lastActiveDay, today())
+                rolled.withGoal(goal, advanced).copy(
+                    missionDoneToday = true,
+                    streak = streak,
+                    bestStreak = maxOf(rolled.bestStreak, streak),
+                    lastActiveDay = today(),
+                    log = listOf(
+                        LogEntry(
+                            id = System.currentTimeMillis(),
+                            pillar = goal.homePillar.name,
+                            tier = step,
+                            title = title,
+                            friction = false,
+                            epochDay = today(),
+                            minutes = minutes,
+                            kind = "MISSION"
+                        )
+                    ) + rolled.log
+                )
+            }
+            _pulse.value = goal.homePillar
+            _route.value = Route.Completion(goal.homePillar, step)
+        }
+    }
+
+    fun missionFriction(step: Int, title: String) {
+        val goal = state.value.goalEnum ?: return
+        viewModelScope.launch {
+            repo.update { s ->
+                val rolled = s.rolledTo(today())
+                val streak = Engine.updateStreak(rolled.streak, rolled.lastActiveDay, today())
+                rolled.copy(
+                    friction = rolled.friction + 1,
+                    streak = streak,
+                    bestStreak = maxOf(rolled.bestStreak, streak),
+                    lastActiveDay = today(),
+                    log = listOf(
+                        LogEntry(
+                            id = System.currentTimeMillis(),
+                            pillar = goal.homePillar.name,
+                            tier = step,
+                            title = title,
+                            friction = true,
+                            epochDay = today(),
+                            kind = "MISSION"
+                        )
+                    ) + rolled.log
+                )
+            }
+            goDashboard()
+        }
+    }
+
+    /**
+     * Log one rep. Unlimited per day, and the reason the app has something to do after the
+     * daily cards are gone. A rep flagged as friction feeds the anti-score, because being
+     * turned down is the evidence that the attempt was honest.
+     */
+    fun logRep(key: String, isFriction: Boolean, label: String) {
+        val goal = state.value.goalEnum ?: return
+        viewModelScope.launch {
+            repo.update { s ->
+                val rolled = s.rolledTo(today())
+                val totalKey = "${goal.name}:$key"
+                val streak = Engine.updateStreak(rolled.streak, rolled.lastActiveDay, today())
+                rolled
+                    .withGoal(goal, Goals.onRep(rolled.goalState(goal)))
+                    .copy(
+                        repsToday = rolled.repsToday + (key to (rolled.repsToday[key] ?: 0) + 1),
+                        repTotals = rolled.repTotals + (totalKey to (rolled.repTotals[totalKey] ?: 0) + 1),
+                        friction = rolled.friction + if (isFriction) 1 else 0,
+                        streak = streak,
+                        bestStreak = maxOf(rolled.bestStreak, streak),
+                        lastActiveDay = today(),
+                        log = listOf(
+                            LogEntry(
+                                id = System.currentTimeMillis(),
+                                pillar = goal.homePillar.name,
+                                tier = rolled.goalState(goal).step,
+                                title = label,
+                                friction = isFriction,
+                                epochDay = today(),
+                                kind = "REP"
+                            )
+                        ) + rolled.log
+                    )
+            }
+        }
+    }
+
+    fun markRead(index: Int) {
+        val goal = state.value.goalEnum ?: return
+        viewModelScope.launch {
+            repo.update { s ->
+                s.withGoal(goal, s.goalState(goal).let { it.copy(read = it.read + index) })
+            }
         }
     }
 

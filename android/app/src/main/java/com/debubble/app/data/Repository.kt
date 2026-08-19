@@ -5,6 +5,9 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.debubble.app.engine.Curriculum
+import com.debubble.app.engine.Goal
+import com.debubble.app.engine.GoalTrack
+import com.debubble.app.engine.Goals
 import com.debubble.app.engine.Ladder
 import com.debubble.app.engine.Pillar
 import kotlinx.coroutines.flow.Flow
@@ -56,5 +59,19 @@ class Repository(private val context: Context) {
             ladder
         }
         return Curriculum(ladders)
+    }
+
+    /**
+     * Loads the five goal campaigns. Same contract as the curriculum: a malformed campaign is
+     * a hard failure, because every screen downstream assumes a full thirty steps.
+     */
+    fun loadGoals(): Map<Goal, GoalTrack> = Goal.all.associateWith { goal ->
+        val raw = context.assets.open(goal.asset).bufferedReader().use { it.readText() }
+        val track = json.decodeFromString<GoalTrack>(raw)
+        require(track.missions.size == Goals.CAMPAIGN_LENGTH) {
+            "${goal.asset} has ${track.missions.size} missions, expected ${Goals.CAMPAIGN_LENGTH}"
+        }
+        require(track.reps.isNotEmpty()) { "${goal.asset} has no rep types" }
+        track
     }
 }

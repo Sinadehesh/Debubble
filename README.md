@@ -5,7 +5,7 @@ Behavioural expansion engine. Three pillars, 100 tiers each, one challenge per p
 | | |
 | --- | --- |
 | [`index.html`](index.html) | Design prototype and specification — every screen running live in one file, no build step. |
-| [`android/`](android/README.md) | The Android app. Kotlin + Compose, 300 authored challenges, adaptive engine. **Not yet compiled** — see its README. |
+| [`android/`](android/README.md) | The Android app. Kotlin + Compose, 300 challenges + 5 goal campaigns, adaptive engine. **Not yet compiled** — see its README. |
 
 ## The design prototype
 
