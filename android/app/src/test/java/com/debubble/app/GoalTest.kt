@@ -166,10 +166,35 @@ class GoalProgressionTest {
 
     @Test
     fun `a campaign ends at thirty and stays there`() {
-        var s = GoalState(step = 28)
-        repeat(10) { s = Goals.onMissionCompleted(s) }
+        // Walked from the start, because step and completed only ever move together —
+        // constructing a state where they disagree tests something that cannot happen.
+        var s = GoalState()
+        repeat(40) { s = Goals.onMissionCompleted(s) }
+        assertEquals("the step must stop at the end of the campaign", Goals.CAMPAIGN_LENGTH, s.step)
+        assertTrue("and it must read as complete", Goals.isComplete(s))
+        assertEquals("completions past the end still count", 40, s.completed)
+    }
+
+    /**
+     * [GoalState.step] and [GoalState.completed] are two counters over the same events, which
+     * is exactly the kind of redundancy that drifts. They are only ever mutated together in
+     * [Goals.onMissionCompleted], and this pins that down — it is why `isComplete` can read
+     * `completed` alone and still be right about the step.
+     */
+    @Test
+    fun `step and completed stay in lockstep until the campaign ends`() {
+        var s = GoalState()
+        repeat(Goals.CAMPAIGN_LENGTH) { i ->
+            assertEquals("step should trail completions by one", s.completed + 1, s.step)
+            s = Goals.onMissionCompleted(s)
+            assertEquals("completion count", i + 1, s.completed)
+        }
+        assertEquals(Goals.CAMPAIGN_LENGTH, s.completed)
         assertEquals(Goals.CAMPAIGN_LENGTH, s.step)
-        assertTrue(Goals.isComplete(s))
+        // Past the end only the completion count keeps moving; the step is pinned.
+        s = Goals.onMissionCompleted(s)
+        assertEquals(Goals.CAMPAIGN_LENGTH, s.step)
+        assertEquals(Goals.CAMPAIGN_LENGTH + 1, s.completed)
     }
 
     @Test
