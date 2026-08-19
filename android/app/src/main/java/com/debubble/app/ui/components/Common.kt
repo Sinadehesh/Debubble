@@ -35,6 +35,9 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -83,7 +86,13 @@ fun ChallengeCard(
             .clip(RoundedCornerShape(Space.radius))
             .background(if (done) Ink.Strata else Ink.Ridge)
             .drawLeftRail(pillar.accent)
-            .then(if (done) Modifier.alpha(0.42f) else Modifier.clickable(onClick = onClick))
+            // Done is signalled visually by strikethrough and dimming alone, so the state has
+            // to be spoken as well.
+            .semantics { stateDescription = if (done) "Completed today" else "Not started" }
+            .then(
+                if (done) Modifier.alpha(0.42f)
+                else Modifier.clickable(role = Role.Button, onClick = onClick)
+            )
             .padding(start = 15.dp, top = 14.dp, end = 15.dp, bottom = 14.dp),
         verticalArrangement = Arrangement.spacedBy(Space.gap)
     ) {
@@ -140,8 +149,12 @@ fun ExpansionBurst(
     // animateFloatAsState would start *at* its target on first composition and never move,
     // so the burst is driven explicitly from 0 on first appearance.
     val progress = remember { Animatable(0f) }
-    LaunchedEffect(Unit) {
-        progress.animateTo(1f, tween(durationMillis = 2000, easing = LinearOutSlowInEasing))
+    val reducedMotion = rememberReducedMotion()
+    LaunchedEffect(reducedMotion) {
+        // At 1f every ring has already passed its own cutoff below, so the burst simply does
+        // not draw. The haptic and the state change still land; only the motion is dropped.
+        if (reducedMotion) progress.snapTo(1f)
+        else progress.animateTo(1f, tween(durationMillis = 2000, easing = LinearOutSlowInEasing))
     }
 
     Canvas(modifier = modifier.fillMaxSize()) {

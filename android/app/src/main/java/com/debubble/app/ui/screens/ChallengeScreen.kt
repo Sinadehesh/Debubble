@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -20,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.debubble.app.engine.Engine
 import com.debubble.app.engine.Served
@@ -66,10 +69,16 @@ fun ChallengeScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Instrument(
+                // The arrow is decoration; the spoken label has to carry the destination.
                 "← Abort",
                 modifier = Modifier
-                    .clickable(onClick = onAbort)
-                    .padding(vertical = 6.dp, horizontal = 2.dp)
+                    .clickable(
+                        role = Role.Button,
+                        onClickLabel = "Leave this challenge without logging anything",
+                        onClick = onAbort
+                    )
+                    .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+                    .wrapContentSize(Alignment.CenterStart)
             )
             Instrument(
                 if (served.kind == "MISSION") "Step ${tierCode(served.tier)} / 030"
@@ -155,11 +164,12 @@ fun ChallengeScreen(
                 "Too much today — log friction",
                 color = Ink.Ember,
                 modifier = Modifier
-                    .clickable {
+                    .clickable(role = Role.Button) {
                         haptics.friction()
                         onFriction()
                     }
-                    .padding(10.dp)
+                    .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+                    .wrapContentSize(Alignment.Center)
             )
         }
 
@@ -169,8 +179,9 @@ fun ChallengeScreen(
                     "Not this one — swap it",
                     color = Ink.Dim,
                     modifier = Modifier
-                        .clickable(onClick = onSwap)
-                        .padding(8.dp),
+                        .clickable(role = Role.Button, onClick = onSwap)
+                        .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+                        .wrapContentSize(Alignment.Center),
                     small = true
                 )
             }

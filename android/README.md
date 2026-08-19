@@ -11,10 +11,10 @@ everything lives on the device.
 
 Requires JDK 17+, an Android SDK with API 35, and network access to Google's Maven repo.
 
-> **Build status: not compiled.** This project was written in an environment with no Android
-> SDK and no route to `dl.google.com`, so it has never been through `assembleDebug`. What *has*
-> been verified is described under [Verification](#verification) — expect to fix trivia
-> (an import, a signature) on the first real build.
+> **Build status:** the authoring environment has no Android SDK and no route to
+> `dl.google.com`, so nothing here is compiled locally. `.github/workflows/android.yml` builds
+> the debug APK on every push touching `android/**`, and that is the authority on whether it
+> compiles. What is verified locally is described under [Verification](#verification).
 
 ## Structure
 
@@ -73,6 +73,10 @@ The original loop gave you three cards and then nothing. Three things fixed that
    daily rep target; over a month the rep count is what separates people.
 3. **Principles** — short readable ideas that unlock as the campaign advances, so the reading
    tracks the doing rather than front-loading theory nobody acts on.
+
+The new surfaces carry the same accessibility treatment as the rest: 48dp minimum targets,
+explicit roles, and spoken state where meaning is carried by colour or dimming alone. A rep
+row is one button that announces its label, its running total and what a tap will do.
 
 ### On the dating and intimacy campaigns
 

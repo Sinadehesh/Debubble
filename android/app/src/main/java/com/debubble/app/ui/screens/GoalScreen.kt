@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -24,6 +25,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.debubble.app.engine.Goal
@@ -53,7 +58,7 @@ fun GoalPickerScreen(
     onChoose: (Goal) -> Unit,
     onCancel: (() -> Unit)?
 ) {
-    var selected by remember { mutableStateOf(current) }
+    var chosen by remember { mutableStateOf(current) }
 
     Column(
         modifier = Modifier
@@ -87,7 +92,7 @@ fun GoalPickerScreen(
             Goal.all.forEach { goal ->
                 val gs = progressOf(goal)
                 val started = gs.completed > 0
-                val on = goal == selected
+                val on = goal == chosen
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -99,7 +104,9 @@ fun GoalPickerScreen(
                             if (on) goal.homePillar.accent else Ink.EdgeSoft,
                             RoundedCornerShape(Space.radiusLarge)
                         )
-                        .clickable { selected = goal }
+                        // Selection is signalled by a tint and a border, so it is also spoken.
+                        .semantics { selected = on }
+                        .clickable(role = Role.RadioButton) { chosen = goal }
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -156,13 +163,14 @@ fun GoalPickerScreen(
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(11.dp)) {
-            val chosen = selected
-            if (chosen != null) {
+            chosen?.let { pick ->
                 PrimaryButton(
-                    if (chosen == current) "Keep this campaign"
-                    else if (progressOf(chosen).completed > 0) "Resume this campaign"
-                    else "Start this campaign"
-                ) { onChoose(chosen) }
+                    when {
+                        pick == current -> "Keep this campaign"
+                        progressOf(pick).completed > 0 -> "Resume this campaign"
+                        else -> "Start this campaign"
+                    }
+                ) { onChoose(pick) }
             }
             if (onCancel != null) GhostButton("Cancel") { onCancel() }
         }
@@ -189,8 +197,9 @@ fun PrinciplesScreen(
         Instrument(
             "← Back",
             modifier = Modifier
-                .clickable(onClick = onBack)
-                .padding(vertical = 6.dp)
+                .sizeIn(minHeight = 48.dp)
+                .clickable(role = Role.Button, onClick = onBack)
+                .padding(vertical = 14.dp)
         )
         VSpace(18)
         Text(
@@ -216,7 +225,19 @@ fun PrinciplesScreen(
                     .clip(RoundedCornerShape(Space.radius))
                     .background(Ink.Ridge)
                     .border(1.dp, Ink.EdgeSoft, RoundedCornerShape(Space.radius))
-                    .then(if (unlocked) Modifier.clickable { onOpen(i) } else Modifier)
+                    .sizeIn(minHeight = 48.dp)
+                    // Locked rows look dimmed; that has to be spoken too.
+                    .semantics {
+                        stateDescription = when {
+                            !unlocked -> "Locked until step ${p.unlocksAt}"
+                            read -> "Read"
+                            else -> "Unread"
+                        }
+                    }
+                    .then(
+                        if (unlocked) Modifier.clickable(role = Role.Button) { onOpen(i) }
+                        else Modifier
+                    )
                     .padding(15.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
@@ -263,8 +284,9 @@ fun PrincipleScreen(
             Instrument(
                 "← Back",
                 modifier = Modifier
-                    .clickable(onClick = onDone)
-                    .padding(vertical = 6.dp)
+                    .sizeIn(minHeight = 48.dp)
+                    .clickable(role = Role.Button, onClick = onDone)
+                    .padding(vertical = 14.dp)
             )
             VSpace(26)
             Instrument(goal.display, color = goal.homePillar.accent)

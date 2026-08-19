@@ -3,7 +3,7 @@ package com.debubble.app.engine
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-/** One rung of one ladder. Authored in assets/curriculum/*.json, never generated at runtime. */
+/** One rung of one ladder. Authored in the assets/curriculum JSON, never generated at runtime. */
 @Serializable
 data class Challenge(
     @SerialName("t") val tier: Int,

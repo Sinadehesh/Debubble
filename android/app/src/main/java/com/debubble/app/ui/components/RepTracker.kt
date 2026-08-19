@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -19,6 +20,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.debubble.app.engine.RepType
@@ -112,8 +116,16 @@ fun RepTracker(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .sizeIn(minHeight = 48.dp)
                     .clip(RoundedCornerShape(Space.radius))
                     .background(Ink.Ridge)
+                    // The count and the "+" are visual; the whole row is one button, so it
+                    // announces the label, the running total and what tapping will do.
+                    .semantics {
+                        role = Role.Button
+                        contentDescription =
+                            "${rep.label}. Logged $count today. Tap to log another."
+                    }
                     .clickable { onLog(rep) }
                     .padding(horizontal = 14.dp, vertical = 12.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -138,6 +150,7 @@ fun RepTracker(
                 }
                 if (count > 0) {
                     Text(
+                        modifier = Modifier.semantics { contentDescription = "" },
                         text = count.toString(),
                         color = if (rep.friction) Ink.Ember else accent,
                         style = MaterialTheme.typography.headlineMedium.copy(
@@ -148,6 +161,7 @@ fun RepTracker(
                 Box(
                     modifier = Modifier
                         .size(30.dp)
+                        .semantics { contentDescription = "" }
                         .clip(RoundedCornerShape(50))
                         .background((if (rep.friction) Ink.Ember else accent).copy(alpha = 0.14f)),
                     contentAlignment = Alignment.Center
