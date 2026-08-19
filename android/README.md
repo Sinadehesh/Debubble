@@ -28,11 +28,16 @@ engine/          pure Kotlin, no Android, fully unit-tested
 data/
   AppState.kt      one serializable snapshot of everything
   Repository.kt    DataStore persistence + curriculum loading
+audio/           procedural synthesis; Synth.kt is pure Kotlin and unit-tested
+  Synth.kt         drone, tension bed, chime, stab — PCM generated at runtime
+  SoundEngine.kt   AudioTrack playback, ringer/music/opt-in rules
 ui/
   theme/           palette, two type roles, spacing
-  components/      BubbleMap, HoldToCommit, ChallengeCard, ExpansionBurst, Haptics
-  screens/         Calibration, GoalPicker, Dashboard, Challenge, Completion,
-                   Principles, Profile
+  components/      LivingBubble (AGSL), BubbleMap (fallback), HoldToCommit,
+                   Fracture, Topography, ChallengeCard, ExpansionBurst,
+                   Shockwave, Haptics, Motion
+  screens/         Calibration, GoalPicker, Dashboard, Challenge, Campaign,
+                   Completion, Principles, Profile, Transcendence
 assets/curriculum/ access.json, activity.json, social.json — 300 authored challenges
 assets/goals/      5 campaigns — 150 missions, 40 principles, 25 rep types
 ```
@@ -95,6 +100,46 @@ Two rules are load-bearing and stated explicitly in the principles:
 
 Rejections are logged as reps and counted as credit, which is the same anti-score logic the
 rest of the app already runs on.
+
+## The interface
+
+The app is a dark instrument panel that opens up as the ladder is climbed. That progression is
+carried by light rather than by layout: `LocalAscension` supplies mean tier as 0..1 from the
+root, and the surfaces that read it soften continuously — nobody should be able to point at the
+day it changed.
+
+| Piece | What it is |
+| --- | --- |
+| **Living bubble** | An AGSL membrane: three metaball lobes with fbm-displaced boundaries, breathing at 60 BPM. Viscosity comes from days since last activity, so a neglected bubble goes *heavy* rather than merely small; energy spikes on a completion; light comes from mean tier; touch pulls the fluid toward the thumb. |
+| **Hold-to-Commit** | Three seconds of sustained pressure. Tension is progress squared, so the first second is quiet and the last is violent. A 24-step rising haptic waveform, shake on both axes, hollow thud if you let go early, sharp strike and a full-surface shockwave if you don't. |
+| **Fracture** | Friction tears the surface: RGB channel separation and horizontal slip via a RenderEffect, with ember tear bands over the top. |
+| **Topography** | The campaign as terrain — 30 monuments on ground that ascends away from you, cleared ones permanently lit, everything ahead fogged. |
+| **Sound** | Four procedurally synthesised voices. No audio assets ship. |
+| **Transcendence** | Tier 100 plays once: the interface comes apart into particles, the bubble expands past every boundary it had, and one line is left. |
+
+### Two constraints that shaped all of it
+
+**AGSL, not GLSL or Vulkan.** Compose cannot drive either. Android's runtime shader language is
+AGSL and `RuntimeShader` arrived in API 33; minSdk here is 26. Both shader effects fall back
+below 33 — the bubble to a flat additive canvas, the fracture to its ember tear bands alone.
+Those paths are what much of the install base will actually see, so they are designed states
+rather than stubs.
+
+**Nothing engineered to retain.** There is deliberately no variable-ratio reward schedule, no
+"critical hit" system, no jackpot animation. An app whose stated endgame is to render itself
+obsolete cannot also be built to maximise time-in-app, and the users this is aimed at —
+isolated people — are exactly the population where engineered compulsion does damage. The real
+variable reward is already present and pointed outward: you genuinely do not know whether she
+will say yes. See `TranscendenceScreen.kt`.
+
+### Sound, and why it stays out of the way
+
+Three rules, because this is the feature most likely to make someone uninstall:
+
+- The ringer mode is absolute. Silent means silent, one-shots included.
+- The ambient bed never plays over music — it stays out rather than ducking and fighting.
+- The bed is opt-in. One-shot feedback on a deliberate action is expected; a drone that starts
+  by itself is an intrusion. Both toggle from the profile and persist.
 
 ## How the 100-tier ladder works
 
@@ -164,7 +209,13 @@ build:
   entire answer space stays inside 1–14, double-step/step-back behave, tier floors at 1 and
   caps at 100, cleared counts survive backsliding, streak restarts at 1, radius is monotonic
   and visibly grows early (`t1 0.246 → t10 0.392`). Summit reached in 75 completions.
-- **Structural check** on all 20 Kotlin files.
+- **Structural check** across every Kotlin file: brace/paren balance, symbol cross-reference,
+  and a scan for Kotlin's nested-block-comment trap.
+- **Isometric projection prototyped in a browser canvas and screenshotted** before being ported
+  to Compose, because none of that geometry is visible from the authoring environment. The
+  first attempt drew the monuments as flat bowties.
+- **9 audio tests** on clipping, loop-seam silence, decay, filter selectivity and normalisation
+  of both silent and overdriven buffers. Audio fails loudly and invisibly.
 
 `app/src/test/` carries the same invariants as real JUnit tests (`CurriculumTest`,
 `EngineTest`, `GoalTest`) reading the shipped asset files, so `./gradlew :app:test` re-checks all of it on
@@ -196,9 +247,32 @@ Difficulty weights differ per pillar, because the pillars measure different thin
 A single global weighting made the honest Social ladder look mis-ordered — saying no to
 someone takes five minutes and costs nothing, but it is a real step up.
 
+## What each kind of check actually catches
+
+Worth recording, because the split turned out to be absolutely clean over this project's life:
+
+| Found locally | Found only by CI |
+| --- | --- |
+| A progress bar stuck at 96.7% on a finished campaign | Missing imports |
+| Monuments rendered as flat bowties | A `\n` that became a literal line break inside a string |
+| A difficulty metric that was wrong for the Social pillar | Kotlin prohibiting varargs of value classes |
+| A float LCG that overflowed into a pure tone | A property delegate without `getValue`/`setValue` |
+| A test asserting on an unreachable state | |
+
+Design and algorithm bugs are reachable with harnesses, prototypes and validators. Compile
+errors are not reachable at all without a compiler. Push small and let CI answer the second
+question.
+
 ## Known gaps
 
-- Never compiled (see above).
+- **Never run on a device.** It compiles and the tests pass, but no screen has been rendered on
+  real hardware: layout, the membrane on a real GPU, and the feel of the three-second hold are
+  all unverified.
+- No unboxing ceremony for unlocked principles. A physics drop and a tear-to-open gesture is
+  excellent the first three times and an obstacle by the fortieth; if built, the full ceremony
+  should fire on first unlock only.
+- No gyroscope-driven caustics. Achievable, but a continuous sensor feeding a full-screen
+  fragment shader is the most expensive thing this app could do to a battery.
 - No notifications or daily reminder scheduling.
 - `Access` progress is reported as tier and evidence count, not measured distance — no
   location permission is requested, by choice. Real km would need GPS and a privacy story.
