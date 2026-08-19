@@ -32,7 +32,8 @@ import com.debubble.app.engine.Goal
 import com.debubble.app.engine.Pillar
 import com.debubble.app.engine.RepType
 import com.debubble.app.engine.Served
-import com.debubble.app.ui.components.BubbleMap
+import com.debubble.app.ui.components.BubbleState
+import com.debubble.app.ui.components.LivingBubble
 import com.debubble.app.ui.components.ChallengeCard
 import com.debubble.app.ui.components.Dot
 import com.debubble.app.ui.components.Instrument
@@ -55,6 +56,7 @@ fun DashboardScreen(
     state: AppState,
     dayIndex: Long,
     served: Map<Pillar, Served>,
+    bubble: BubbleState,
     mission: Served?,
     reps: List<RepType>,
     pulse: Pillar?,
@@ -78,11 +80,11 @@ fun DashboardScreen(
                 .fillMaxWidth()
                 .aspectRatio(1.16f)
         ) {
-            BubbleMap(
-                tiers = tiers,
+            LivingBubble(
+                state = bubble,
                 pulse = pulse,
-                // The map drifts forever, so it is the one surface that must go still when the
-                // user has asked the system for no animation.
+                // The membrane breathes forever, so it is the one surface that must go still
+                // when the user has asked the system for no animation.
                 animate = !rememberReducedMotion(),
                 modifier = Modifier.fillMaxSize()
             )

@@ -80,6 +80,13 @@ data class AppState(
 
     fun isDoneToday(p: Pillar): Boolean = p.name in doneToday
 
+    /**
+     * Days since the user last did anything. Drives how heavy the bubble looks — a neglected
+     * membrane thickens rather than shrinking, because nothing earned is ever taken back.
+     */
+    fun daysSinceActive(today: Long): Long =
+        if (lastActiveDay == 0L) 0L else (today - lastActiveDay).coerceAtLeast(0L)
+
     fun evidence(p: Pillar): Int = log.count { !it.friction && it.pillar == p.name }
 
     /* ---- goal helpers ---- */

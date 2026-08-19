@@ -87,6 +87,7 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
                             state = state,
                             dayIndex = vm.dayIndex(state),
                             served = Pillar.order.associateWith { vm.serve(it, state) },
+                            bubble = vm.bubble(state, pulsing = pulse != null),
                             mission = vm.serveMission(state),
                             reps = vm.repTypes(state),
                             pulse = pulse,

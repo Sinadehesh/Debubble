@@ -16,6 +16,7 @@ import com.debubble.app.engine.GoalTrack
 import com.debubble.app.engine.Goals
 import com.debubble.app.engine.Pillar
 import com.debubble.app.engine.Served
+import com.debubble.app.ui.components.BubbleState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -118,6 +119,17 @@ class DeBubbleViewModel(app: Application) : AndroidViewModel(app) {
             repTarget = m.repTarget
         )
     }
+
+    /**
+     * Everything the living bubble reads. Energy spikes on a fresh completion and otherwise
+     * reflects how much of today has already been taken.
+     */
+    fun bubble(s: AppState, pulsing: Boolean): BubbleState =
+        BubbleState.from(
+            tiers = Pillar.order.associateWith { s.state(it).tier },
+            daysSinceActive = s.daysSinceActive(today()),
+            energy = if (pulsing) 1f else (s.doneToday.size / 3f) * 0.35f
+        )
 
     /** Rep types available today, empty when no campaign is active. */
     fun repTypes(s: AppState) = s.goalEnum?.let { track(it).reps } ?: emptyList()
