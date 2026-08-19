@@ -248,8 +248,7 @@ private fun CampaignComplete(goal: Goal, onPick: () -> Unit) {
     ) {
         Instrument("Campaign cleared", color = goal.homePillar.accent)
         Text(
-            text = "Thirty steps of
-${goal.display.lowercase()}.",
+            text = "Thirty steps of\n${goal.display.lowercase()}.",
             color = Ink.Primary,
             style = MaterialTheme.typography.headlineMedium
         )
