@@ -10,27 +10,80 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 
 /**
- * Two haptic signatures, and only two.
+ * The app's tactile vocabulary. Four signatures, and only four.
  *
- * [commit] rises — the phone should feel like something opened up.
- * [friction] is one blunt pulse — an acknowledgement, never a buzzer. Friction is credit
- * in this app, so it must not feel like an error.
+ * [tension] escalates — the phone should feel like a spring being drawn back.
+ * [strike] is the release: one sharp, final hit.
+ * [thud] is a hollow drop, for letting go early. Not a buzzer; a disappointment you can feel.
+ * [friction] is one blunt pulse. Friction is credit in this app, so it must never feel
+ * like an error tone.
  */
 class Haptics(private val vibrator: Vibrator?) {
 
-    fun commit() = play(longArrayOf(0, 6, 26, 10, 40, 18), intArrayOf(0, 90, 0, 150, 0, 210))
+    private fun available(): Vibrator? = vibrator?.takeIf { it.hasVibrator() }
 
-    fun friction() = play(longArrayOf(0, 30), intArrayOf(0, 140))
-
-    private fun play(timings: LongArray, amplitudes: IntArray) {
-        val v = vibrator ?: return
-        if (!v.hasVibrator()) return
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && v.hasAmplitudeControl()) {
+    /**
+     * A rising rumble for the whole hold, composed up front as a single waveform.
+     *
+     * Built in one call rather than ticked from a timer: a coroutine firing a pulse every
+     * frame drifts against the visual ring and ends up feeling loose. One waveform stays
+     * locked to the animation because both are started from the same instant.
+     */
+    fun tension(durationMs: Int) {
+        val v = available() ?: return
+        val steps = 24
+        val slot = (durationMs / steps).coerceAtLeast(8)
+        val timings = LongArray(steps * 2)
+        val amplitudes = IntArray(steps * 2)
+        for (i in 0 until steps) {
+            val k = if (steps > 1) i / (steps - 1f) else 1f
+            val pulse = (6 + 12 * k).toLong()
+            val gap = (slot - pulse).coerceAtLeast(3L)
+            timings[i * 2] = pulse
+            amplitudes[i * 2] = (38 + 200 * k * k).toInt().coerceIn(1, 255)
+            timings[i * 2 + 1] = gap
+            amplitudes[i * 2 + 1] = 0
+        }
+        if (v.hasAmplitudeControl()) {
             v.vibrate(VibrationEffect.createWaveform(timings, amplitudes, -1))
         } else {
-            @Suppress("DEPRECATION")
-            v.vibrate(timings, -1)
+            v.vibrate(VibrationEffect.createWaveform(timings, -1))
         }
+    }
+
+    /** Kill the rumble the instant a hold is abandoned. */
+    fun stop() {
+        available()?.cancel()
+    }
+
+    /** The commit. One sharp, unambiguous hit. */
+    fun strike() {
+        val v = available() ?: return
+        v.cancel()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            v.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK))
+        } else {
+            v.vibrate(VibrationEffect.createOneShot(24, 255))
+        }
+    }
+
+    /** Let go too early. Hollow, low, over immediately. */
+    fun thud() {
+        val v = available() ?: return
+        v.cancel()
+        v.vibrate(
+            if (v.hasAmplitudeControl()) VibrationEffect.createOneShot(52, 70)
+            else VibrationEffect.createOneShot(52, VibrationEffect.DEFAULT_AMPLITUDE)
+        )
+    }
+
+    /** Logging friction. An acknowledgement, never a reprimand. */
+    fun friction() {
+        val v = available() ?: return
+        v.vibrate(
+            if (v.hasAmplitudeControl()) VibrationEffect.createOneShot(30, 140)
+            else VibrationEffect.createOneShot(30, VibrationEffect.DEFAULT_AMPLITUDE)
+        )
     }
 }
 

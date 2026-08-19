@@ -190,6 +190,45 @@ fun ExpansionBurst(
     }
 }
 
+/**
+ * The release. A single ring crossing the entire surface, fired the instant a hold closes.
+ *
+ * Deliberately one ring rather than a particle burst: the burst belongs to the completion
+ * screen a beat later, and firing both at once turns a decisive moment into noise.
+ */
+@Composable
+fun Shockwave(
+    accent: Color,
+    origin: Float = 0.72f,
+    modifier: Modifier = Modifier
+) {
+    val p = remember { Animatable(0f) }
+    val reduced = rememberReducedMotion()
+    LaunchedEffect(Unit) {
+        if (reduced) p.snapTo(1f)
+        else p.animateTo(1f, tween(durationMillis = 460, easing = LinearOutSlowInEasing))
+    }
+    Canvas(modifier = modifier.fillMaxSize()) {
+        val v = p.value
+        if (v <= 0f || v >= 1f) return@Canvas
+        val centre = Offset(size.width / 2f, size.height * origin)
+        val reach = kotlin.math.sqrt(size.width * size.width + size.height * size.height)
+        drawCircle(
+            color = accent.copy(alpha = 0.55f * (1f - v)),
+            radius = 40f + v * reach,
+            center = centre,
+            style = Stroke(width = (7f * (1f - v)).coerceAtLeast(1f)),
+            blendMode = BlendMode.Plus
+        )
+        drawCircle(
+            color = accent.copy(alpha = 0.10f * (1f - v)),
+            radius = v * reach * 0.72f,
+            center = centre,
+            blendMode = BlendMode.Plus
+        )
+    }
+}
+
 /** Thin progress bar to 100, in the pillar's accent. */
 @Composable
 fun PillarBar(pillar: Pillar, tier: Int, modifier: Modifier = Modifier) {

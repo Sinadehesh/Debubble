@@ -19,6 +19,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -27,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import com.debubble.app.engine.Engine
 import com.debubble.app.engine.Served
 import com.debubble.app.ui.components.HoldToCommit
+import com.debubble.app.ui.components.Shockwave
 import com.debubble.app.ui.components.Instrument
 import com.debubble.app.ui.components.VSpace
 import com.debubble.app.ui.components.rememberHaptics
@@ -55,136 +61,153 @@ fun ChallengeScreen(
     val pillar = served.pillar
     val haptics = rememberHaptics()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Ink.Void)
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = Space.gutter)
-            .padding(top = 10.dp, bottom = 24.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Instrument(
-                // The arrow is decoration; the spoken label has to carry the destination.
-                "← Abort",
-                modifier = Modifier
-                    .clickable(
-                        role = Role.Button,
-                        onClickLabel = "Leave this challenge without logging anything",
-                        onClick = onAbort
-                    )
-                    .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
-                    .wrapContentSize(Alignment.CenterStart)
-            )
-            Instrument(
-                if (served.kind == "MISSION") "Step ${tierCode(served.tier)} / 030"
-                else "Tier ${tierCode(served.tier)} · ${pillar.code}",
-                color = pillar.accent
-            )
+    // The snap needs somewhere to land. Navigating on the same frame as the commit throws
+    // away the moment the three-second hold just bought.
+    var committing by remember { mutableStateOf(false) }
+    LaunchedEffect(committing) {
+        if (committing) {
+            kotlinx.coroutines.delay(380)
+            onComplete()
         }
+    }
 
-        VSpace(22)
-        Instrument(served.phase ?: "${pillar.display} · ${pillar.dimension}")
-        VSpace(14)
-
-        Text(
-            text = served.directive,
-            color = Ink.Primary,
-            style = MaterialTheme.typography.headlineLarge
-        )
-
-        VSpace(24)
-
-        // TIME · COST · EXPOSURE. Exposure is the vulnerability rating and the number that
-        // climbs hardest across a hundred tiers.
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(Space.radius))
-                .background(Ink.EdgeSoft),
-            horizontalArrangement = Arrangement.spacedBy(1.dp)
-        ) {
-            Param("Time", Engine.formatMinutes(served.minutes), Modifier.weight(1f))
-            Param("Cost", if (served.cost == 0) "Free" else "${served.cost}", Modifier.weight(1f))
-            Param("Exposure", "${served.exposure}/10", Modifier.weight(1f), pillar.accent)
-        }
-
-        VSpace(20)
-
+    Box(modifier = Modifier.fillMaxSize().background(Ink.Void)) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(Space.radius))
-                .background(pillar.tint)
-                .border(1.dp, pillar.line, RoundedCornerShape(Space.radius))
-                .padding(15.dp),
-            verticalArrangement = Arrangement.spacedBy(7.dp)
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = Space.gutter)
+                .padding(top = 10.dp, bottom = 24.dp)
         ) {
-            Instrument(if (served.kind == "MISSION") "Why this step" else "Why this tier", color = pillar.accent, small = true)
-            Text(
-                text = served.coach,
-                color = Ink.Primary,
-                style = MaterialTheme.typography.bodyMedium
-            )
-        }
-
-        if (served.substituted && served.substitutionReason != null) {
-            VSpace(12)
-            Instrument(served.substitutionReason, color = pillar.accent.copy(alpha = 0.8f), small = true)
-        }
-
-        if (served.repTarget > 0) {
-            VSpace(14)
-            Instrument(
-                "Then log ${served.repTarget} rep${if (served.repTarget == 1) "" else "s"} today",
-                color = Ink.Ash,
-                small = true
-            )
-        }
-
-        VSpace(30)
-
-        HoldToCommit(
-            accent = pillar.accent,
-            label = "Hold to complete",
-            modifier = Modifier.fillMaxWidth(),
-            onCommit = onComplete
-        )
-
-        VSpace(10)
-
-        // The second exit, in ember. Not hidden, not shamed — it is the courage counter's
-        // entire supply line.
-        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            Instrument(
-                "Too much today — log friction",
-                color = Ink.Ember,
-                modifier = Modifier
-                    .clickable(role = Role.Button) {
-                        haptics.friction()
-                        onFriction()
-                    }
-                    .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
-                    .wrapContentSize(Alignment.Center)
-            )
-        }
-
-        if (canSwap) {
-            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Instrument(
-                    "Not this one — swap it",
-                    color = Ink.Dim,
+                    // The arrow is decoration; the spoken label has to carry the destination.
+                    "← Abort",
                     modifier = Modifier
-                        .clickable(role = Role.Button, onClick = onSwap)
+                        .clickable(
+                            role = Role.Button,
+                            onClickLabel = "Leave this challenge without logging anything",
+                            onClick = onAbort
+                        )
                         .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
-                        .wrapContentSize(Alignment.Center),
+                        .wrapContentSize(Alignment.CenterStart)
+                )
+                Instrument(
+                    if (served.kind == "MISSION") "Step ${tierCode(served.tier)} / 030"
+                    else "Tier ${tierCode(served.tier)} · ${pillar.code}",
+                    color = pillar.accent
+                )
+            }
+
+            VSpace(22)
+            Instrument(served.phase ?: "${pillar.display} · ${pillar.dimension}")
+            VSpace(14)
+
+            Text(
+                text = served.directive,
+                color = Ink.Primary,
+                style = MaterialTheme.typography.headlineLarge
+            )
+
+            VSpace(24)
+
+            // TIME · COST · EXPOSURE. Exposure is the vulnerability rating and the number that
+            // climbs hardest across a hundred tiers.
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(Space.radius))
+                    .background(Ink.EdgeSoft),
+                horizontalArrangement = Arrangement.spacedBy(1.dp)
+            ) {
+                Param("Time", Engine.formatMinutes(served.minutes), Modifier.weight(1f))
+                Param("Cost", if (served.cost == 0) "Free" else "${served.cost}", Modifier.weight(1f))
+                Param("Exposure", "${served.exposure}/10", Modifier.weight(1f), pillar.accent)
+            }
+
+            VSpace(20)
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(Space.radius))
+                    .background(pillar.tint)
+                    .border(1.dp, pillar.line, RoundedCornerShape(Space.radius))
+                    .padding(15.dp),
+                verticalArrangement = Arrangement.spacedBy(7.dp)
+            ) {
+                Instrument(if (served.kind == "MISSION") "Why this step" else "Why this tier", color = pillar.accent, small = true)
+                Text(
+                    text = served.coach,
+                    color = Ink.Primary,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
+            if (served.substituted && served.substitutionReason != null) {
+                VSpace(12)
+                Instrument(served.substitutionReason, color = pillar.accent.copy(alpha = 0.8f), small = true)
+            }
+
+            if (served.repTarget > 0) {
+                VSpace(14)
+                Instrument(
+                    "Then log ${served.repTarget} rep${if (served.repTarget == 1) "" else "s"} today",
+                    color = Ink.Ash,
                     small = true
                 )
             }
+
+            VSpace(30)
+
+            HoldToCommit(
+                accent = pillar.accent,
+                label = "Hold to commit",
+                modifier = Modifier.fillMaxWidth(),
+                onCommit = { committing = true }
+            )
+
+            VSpace(10)
+
+            // The second exit, in ember. Not hidden, not shamed — it is the courage counter's
+            // entire supply line.
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Instrument(
+                    "Too much today — log friction",
+                    color = Ink.Ember,
+                    modifier = Modifier
+                        .clickable(role = Role.Button) {
+                            haptics.friction()
+                            onFriction()
+                        }
+                        .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+                        .wrapContentSize(Alignment.Center)
+                )
+            }
+
+            if (canSwap) {
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    Instrument(
+                        "Not this one — swap it",
+                        color = Ink.Dim,
+                        modifier = Modifier
+                            .clickable(role = Role.Button, onClick = onSwap)
+                            .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+                            .wrapContentSize(Alignment.Center),
+                        small = true
+                    )
+                }
+            }
+        }
+
+        // Fired the instant the hold closes, and the reason navigation waits 380ms:
+        // the snap needs somewhere to land.
+        if (committing) {
+            Shockwave(accent = pillar.accent, modifier = Modifier.fillMaxSize())
         }
     }
 }
