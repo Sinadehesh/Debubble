@@ -117,7 +117,9 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
                             dayIndex = vm.dayIndex(state),
                             trackOf = vm::track,
                             onRecalibrate = vm::goRecalibrate,
-                            onChangeGoal = vm::goGoalPicker
+                            onChangeGoal = vm::goGoalPicker,
+                            onToggleSound = vm::toggleSound,
+                            onToggleAmbient = vm::toggleAmbient
                         )
                     }
                     TabBar(
@@ -137,6 +139,8 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
                         served = served,
                         canSwap = r.pillar.name !in state.swappedToday,
                         frictionAfter = state.friction + 1,
+                        soundOn = state.soundOn,
+                        ambientOn = state.ambientOn,
                         onAbort = vm::abort,
                         onSwap = { vm.swap(r.pillar) },
                         onComplete = {
@@ -180,6 +184,8 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
                             served = mission,
                             canSwap = false,
                             frictionAfter = state.friction + 1,
+                            soundOn = state.soundOn,
+                            ambientOn = state.ambientOn,
                             onAbort = vm::abort,
                             onSwap = {},
                             onComplete = {

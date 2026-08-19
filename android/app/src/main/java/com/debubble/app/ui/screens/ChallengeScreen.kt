@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import com.debubble.app.audio.rememberSound
 import com.debubble.app.engine.Engine
 import com.debubble.app.engine.Served
 import com.debubble.app.ui.components.FractureOverlay
@@ -59,6 +61,8 @@ fun ChallengeScreen(
     served: Served,
     canSwap: Boolean,
     frictionAfter: Int,
+    soundOn: Boolean,
+    ambientOn: Boolean,
     onAbort: () -> Unit,
     onSwap: () -> Unit,
     onComplete: () -> Unit,
@@ -66,6 +70,16 @@ fun ChallengeScreen(
 ) {
     val pillar = served.pillar
     val haptics = rememberHaptics()
+    val sound = rememberSound()
+
+    // The bed only comes up for challenges that genuinely frighten people, and only if the
+    // user asked for it. Exposure 7 is roughly where the ladder stops being a nudge.
+    DisposableEffect(ambientOn, served.exposure, served.tier) {
+        if (ambientOn && served.exposure >= 7) {
+            sound.startBed(((served.exposure - 6) / 4f).coerceIn(0f, 1f))
+        }
+        onDispose { sound.stopBed() }
+    }
 
     // The snap needs somewhere to land. Navigating on the same frame as the commit throws
     // away the moment the three-second hold just bought.
@@ -186,7 +200,11 @@ fun ChallengeScreen(
                 accent = pillar.accent,
                 label = "Hold to commit",
                 modifier = Modifier.fillMaxWidth(),
-                onCommit = { committing = true }
+                onCommit = {
+                sound.stopBed()
+                if (soundOn) sound.chime()
+                committing = true
+            }
             )
 
             VSpace(10)

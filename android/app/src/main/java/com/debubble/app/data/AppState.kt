@@ -63,6 +63,11 @@ data class AppState(
     /** "GOAL:repKey" -> lifetime count. Never reset — this is the evidence. */
     val repTotals: Map<String, Int> = emptyMap(),
 
+    /** One-shot feedback on deliberate actions. Expected, so it is on. */
+    val soundOn: Boolean = true,
+    /** The continuous bed. An intrusion if it starts by itself, so it is opt-in. */
+    val ambientOn: Boolean = false,
+
     val log: List<LogEntry> = emptyList()
 ) {
     fun state(p: Pillar): PillarState = pillars[p.name] ?: PillarState()

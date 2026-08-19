@@ -394,6 +394,14 @@ class DeBubbleViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    fun toggleSound() {
+        viewModelScope.launch { repo.update { it.copy(soundOn = !it.soundOn) } }
+    }
+
+    fun toggleAmbient() {
+        viewModelScope.launch { repo.update { it.copy(ambientOn = !it.ambientOn) } }
+    }
+
     fun clearPulse() { _pulse.value = null }
 
     fun dayIndex(s: AppState): Long = s.dayIndex(today())

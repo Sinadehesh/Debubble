@@ -2,6 +2,7 @@ package com.debubble.app.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -19,6 +21,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.debubble.app.data.AppState
@@ -51,7 +57,9 @@ fun ProfileScreen(
     dayIndex: Long,
     trackOf: (Goal) -> GoalTrack,
     onRecalibrate: () -> Unit,
-    onChangeGoal: () -> Unit
+    onChangeGoal: () -> Unit,
+    onToggleSound: () -> Unit,
+    onToggleAmbient: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -176,6 +184,23 @@ fun ProfileScreen(
             }
         }
 
+        Column(verticalArrangement = Arrangement.spacedBy(Space.gap)) {
+            Instrument("Sound")
+            SettingRow(
+                label = "Feedback",
+                detail = "A chime on commit, a stab on friction.",
+                on = state.soundOn,
+                onToggle = onToggleSound
+            )
+            SettingRow(
+                label = "Tension bed",
+                detail = "A low drone under high-exposure challenges. Off by default, and " +
+                    "never over music or on silent.",
+                on = state.ambientOn,
+                onToggle = onToggleAmbient
+            )
+        }
+
         VSpace(4)
         GhostButton(if (state.goalEnum == null) "Choose a campaign" else "Change campaign") { onChangeGoal() }
         GhostButton("Recalibrate baseline") { onRecalibrate() }
@@ -185,6 +210,40 @@ fun ProfileScreen(
             color = Ink.Faint,
             style = MaterialTheme.typography.bodyMedium
         )
+    }
+}
+
+@Composable
+private fun SettingRow(
+    label: String,
+    detail: String,
+    on: Boolean,
+    onToggle: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(Space.radius))
+            .background(Ink.Ridge)
+            .sizeIn(minHeight = 48.dp)
+            .semantics {
+                role = Role.Switch
+                stateDescription = if (on) "On" else "Off"
+            }
+            .clickable(onClick = onToggle)
+            .padding(horizontal = 15.dp, vertical = 13.dp),
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Text(
+                text = label,
+                color = Ink.Primary,
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium)
+            )
+            Text(text = detail, color = Ink.Dim, style = MaterialTheme.typography.bodyMedium)
+        }
+        Instrument(if (on) "On" else "Off", color = if (on) Ink.Activity else Ink.Faint)
     }
 }
 
