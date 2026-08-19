@@ -63,6 +63,9 @@ data class AppState(
     /** "GOAL:repKey" -> lifetime count. Never reset — this is the evidence. */
     val repTotals: Map<String, Int> = emptyMap(),
 
+    /** Pillars whose tier-100 ending has been shown. It only ever plays once. */
+    val transcended: Set<String> = emptySet(),
+
     /** One-shot feedback on deliberate actions. Expected, so it is on. */
     val soundOn: Boolean = true,
     /** The continuous bed. An intrusion if it starts by itself, so it is opt-in. */
@@ -115,6 +118,16 @@ data class AppState(
     fun hasStarted(g: Goal): Boolean = goalStates.containsKey(g.name)
 
     fun goalProgress(g: Goal): Float = Goals.progress(goalState(g))
+
+    /**
+     * How far open the whole interface should be, 0..1.
+     *
+     * Drives the app coming apart as the ladder is climbed: at the bottom it is a tight, dark
+     * instrument panel, and near the top the borders fade and the light takes over.
+     */
+    val ascension: Float
+        get() = ((Pillar.order.map { state(it).tier }.average().toFloat() - 1f) / 99f)
+            .coerceIn(0f, 1f)
 
     /**
      * A new day resets what was served without touching any progress. Called on load and

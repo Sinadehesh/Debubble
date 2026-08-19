@@ -43,6 +43,8 @@ sealed interface Route {
     /** The campaign rendered as terrain. */
     data object Campaign : Route
     data class ReadPrinciple(val index: Int) : Route
+    /** The end of one ladder. Shown once, then never again. */
+    data class Transcendence(val pillar: Pillar) : Route
 }
 
 class DeBubbleViewModel(app: Application) : AndroidViewModel(app) {
@@ -219,7 +221,16 @@ class DeBubbleViewModel(app: Application) : AndroidViewModel(app) {
                     )
             }
             _pulse.value = pillar
-            _route.value = Route.Completion(pillar, tier)
+            // Reaching the summit outranks the ordinary completion beat.
+            val reached = repo.state.first()
+            _route.value =
+                if (reached.state(pillar).tier >= Engine.MAX_TIER &&
+                    pillar.name !in reached.transcended
+                ) {
+                    Route.Transcendence(pillar)
+                } else {
+                    Route.Completion(pillar, tier)
+                }
         }
     }
 
@@ -391,6 +402,14 @@ class DeBubbleViewModel(app: Application) : AndroidViewModel(app) {
             repo.update { s ->
                 s.withGoal(goal, s.goalState(goal).let { it.copy(read = it.read + index) })
             }
+        }
+    }
+
+    /** Mark an ending as seen and return to the app it has just finished arguing against. */
+    fun closeTranscendence(pillar: Pillar) {
+        viewModelScope.launch {
+            repo.update { it.copy(transcended = it.transcended + pillar.name) }
+            goDashboard()
         }
     }
 

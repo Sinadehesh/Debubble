@@ -49,6 +49,15 @@ import com.debubble.app.ui.theme.InstrumentFamily
 import com.debubble.app.ui.theme.Space
 import com.debubble.app.ui.theme.accent
 
+/**
+ * How far open the interface is, 0..1, supplied at the root from the mean tier.
+ *
+ * Page 10 of the design doctrine: the app should visually stop being able to contain the life
+ * it is measuring. Rather than a switch at some threshold, every surface that reads it opens
+ * continuously — nobody should be able to point at the day it changed.
+ */
+val LocalAscension = androidx.compose.runtime.compositionLocalOf { 0f }
+
 /** Wide-tracked uppercase monospace: the voice the system reports in. */
 @Composable
 fun Instrument(
@@ -80,11 +89,22 @@ fun ChallengeCard(
     modifier: Modifier = Modifier
 ) {
     val pillar = served.pillar
+    // Low on the ladder a card is a tight box in a void. High up the edges give way and the
+    // accent starts to leak past them.
+    val open = LocalAscension.current
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(Space.radius))
-            .background(if (done) Ink.Strata else Ink.Ridge)
+            .clip(RoundedCornerShape(Space.radius + (Space.radius.value * open * 0.8f).dp))
+            .background(
+                if (done) Ink.Strata
+                else Ink.Ridge.copy(alpha = (1f - open * 0.25f).coerceIn(0f, 1f))
+            )
+            .border(
+                width = 1.dp,
+                color = pillar.accent.copy(alpha = 0.10f + 0.35f * open),
+                shape = RoundedCornerShape(Space.radius + (Space.radius.value * open * 0.8f).dp)
+            )
             .drawLeftRail(pillar.accent)
             // Done is signalled visually by strikethrough and dimming alone, so the state has
             // to be spoken as well.

@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -31,7 +32,9 @@ import com.debubble.app.ui.screens.PrinciplesScreen
 import com.debubble.app.ui.screens.ProfileScreen
 import com.debubble.app.ui.screens.Tab
 import com.debubble.app.ui.screens.TabBar
+import com.debubble.app.ui.screens.TranscendenceScreen
 import com.debubble.app.ui.theme.DeBubbleTheme
+import com.debubble.app.ui.components.LocalAscension
 import com.debubble.app.ui.theme.Ink
 
 class MainActivity : ComponentActivity() {
@@ -62,6 +65,7 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
         }
     }
 
+    CompositionLocalProvider(LocalAscension provides state.ascension) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -260,6 +264,16 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
                 }
             }
 
+            is Route.Transcendence -> {
+                // No BackHandler: this one is closed deliberately or not at all.
+                Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
+                    TranscendenceScreen(
+                        pillar = r.pillar,
+                        onClose = { vm.closeTranscendence(r.pillar) }
+                    )
+                }
+            }
+
             is Route.Completion -> {
                 // Back out of the journal is the same as skipping it.
                 BackHandler { vm.goDashboard() }
@@ -273,5 +287,6 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
                 }
             }
         }
+    }
     }
 }
