@@ -6,7 +6,10 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -47,7 +50,7 @@ fun Modifier.fractureEffect(amount: Float): Modifier {
 @Composable
 private fun Modifier.applyFracture(amount: Float): Modifier {
     val shader = remember { RuntimeShader(FRACTURE_AGSL) }
-    var size by remember { androidx.compose.runtime.mutableStateOf(IntSize.Zero) }
+    var size by remember { mutableStateOf(IntSize.Zero) }
     return this
         .onSizeChanged { size = it }
         .graphicsLayer {
