@@ -110,23 +110,31 @@ fun Topography(
             }
             val stroke = Stroke(width = if (here) 2.4f else 1.3f)
 
-            fun face(vararg pts: Offset) = Path().apply {
+            // Offset is a value class and Kotlin prohibits varargs of those, so the faces
+            // are built from lists.
+            fun face(pts: List<Offset>) = Path().apply {
                 moveTo(pts[0].x, pts[0].y)
                 for (k in 1 until pts.size) lineTo(pts[k].x, pts[k].y)
                 close()
             }
 
             val left = face(
-                Offset(top.x - dx, top.y), Offset(top.x, top.y + dy),
-                Offset(base.x, base.y + dy), Offset(base.x - dx, base.y)
+                listOf(
+                    Offset(top.x - dx, top.y), Offset(top.x, top.y + dy),
+                    Offset(base.x, base.y + dy), Offset(base.x - dx, base.y)
+                )
             )
             val right = face(
-                Offset(top.x + dx, top.y), Offset(top.x, top.y + dy),
-                Offset(base.x, base.y + dy), Offset(base.x + dx, base.y)
+                listOf(
+                    Offset(top.x + dx, top.y), Offset(top.x, top.y + dy),
+                    Offset(base.x, base.y + dy), Offset(base.x + dx, base.y)
+                )
             )
             val cap = face(
-                Offset(top.x, top.y - dy), Offset(top.x + dx, top.y),
-                Offset(top.x, top.y + dy), Offset(top.x - dx, top.y)
+                listOf(
+                    Offset(top.x, top.y - dy), Offset(top.x + dx, top.y),
+                    Offset(top.x, top.y + dy), Offset(top.x - dx, top.y)
+                )
             )
 
             drawPath(left, if (cleared) accent.copy(alpha = 0.16f) else Ink.Strata.copy(alpha = 0.92f))
