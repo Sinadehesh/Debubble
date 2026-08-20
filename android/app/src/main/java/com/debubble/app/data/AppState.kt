@@ -2,6 +2,7 @@ package com.debubble.app.data
 
 import com.debubble.app.engine.AvatarState
 import com.debubble.app.engine.Baseline
+import com.debubble.app.engine.BudgetTier
 import com.debubble.app.engine.Goal
 import com.debubble.app.engine.GoalState
 import com.debubble.app.engine.Goals
@@ -62,8 +63,16 @@ data class AppState(
 
     /* ---- the goal layer: what the user actually wants, and the volume they put in ---- */
 
-    /** The active campaign. Null until chosen; changeable without losing any progress. */
+    /**
+     * The single active campaign, kept only so state written before parallel campaigns
+     * existed still knows what it was running. Read through [activeGoals].
+     */
     val goal: String? = null,
+    /**
+     * Every campaign running right now. More than one is supported and expected — the
+     * router serves them in rotation and bridges them where a challenge satisfies both.
+     */
+    val activeGoals: Set<String> = emptySet(),
     /** Per-goal progress, kept for every goal ever started so switching costs nothing. */
     val goalStates: Map<String, GoalState> = emptyMap(),
     val missionDoneToday: Boolean = false,
@@ -80,6 +89,26 @@ data class AppState(
     /** Earned by doing things. Unlocks casual wear. */
     val xp: Int = 0,
     val avatar: AvatarState = AvatarState(),
+
+    /* ---- the Systems Audit, the budget, and what the router has already served ---- */
+
+    /** Behaviours the user flagged. Drives remediation challenges and Learn articles. */
+    val debuffs: Set<String> = emptySet(),
+    /** True once the audit has been seen, so it is never forced a second time. */
+    val auditDone: Boolean = false,
+    /** Strict spending ceiling. Nothing above it is ever shown. */
+    val budgetLevel: Int = -1,
+
+    /** Ids of remediation and campaign challenges already cleared, so they are not reserved. */
+    val clearedRemediation: Set<String> = emptySet(),
+    val clearedCampaign: Set<String> = emptySet(),
+    /** Which of the two routed slots have been taken today. */
+    val routedDoneToday: Set<String> = emptySet(),
+
+    /* ---- Learn and Notes ---- */
+
+    val lessonsRead: Set<String> = emptySet(),
+    val notes: List<Note> = emptyList(),
 
     /** One-shot feedback on deliberate actions. Expected, so it is on. */
     val soundOn: Boolean = true,
@@ -122,6 +151,30 @@ data class AppState(
 
     val goalEnum: Goal? get() = Goal.from(goal)
 
+    /**
+     * Campaigns actually running.
+     *
+     * Falls back to the old single [goal] for state written before parallel campaigns, so an
+     * existing user opens the new build already running what they were running.
+     */
+    val running: Set<String>
+        get() = if (activeGoals.isNotEmpty()) activeGoals else setOfNotNull(goal)
+
+    val runningGoals: List<Goal> get() = running.mapNotNull { Goal.from(it) }.sortedBy { it.name }
+
+    /** The campaign whose 30-step ladder drives the mission card. First alphabetically. */
+    val primaryGoal: Goal? get() = runningGoals.firstOrNull()
+
+    fun isRunning(g: Goal): Boolean = g.name in running
+
+    /**
+     * The spending ceiling. Older state has no [budgetLevel] and only the free-text cash
+     * figure from setup, which maps cleanly onto a tier.
+     */
+    val budget: BudgetTier
+        get() = if (budgetLevel >= 0) BudgetTier.fromLevel(budgetLevel)
+        else BudgetTier.fromLegacyCash(baseline.budgetPerChallenge)
+
     fun goalState(g: Goal): GoalState = goalStates[g.name] ?: GoalState()
 
     fun withGoal(g: Goal, s: GoalState): AppState =
@@ -151,6 +204,7 @@ data class AppState(
             doneToday = emptySet(),
             swappedToday = emptySet(),
             missionDoneToday = false,
-            repsToday = emptyMap()
+            repsToday = emptyMap(),
+            routedDoneToday = emptySet()
         )
 }

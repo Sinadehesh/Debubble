@@ -33,6 +33,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.debubble.app.engine.Baseline
+import com.debubble.app.engine.BudgetTier
 import com.debubble.app.engine.Calibration
 import com.debubble.app.engine.Copy
 import com.debubble.app.engine.Mobility
@@ -62,8 +63,9 @@ import com.debubble.app.ui.theme.accent
 @Composable
 fun CalibrationScreen(
     initial: Baseline,
+    initialTier: BudgetTier,
     isRecalibration: Boolean,
-    onDone: (Baseline) -> Unit,
+    onDone: (Baseline, BudgetTier) -> Unit,
     onCancel: (() -> Unit)? = null
 ) {
     var step by remember { mutableIntStateOf(0) }
@@ -76,6 +78,7 @@ fun CalibrationScreen(
     var conversations by remember { mutableIntStateOf(initial.longConversations) }
     var budget by remember { mutableIntStateOf(initial.budgetPerChallenge) }
     var capacity by remember { mutableIntStateOf(initial.capacityMinutes) }
+    var tier by remember { mutableStateOf(initialTier) }
     var canStayOut by remember { mutableStateOf(initial.canStayOut) }
     var hasPassport by remember { mutableStateOf(initial.hasPassport) }
 
@@ -242,14 +245,33 @@ fun CalibrationScreen(
                         onChange = { capacity = it }
                     )
                     VSpace(26)
-                    Label("What can you spend, without it being a problem?", strong = true)
-                    VSpace(10)
-                    NumberSlider(
-                        value = budget, range = 0..100, step = 5,
-                        unit = "per challenge", accent = Ink.Access,
-                        display = { if (it == 0) "Nothing" else "$it" },
-                        onChange = { budget = it }
+                    Label("What can you spend on a challenge?", strong = true)
+                    VSpace(6)
+                    Text(
+                        text = "This is a hard limit. Anything above it is never shown to " +
+                            "you — not greyed out, not locked. There is enough free material " +
+                            "to run the whole app on Free forever.",
+                        color = Ink.Muted,
+                        style = MaterialTheme.typography.bodyMedium
                     )
+                    VSpace(12)
+                    Column(verticalArrangement = Arrangement.spacedBy(Space.gap)) {
+                        BudgetTier.all.forEach { t ->
+                            SelectRow(
+                                label = t.display,
+                                detail = t.detail,
+                                selected = tier == t,
+                                single = true,
+                                accent = Ink.Activity,
+                                onToggle = {
+                                    tier = t
+                                    // Keep the legacy cash figure in step, since the pillar
+                                    // curriculum still gates on it.
+                                    budget = t.cap
+                                }
+                            )
+                        }
+                    }
                 }
 
                 5 -> Question(
@@ -281,7 +303,7 @@ fun CalibrationScreen(
                 },
                 enabled = step != 0 || moves.isNotEmpty()
             ) {
-                if (step >= cards) onDone(baseline) else step++
+                if (step >= cards) onDone(baseline, tier) else step++
             }
             if (step > 0) {
                 TextAction("Back") { step-- }

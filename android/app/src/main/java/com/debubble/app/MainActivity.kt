@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.debubble.app.engine.Pillar
+import com.debubble.app.ui.screens.AuditScreen
 import com.debubble.app.ui.screens.AvatarScreen
 import com.debubble.app.ui.screens.CalibrationScreen
 import com.debubble.app.ui.screens.CampaignScreen
@@ -27,6 +28,10 @@ import com.debubble.app.ui.screens.CompletionScreen
 import com.debubble.app.ui.screens.DashboardScreen
 import com.debubble.app.ui.screens.GoalPickerScreen
 import com.debubble.app.ui.screens.IntroScreen
+import com.debubble.app.ui.screens.LearnScreen
+import com.debubble.app.ui.screens.LessonScreen
+import com.debubble.app.ui.screens.NoteEditorScreen
+import com.debubble.app.ui.screens.NotesScreen
 import com.debubble.app.ui.screens.PrincipleScreen
 import com.debubble.app.ui.screens.PrinciplesScreen
 import com.debubble.app.ui.screens.ProfileScreen
@@ -80,14 +85,29 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
                 // Reachable again from the profile, so it has to be cancellable.
                 CalibrationScreen(
                     initial = state.baseline,
+                    initialTier = state.budget,
                     isRecalibration = state.onboarded,
-                    onDone = vm::finishCalibration,
+                    onDone = { baseline, tier ->
+                        vm.setBudget(tier)
+                        vm.finishCalibration(baseline)
+                    },
                     onCancel = if (state.onboarded) vm::goDashboard else null
                 )
             }
 
+            is Route.Audit -> {
+                if (!r.firstRun) BackHandler { vm.goDashboard() }
+                AuditScreen(
+                    catalogue = vm.audit,
+                    initial = state.debuffs,
+                    firstRun = r.firstRun,
+                    onSave = { vm.saveAudit(it, r.firstRun) },
+                    onBack = if (r.firstRun) null else vm::goDashboard
+                )
+            }
+
             is Route.Dashboard -> {
-                val goal = state.goalEnum
+                val goal = state.primaryGoal
                 Column(modifier = Modifier.fillMaxSize()) {
                     Box(modifier = Modifier.weight(1f)) {
                         DashboardScreen(
@@ -98,11 +118,16 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
                             mission = vm.serveMission(state),
                             reps = vm.repTypes(state),
                             principles = goal?.let { vm.track(it).principles } ?: emptyList(),
+                            routed = vm.routed(state),
+                            routedDone = state.routedDoneToday,
+                            debuffLabel = { id -> vm.audit.debuff(id)?.label ?: "From your audit" },
                             pulse = pulse,
                             onOpen = vm::openChallenge,
                             onOpenMission = vm::openMission,
                             onLogRep = { rep -> vm.logRep(rep.key, rep.friction, rep.label) },
                             onUndoRep = { rep -> vm.unlogRep(rep.key, rep.friction) },
+                            onOpenRoutedCampaign = vm::openRoutedCampaign,
+                            onOpenRoutedRemediation = vm::openRoutedRemediation,
                             onOpenPrinciple = vm::openPrinciple,
                             onAllPrinciples = vm::goPrinciples,
                             onPickGoal = vm::goGoalPicker,
@@ -112,7 +137,7 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
                     }
                     TabBar(
                         current = Tab.TODAY,
-                        onSelect = { if (it == Tab.PROFILE) vm.goProfile() },
+                        onSelect = vm::selectTab,
                         modifier = Modifier.navigationBarsPadding()
                     )
                 }
@@ -129,13 +154,15 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
                             onRecalibrate = vm::goRecalibrate,
                             onChangeGoal = vm::goGoalPicker,
                             onOpenAvatar = vm::goAvatar,
+                            onOpenAudit = vm::goAudit,
+                            onSetBudget = vm::setBudget,
                             onToggleSound = vm::toggleSound,
                             onToggleAmbient = vm::toggleAmbient
                         )
                     }
                     TabBar(
                         current = Tab.PROFILE,
-                        onSelect = { if (it == Tab.TODAY) vm.goDashboard() },
+                        onSelect = vm::selectTab,
                         modifier = Modifier.navigationBarsPadding()
                     )
                 }
@@ -189,10 +216,11 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
             is Route.GoalPicker -> {
                 if (!r.firstRun) BackHandler { vm.goDashboard() }
                 GoalPickerScreen(
-                    current = state.goalEnum,
+                    running = state.running,
                     firstRun = r.firstRun,
                     progressOf = { state.goalState(it) },
-                    onChoose = vm::chooseGoal,
+                    onToggle = vm::toggleGoal,
+                    onConfirm = vm::confirmGoals,
                     onCancel = if (r.firstRun) null else vm::goDashboard
                 )
             }
@@ -289,6 +317,134 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
                         pillar = r.pillar,
                         onClose = { vm.closeTranscendence(r.pillar) }
                     )
+                }
+            }
+
+            is Route.Learn -> {
+                BackHandler { vm.goDashboard() }
+                Column(modifier = Modifier.fillMaxSize()) {
+                    Box(modifier = Modifier.weight(1f)) {
+                        LearnScreen(
+                            curriculum = vm.learn,
+                            catalogue = vm.audit,
+                            dayIndex = vm.dayIndex(state),
+                            debuffs = state.debuffs,
+                            read = state.lessonsRead,
+                            onOpen = vm::openLesson
+                        )
+                    }
+                    TabBar(
+                        current = Tab.LEARN,
+                        onSelect = vm::selectTab,
+                        modifier = Modifier.navigationBarsPadding()
+                    )
+                }
+            }
+
+            is Route.ReadLesson -> {
+                BackHandler { vm.goLearn() }
+                val lesson = vm.learn.byId(r.id)
+                if (lesson == null) {
+                    LaunchedEffect(Unit) { vm.goLearn() }
+                } else {
+                    // Opening it is reading it. A separate "mark as read" that people forget
+                    // to press just makes the counter lie.
+                    LaunchedEffect(r.id) { vm.markLessonRead(r.id) }
+                    Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
+                        LessonScreen(
+                            lesson = lesson,
+                            isRead = r.id in state.lessonsRead,
+                            onAddNote = { vm.newNote(linkLessonId = r.id) },
+                            onBack = vm::goLearn
+                        )
+                    }
+                }
+            }
+
+            is Route.Notes -> {
+                BackHandler { vm.goDashboard() }
+                Column(modifier = Modifier.fillMaxSize()) {
+                    Box(modifier = Modifier.weight(1f)) {
+                        NotesScreen(
+                            notes = state.notes,
+                            dayIndexOf = { note -> vm.dayIndexOfDay(state, note.epochDay) },
+                            onOpen = vm::openNote,
+                            onNew = { vm.newNote() }
+                        )
+                    }
+                    TabBar(
+                        current = Tab.NOTES,
+                        onSelect = vm::selectTab,
+                        modifier = Modifier.navigationBarsPadding()
+                    )
+                }
+            }
+
+            is Route.EditNote -> {
+                BackHandler { vm.goNotes() }
+                val existing = r.id?.let { id -> state.notes.firstOrNull { it.id == id } }
+                val linkedEntry = r.linkLogId?.let { id -> state.log.firstOrNull { it.id == id } }
+                val linkedKind = when {
+                    existing != null -> existing.linkedKind
+                    linkedEntry?.friction == true -> "FRICTION"
+                    linkedEntry != null -> linkedEntry.kind
+                    r.linkLessonId != null -> "LESSON"
+                    else -> ""
+                }
+                val linkedTitle = existing?.linkedTitle
+                    ?: linkedEntry?.title
+                    ?: r.linkLessonId?.let { vm.learn.byId(it)?.title }
+                    ?: ""
+                Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
+                    NoteEditorScreen(
+                        existing = existing,
+                        linkedTitle = linkedTitle,
+                        linkedKind = linkedKind,
+                        onSave = { body, tags ->
+                            vm.saveNote(r.id, body, tags, r.linkLogId, r.linkLessonId)
+                        },
+                        onDelete = r.id?.let { id -> { vm.deleteNote(id) } },
+                        onBack = vm::goNotes
+                    )
+                }
+            }
+
+            is Route.Routed -> {
+                BackHandler { vm.goDashboard() }
+                val today = vm.routed(state)
+                val campaign = today.campaign
+                val fix = today.remediation
+                val served = when {
+                    r.remediation && fix != null ->
+                        fix.toServed(vm.audit.debuff(fix.debuff)?.label ?: "From your audit")
+                    !r.remediation && campaign != null -> campaign.toServed()
+                    else -> null
+                }
+                val id = if (r.remediation) fix?.id else campaign?.id
+                if (served == null || id == null) {
+                    LaunchedEffect(Unit) { vm.goDashboard() }
+                } else {
+                    Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
+                        ChallengeScreen(
+                            served = served,
+                            soundOn = state.soundOn,
+                            ambientOn = state.ambientOn,
+                            onCommit = { minutes ->
+                                vm.completeRouted(
+                                    id = id,
+                                    pillar = served.pillar,
+                                    minutes = minutes,
+                                    title = served.directive,
+                                    remediation = r.remediation
+                                )
+                            },
+                            onFriction = {
+                                vm.frictionRouted(id, served.pillar, served.directive)
+                            },
+                            onSwap = null,
+                            onBack = vm::goDashboard
+                        )
+                    }
                 }
             }
 

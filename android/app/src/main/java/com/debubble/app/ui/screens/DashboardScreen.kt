@@ -29,6 +29,7 @@ import com.debubble.app.data.AppState
 import com.debubble.app.engine.Goal
 import com.debubble.app.engine.Pillar
 import com.debubble.app.engine.Principle
+import com.debubble.app.engine.Routed
 import com.debubble.app.engine.Progress
 import com.debubble.app.engine.RepType
 import com.debubble.app.engine.Served
@@ -67,11 +68,16 @@ fun DashboardScreen(
     mission: Served?,
     reps: List<RepType>,
     principles: List<Principle>,
+    routed: Routed,
+    routedDone: Set<String>,
+    debuffLabel: (String) -> String,
     pulse: Pillar?,
     onOpen: (Pillar) -> Unit,
     onOpenMission: () -> Unit,
     onLogRep: (RepType) -> Unit,
     onUndoRep: (RepType) -> Unit,
+    onOpenRoutedCampaign: () -> Unit,
+    onOpenRoutedRemediation: () -> Unit,
     onOpenPrinciple: (Int) -> Unit,
     onAllPrinciples: () -> Unit,
     onPickGoal: () -> Unit,
@@ -170,7 +176,26 @@ fun DashboardScreen(
                 }
             }
 
-            val goal = state.goalEnum
+            if (!routed.isEmpty) {
+                VSpace(16)
+                SectionHeader("Focus", trailing = routed.rationale.ifBlank { null })
+                routed.campaign?.let { c ->
+                    ChallengeCard(
+                        served = c.toServed(),
+                        done = c.id in routedDone,
+                        onClick = onOpenRoutedCampaign
+                    )
+                }
+                routed.remediation?.let { r ->
+                    ChallengeCard(
+                        served = r.toServed(debuffLabel(r.debuff)),
+                        done = r.id in routedDone,
+                        onClick = onOpenRoutedRemediation
+                    )
+                }
+            }
+
+            val goal = state.primaryGoal
             VSpace(14)
 
             if (goal == null) {
@@ -524,9 +549,10 @@ fun TabBar(
                 modifier = Modifier
                     .clickable(role = Role.Tab) { onSelect(tab) }
                     .semantics { selected = tab == current }
+                    .weight(1f)
                     .heightIn(min = Space.tap)
                     .wrapContentSize(Alignment.Center)
-                    .padding(horizontal = 22.dp, vertical = 4.dp),
+                    .padding(vertical = 4.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(5.dp)
             ) {
@@ -543,5 +569,7 @@ fun TabBar(
 
 enum class Tab(val label: String) {
     TODAY("Today"),
+    LEARN("Learn"),
+    NOTES("Notes"),
     PROFILE("You")
 }

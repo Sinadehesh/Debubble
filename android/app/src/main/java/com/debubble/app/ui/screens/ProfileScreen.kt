@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.debubble.app.data.AppState
 import com.debubble.app.data.LogEntry
+import com.debubble.app.engine.BudgetTier
 import com.debubble.app.engine.Engine
 import com.debubble.app.engine.Goal
 import com.debubble.app.engine.GoalTrack
@@ -43,6 +44,7 @@ import com.debubble.app.ui.components.PillarBar
 import com.debubble.app.ui.components.Pill
 import com.debubble.app.ui.components.ProgressTrack
 import com.debubble.app.ui.components.SecondaryButton
+import com.debubble.app.ui.components.SelectRow
 import com.debubble.app.ui.components.SectionHeader
 import com.debubble.app.ui.components.StatTile
 import com.debubble.app.ui.components.VSpace
@@ -66,6 +68,8 @@ fun ProfileScreen(
     onRecalibrate: () -> Unit,
     onChangeGoal: () -> Unit,
     onOpenAvatar: () -> Unit,
+    onOpenAudit: () -> Unit,
+    onSetBudget: (BudgetTier) -> Unit,
     onToggleSound: () -> Unit,
     onToggleAmbient: () -> Unit
 ) {
@@ -164,6 +168,60 @@ fun ProfileScreen(
                     if (i > 0) Divider()
                     HistoryRow(entry, dayIndex, state)
                 }
+            }
+        }
+
+        VSpace(24)
+        SectionHeader("Your audit", trailing = "${state.debuffs.size} marked")
+        VSpace(10)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = Space.tap)
+                .panel()
+                .clickable(role = Role.Button, onClick = onOpenAudit)
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Glyph(Glyphs.Spark, colour = Ink.Access, size = 20)
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = if (state.debuffs.isEmpty()) "Run your systems audit"
+                    else "${state.debuffs.size} target${if (state.debuffs.size == 1) "" else "s"} marked",
+                    color = Ink.Primary,
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Text(
+                    text = if (state.debuffs.isEmpty())
+                        "Mark specific habits and get challenges and reading for each."
+                    else "Each one gets its own challenges, on rotation.",
+                    color = Ink.Muted,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+            Glyph(Glyphs.ArrowRight, colour = Ink.Muted, size = 18)
+        }
+
+        VSpace(24)
+        SectionHeader("Budget", trailing = state.budget.display)
+        VSpace(6)
+        Text(
+            text = "A hard limit. Nothing above it is ever shown to you.",
+            color = Ink.Muted,
+            style = MaterialTheme.typography.bodyMedium
+        )
+        VSpace(10)
+        Column(verticalArrangement = Arrangement.spacedBy(Space.gap)) {
+            BudgetTier.all.forEach { t ->
+                SelectRow(
+                    label = t.display,
+                    detail = t.detail,
+                    selected = state.budget == t,
+                    single = true,
+                    accent = Ink.Activity,
+                    onToggle = { onSetBudget(t) }
+                )
             }
         }
 

@@ -1,0 +1,1416 @@
+{
+ "challenges": [
+  {
+   "id": "partner_0",
+   "goals": [
+    "PARTNER"
+   ],
+   "do": "Say one true thing about yourself today that you would normally keep back.",
+   "why": "Vulnerability is not confession. It is one honest sentence offered without checking whether it landed well.",
+   "min": 10,
+   "cost": 0,
+   "tier": 0,
+   "exp": 5,
+   "pillar": "SOCIAL",
+   "themes": [
+    "vulnerability"
+   ]
+  },
+  {
+   "id": "partner_1",
+   "goals": [
+    "PARTNER"
+   ],
+   "do": "Write down five things you actually want in a person. Not the polite list — the real one.",
+   "why": "Most people looking for someone have never defined who. You cannot search for an unspecified thing.",
+   "min": 20,
+   "cost": 0,
+   "tier": 0,
+   "exp": 2,
+   "pillar": "ACTIVITY",
+   "themes": [
+    "demographics",
+    "clarity"
+   ]
+  },
+  {
+   "id": "partner_2",
+   "goals": [
+    "PARTNER"
+   ],
+   "do": "Write down where a person like that would actually spend their time, and pick one to go to this week.",
+   "why": "Attraction is a location problem before it is a charisma problem. The right room does most of the work.",
+   "min": 20,
+   "cost": 0,
+   "tier": 0,
+   "exp": 3,
+   "pillar": "ACTIVITY",
+   "themes": [
+    "demographics",
+    "strategy"
+   ]
+  },
+  {
+   "id": "partner_3",
+   "goals": [
+    "PARTNER"
+   ],
+   "do": "Go to that place and stay a full hour, whether or not you speak to anyone.",
+   "why": "Turning up repeatedly is the whole method. Talking to someone is a bonus on the first visit.",
+   "min": 60,
+   "cost": 0,
+   "tier": 0,
+   "exp": 6,
+   "pillar": "ACCESS",
+   "themes": [
+    "demographics",
+    "exposure"
+   ]
+  },
+  {
+   "id": "partner_4",
+   "goals": [
+    "PARTNER"
+   ],
+   "do": "Have a conversation where you do not adjust a single opinion to make someone like you more.",
+   "why": "Neediness is not wanting someone. It is editing yourself in real time to keep them. They can always tell.",
+   "min": 15,
+   "cost": 0,
+   "tier": 0,
+   "exp": 6,
+   "pillar": "SOCIAL",
+   "themes": [
+    "neediness"
+   ]
+  },
+  {
+   "id": "partner_5",
+   "goals": [
+    "PARTNER"
+   ],
+   "do": "Let a message sit unanswered for two hours because you were busy, not as a tactic.",
+   "why": "The difference between calm and games is whether you were actually doing something else. Go and do something else.",
+   "min": 10,
+   "cost": 0,
+   "tier": 0,
+   "exp": 4,
+   "pillar": "ACTIVITY",
+   "themes": [
+    "neediness"
+   ]
+  },
+  {
+   "id": "partner_6",
+   "goals": [
+    "PARTNER"
+   ],
+   "do": "State a preference on a date or in a conversation that risks being the wrong answer.",
+   "why": "Being agreeable is not attractive, it is invisible. Polarising slightly is how anyone remembers you.",
+   "min": 15,
+   "cost": 0,
+   "tier": 0,
+   "exp": 7,
+   "pillar": "SOCIAL",
+   "themes": [
+    "polarization"
+   ]
+  },
+  {
+   "id": "partner_7",
+   "goals": [
+    "PARTNER"
+   ],
+   "do": "Ask someone out with a specific plan, a day and a time.",
+   "why": "Vague invitations are a way of not being refused. They are also a way of not being accepted.",
+   "min": 10,
+   "cost": 0,
+   "tier": 0,
+   "exp": 9,
+   "pillar": "SOCIAL",
+   "themes": [
+    "directness",
+    "rejection"
+   ]
+  },
+  {
+   "id": "partner_8",
+   "goals": [
+    "PARTNER"
+   ],
+   "do": "Spend twenty minutes in a mirror working out which of your clothes actually fit your frame.",
+   "why": "Style is not spending. It is fit, upkeep, and a small number of decisions made once.",
+   "min": 20,
+   "cost": 0,
+   "tier": 0,
+   "exp": 2,
+   "pillar": "ACTIVITY",
+   "themes": [
+    "style"
+   ]
+  },
+  {
+   "id": "partner_9",
+   "goals": [
+    "PARTNER"
+   ],
+   "do": "Go somewhere with music and stay for one whole song without leaving the floor.",
+   "why": "Physical ease in a room where bodies move is a real signal and a trainable one. Nobody is watching you.",
+   "min": 30,
+   "cost": 0,
+   "tier": 0,
+   "exp": 7,
+   "pillar": "ACCESS",
+   "themes": [
+    "physicality",
+    "dancing"
+   ]
+  },
+  {
+   "id": "partner_10",
+   "goals": [
+    "PARTNER"
+   ],
+   "do": "Take a beginner class in something physical — dancing, climbing, martial arts.",
+   "why": "A structured room is the cheapest way to be bad at something physical in public without it meaning anything.",
+   "min": 60,
+   "cost": 15,
+   "tier": 1,
+   "exp": 6,
+   "pillar": "ACTIVITY",
+   "themes": [
+    "physicality",
+    "dancing"
+   ]
+  },
+  {
+   "id": "partner_11",
+   "goals": [
+    "PARTNER"
+   ],
+   "do": "Tell someone you are interested in them, plainly, and accept whatever comes back.",
+   "why": "The plain version is rarer than you think and it works more than you think. It also ends the not-knowing.",
+   "min": 15,
+   "cost": 0,
+   "tier": 0,
+   "exp": 10,
+   "pillar": "SOCIAL",
+   "themes": [
+    "directness",
+    "vulnerability"
+   ]
+  },
+  {
+   "id": "partner_12",
+   "goals": [
+    "PARTNER"
+   ],
+   "do": "Get turned down today, deliberately. Ask for something with a real chance of a no.",
+   "why": "A refusal you went looking for is training. A refusal you stumbled into is a wound. Same event, different frame.",
+   "min": 25,
+   "cost": 0,
+   "tier": 0,
+   "exp": 8,
+   "pillar": "SOCIAL",
+   "themes": [
+    "rejection"
+   ]
+  },
+  {
+   "id": "partner_13",
+   "goals": [
+    "PARTNER"
+   ],
+   "do": "Have a full conversation with someone you find attractive without trying to secure anything.",
+   "why": "The pressure you feel is you trying to close. Remove the close and you will find you are much better at this.",
+   "min": 20,
+   "cost": 0,
+   "tier": 0,
+   "exp": 7,
+   "pillar": "SOCIAL",
+   "themes": [
+    "neediness",
+    "presence"
+   ]
+  },
+  {
+   "id": "friends_14",
+   "goals": [
+    "FRIENDS"
+   ],
+   "do": "Message one person you have not spoken to in over a month. No apology for the gap.",
+   "why": "The apology makes it awkward and invites them to reassure you. Just start talking.",
+   "min": 8,
+   "cost": 0,
+   "tier": 0,
+   "exp": 3,
+   "pillar": "SOCIAL",
+   "themes": [
+    "initiating"
+   ]
+  },
+  {
+   "id": "friends_15",
+   "goals": [
+    "FRIENDS"
+   ],
+   "do": "Invite one person to something specific this week. A time, a place, a plan.",
+   "why": "'We should catch up' is not an invitation. It is a way of feeling like you tried.",
+   "min": 10,
+   "cost": 0,
+   "tier": 0,
+   "exp": 5,
+   "pillar": "SOCIAL",
+   "themes": [
+    "initiating"
+   ]
+  },
+  {
+   "id": "friends_16",
+   "goals": [
+    "FRIENDS"
+   ],
+   "do": "Be the one who suggests the plan in a group chat that has gone quiet.",
+   "why": "Every group has one person who starts things. Groups where nobody does it quietly die.",
+   "min": 10,
+   "cost": 0,
+   "tier": 0,
+   "exp": 4,
+   "pillar": "SOCIAL",
+   "themes": [
+    "initiating",
+    "hosting"
+   ]
+  },
+  {
+   "id": "friends_17",
+   "goals": [
+    "FRIENDS"
+   ],
+   "do": "Host something small at home. Two people, one evening, nothing elaborate.",
+   "why": "Hosting is the fastest route from acquaintance to friend, and the bar is far lower than you are imagining.",
+   "min": 120,
+   "cost": 15,
+   "tier": 1,
+   "exp": 7,
+   "pillar": "SOCIAL",
+   "themes": [
+    "hosting"
+   ]
+  },
+  {
+   "id": "friends_18",
+   "goals": [
+    "FRIENDS"
+   ],
+   "do": "Introduce two people you know who do not know each other.",
+   "why": "Being the connector makes you central to a group without needing to be the loudest person in it.",
+   "min": 15,
+   "cost": 0,
+   "tier": 0,
+   "exp": 5,
+   "pillar": "SOCIAL",
+   "themes": [
+    "community",
+    "hosting"
+   ]
+  },
+  {
+   "id": "friends_19",
+   "goals": [
+    "FRIENDS"
+   ],
+   "do": "Go to the same recurring thing twice in a fortnight — a class, a club, a pub quiz.",
+   "why": "Friendship is repeated unplanned contact. Recurring events manufacture exactly that.",
+   "min": 90,
+   "cost": 10,
+   "tier": 1,
+   "exp": 5,
+   "pillar": "ACCESS",
+   "themes": [
+    "community"
+   ]
+  },
+  {
+   "id": "friends_20",
+   "goals": [
+    "FRIENDS"
+   ],
+   "do": "Remember one detail from a conversation and follow up on it a week later.",
+   "why": "This single habit does more for friendship than any amount of charm. It says: you were actually there.",
+   "min": 8,
+   "cost": 0,
+   "tier": 0,
+   "exp": 3,
+   "pillar": "SOCIAL",
+   "themes": [
+    "depth"
+   ]
+  },
+  {
+   "id": "friends_21",
+   "goals": [
+    "FRIENDS"
+   ],
+   "do": "Ask someone for a small favour, and thank them properly for it.",
+   "why": "Favours build friendship in both directions. Never asking keeps people at a polite distance.",
+   "min": 10,
+   "cost": 0,
+   "tier": 0,
+   "exp": 5,
+   "pillar": "SOCIAL",
+   "themes": [
+    "depth",
+    "reciprocity"
+   ]
+  },
+  {
+   "id": "friends_22",
+   "goals": [
+    "FRIENDS"
+   ],
+   "do": "Tell one friend something that is actually going on with you.",
+   "why": "Groups stay shallow until someone goes first. It is usually not going to be them.",
+   "min": 15,
+   "cost": 0,
+   "tier": 0,
+   "exp": 6,
+   "pillar": "SOCIAL",
+   "themes": [
+    "depth",
+    "vulnerability"
+   ]
+  },
+  {
+   "id": "friends_23",
+   "goals": [
+    "FRIENDS"
+   ],
+   "do": "Turn up to something you were invited to and did not want to go to.",
+   "why": "Attendance is the whole tax on having people. You pay it before you feel like it, not after.",
+   "min": 120,
+   "cost": 0,
+   "tier": 0,
+   "exp": 5,
+   "pillar": "SOCIAL",
+   "themes": [
+    "community"
+   ]
+  },
+  {
+   "id": "friends_24",
+   "goals": [
+    "FRIENDS"
+   ],
+   "do": "Start a recurring thing yourself. Same day, same place, every fortnight. Tell three people.",
+   "why": "Owning the standing invitation makes you the centre of a small community by default.",
+   "min": 45,
+   "cost": 0,
+   "tier": 0,
+   "exp": 7,
+   "pillar": "SOCIAL",
+   "themes": [
+    "hosting",
+    "community"
+   ]
+  },
+  {
+   "id": "friends_25",
+   "goals": [
+    "FRIENDS"
+   ],
+   "do": "Have a conversation with someone in your building or on your street.",
+   "why": "Proximity is the most underused source of friendship there is, and it costs nothing to travel to.",
+   "min": 15,
+   "cost": 0,
+   "tier": 0,
+   "exp": 5,
+   "pillar": "SOCIAL",
+   "themes": [
+    "community",
+    "initiating"
+   ]
+  },
+  {
+   "id": "friends_26",
+   "goals": [
+    "FRIENDS"
+   ],
+   "do": "Cook for someone.",
+   "why": "Feeding people is the oldest version of hosting and it works on everyone.",
+   "min": 90,
+   "cost": 20,
+   "tier": 1,
+   "exp": 6,
+   "pillar": "SOCIAL",
+   "themes": [
+    "hosting"
+   ]
+  },
+  {
+   "id": "friends_27",
+   "goals": [
+    "FRIENDS"
+   ],
+   "do": "Reach out to someone the day after you last saw them, with one specific thing you enjoyed.",
+   "why": "The follow-up is what converts a nice evening into a relationship. Almost nobody does it.",
+   "min": 8,
+   "cost": 0,
+   "tier": 0,
+   "exp": 4,
+   "pillar": "SOCIAL",
+   "themes": [
+    "initiating",
+    "depth"
+   ]
+  },
+  {
+   "id": "interesting_28",
+   "goals": [
+    "INTERESTING"
+   ],
+   "do": "Go somewhere in your own town you have never been, today.",
+   "why": "A life with stories in it is mostly a life with unfamiliar places in it. Start with the free ones.",
+   "min": 45,
+   "cost": 0,
+   "tier": 0,
+   "exp": 3,
+   "pillar": "ACCESS",
+   "themes": [
+    "novelty"
+   ]
+  },
+  {
+   "id": "interesting_29",
+   "goals": [
+    "INTERESTING"
+   ],
+   "do": "Say yes to the next invitation before you have finished reading it.",
+   "why": "The deliberation is where the interesting things die. Beat it by a few seconds.",
+   "min": 10,
+   "cost": 0,
+   "tier": 0,
+   "exp": 5,
+   "pillar": "ACTIVITY",
+   "themes": [
+    "novelty",
+    "action"
+   ]
+  },
+  {
+   "id": "interesting_30",
+   "goals": [
+    "INTERESTING"
+   ],
+   "do": "Do one thing this week you would have to explain to someone.",
+   "why": "If nothing you do needs explaining, there is nothing to say when someone asks what you have been up to.",
+   "min": 90,
+   "cost": 10,
+   "tier": 1,
+   "exp": 5,
+   "pillar": "ACTIVITY",
+   "themes": [
+    "novelty",
+    "stories"
+   ]
+  },
+  {
+   "id": "interesting_31",
+   "goals": [
+    "INTERESTING"
+   ],
+   "do": "Take a different route to somewhere you go every week.",
+   "why": "Novelty is a habit, and it is cheapest to practise on the routes you already walk.",
+   "min": 20,
+   "cost": 0,
+   "tier": 0,
+   "exp": 2,
+   "pillar": "ACCESS",
+   "themes": [
+    "novelty"
+   ]
+  },
+  {
+   "id": "interesting_32",
+   "goals": [
+    "INTERESTING"
+   ],
+   "do": "Write down the last three genuinely interesting things that happened to you. If you cannot fill three, that is the finding.",
+   "why": "This is a measurement, not a judgement. You cannot fix a rate you have not measured.",
+   "min": 15,
+   "cost": 0,
+   "tier": 0,
+   "exp": 1,
+   "pillar": "ACTIVITY",
+   "themes": [
+    "stories",
+    "audit"
+   ]
+  },
+  {
+   "id": "interesting_33",
+   "goals": [
+    "INTERESTING"
+   ],
+   "do": "Go to an event on your own.",
+   "why": "Going alone means you actually attend to the thing, and it removes the requirement that someone else be free.",
+   "min": 120,
+   "cost": 15,
+   "tier": 1,
+   "exp": 7,
+   "pillar": "ACCESS",
+   "themes": [
+    "solo",
+    "novelty"
+   ]
+  },
+  {
+   "id": "interesting_34",
+   "goals": [
+    "INTERESTING"
+   ],
+   "do": "Learn one specific fact about where you live that most people there do not know.",
+   "why": "Specific local knowledge is the cheapest form of being interesting, and it is always relevant.",
+   "min": 25,
+   "cost": 0,
+   "tier": 0,
+   "exp": 1,
+   "pillar": "ACTIVITY",
+   "themes": [
+    "depth",
+    "stories"
+   ]
+  },
+  {
+   "id": "interesting_35",
+   "goals": [
+    "INTERESTING"
+   ],
+   "do": "Spend an afternoon somewhere with no plan and no phone navigation.",
+   "why": "Plans produce outcomes. Wandering produces stories. You need some of both.",
+   "min": 150,
+   "cost": 0,
+   "tier": 0,
+   "exp": 5,
+   "pillar": "ACCESS",
+   "themes": [
+    "novelty",
+    "solo"
+   ]
+  },
+  {
+   "id": "interesting_36",
+   "goals": [
+    "INTERESTING"
+   ],
+   "do": "Talk to someone whose life looks nothing like yours, and ask about it.",
+   "why": "Most people's range of acquaintance is a single demographic. Widening it is the fastest way to widen yourself.",
+   "min": 20,
+   "cost": 0,
+   "tier": 0,
+   "exp": 6,
+   "pillar": "SOCIAL",
+   "themes": [
+    "range"
+   ]
+  },
+  {
+   "id": "interesting_37",
+   "goals": [
+    "INTERESTING"
+   ],
+   "do": "Book something now that happens in a month.",
+   "why": "A future you are looking forward to changes the present. Having nothing booked is its own condition.",
+   "min": 20,
+   "cost": 25,
+   "tier": 1,
+   "exp": 3,
+   "pillar": "ACTIVITY",
+   "themes": [
+    "novelty",
+    "anticipation"
+   ]
+  },
+  {
+   "id": "interesting_38",
+   "goals": [
+    "INTERESTING"
+   ],
+   "do": "Do the thing you keep saying you would love to do 'one day'.",
+   "why": "One day is not a day of the week. Pick the actual date.",
+   "min": 180,
+   "cost": 60,
+   "tier": 2,
+   "exp": 6,
+   "pillar": "ACTIVITY",
+   "themes": [
+    "novelty",
+    "action"
+   ]
+  },
+  {
+   "id": "interesting_39",
+   "goals": [
+    "INTERESTING"
+   ],
+   "do": "Take a train to a town you have never visited and spend the day there.",
+   "why": "Range is measurable and it compounds. Every unfamiliar place makes the next one easier.",
+   "min": 300,
+   "cost": 30,
+   "tier": 1,
+   "exp": 6,
+   "pillar": "ACCESS",
+   "themes": [
+    "range",
+    "novelty"
+   ]
+  },
+  {
+   "id": "interesting_40",
+   "goals": [
+    "INTERESTING"
+   ],
+   "do": "Tell someone about something you did this week, out loud, as a story with an ending.",
+   "why": "Having done things is half. Being able to tell them is the half most people skip.",
+   "min": 15,
+   "cost": 0,
+   "tier": 0,
+   "exp": 4,
+   "pillar": "SOCIAL",
+   "themes": [
+    "stories"
+   ]
+  },
+  {
+   "id": "interesting_41",
+   "goals": [
+    "INTERESTING"
+   ],
+   "do": "Change one fixed thing about your week for a fortnight.",
+   "why": "Routine is not the enemy. An unexamined routine that has quietly shrunk your world is.",
+   "min": 30,
+   "cost": 0,
+   "tier": 0,
+   "exp": 4,
+   "pillar": "ACTIVITY",
+   "themes": [
+    "novelty",
+    "audit"
+   ]
+  },
+  {
+   "id": "intimacy_42",
+   "goals": [
+    "INTIMACY"
+   ],
+   "do": "Name one thing you want, out loud, to one person.",
+   "why": "Wanting things silently and hoping they are guessed is the most common failure here, by a distance.",
+   "min": 10,
+   "cost": 0,
+   "tier": 0,
+   "exp": 6,
+   "pillar": "SOCIAL",
+   "themes": [
+    "asking",
+    "vulnerability"
+   ]
+  },
+  {
+   "id": "intimacy_43",
+   "goals": [
+    "INTIMACY"
+   ],
+   "do": "Write down what you actually want that you have never said to anyone.",
+   "why": "You cannot say it to someone else until you can write it down alone.",
+   "min": 20,
+   "cost": 0,
+   "tier": 0,
+   "exp": 3,
+   "pillar": "ACTIVITY",
+   "themes": [
+    "clarity",
+    "vulnerability"
+   ]
+  },
+  {
+   "id": "intimacy_44",
+   "goals": [
+    "INTIMACY"
+   ],
+   "do": "Say no to something you would normally go along with.",
+   "why": "Consent runs both directions. Someone who cannot decline cannot really accept either.",
+   "min": 10,
+   "cost": 0,
+   "tier": 0,
+   "exp": 6,
+   "pillar": "SOCIAL",
+   "themes": [
+    "boundaries"
+   ]
+  },
+  {
+   "id": "intimacy_45",
+   "goals": [
+    "INTIMACY"
+   ],
+   "do": "Ask someone what they want, and then actually be quiet.",
+   "why": "Most people are never asked this directly. The silence afterwards is what makes the answer possible.",
+   "min": 15,
+   "cost": 0,
+   "tier": 0,
+   "exp": 6,
+   "pillar": "SOCIAL",
+   "themes": [
+    "asking",
+    "listening"
+   ]
+  },
+  {
+   "id": "intimacy_46",
+   "goals": [
+    "INTIMACY"
+   ],
+   "do": "Hold eye contact with someone for a full five seconds longer than is comfortable.",
+   "why": "Physical confidence is built in seconds like these, not in preparation.",
+   "min": 10,
+   "cost": 0,
+   "tier": 0,
+   "exp": 7,
+   "pillar": "SOCIAL",
+   "themes": [
+    "physicality"
+   ]
+  },
+  {
+   "id": "intimacy_47",
+   "goals": [
+    "INTIMACY"
+   ],
+   "do": "Give one specific, honest compliment about something that is not appearance.",
+   "why": "Specific and non-physical is the version that lands as attention rather than as an approach.",
+   "min": 8,
+   "cost": 0,
+   "tier": 0,
+   "exp": 4,
+   "pillar": "SOCIAL",
+   "themes": [
+    "warmth"
+   ]
+  },
+  {
+   "id": "intimacy_48",
+   "goals": [
+    "INTIMACY"
+   ],
+   "do": "Have one conversation about what you both actually expect, before assuming.",
+   "why": "The awkward conversation before is always shorter than the one after.",
+   "min": 25,
+   "cost": 0,
+   "tier": 0,
+   "exp": 8,
+   "pillar": "SOCIAL",
+   "themes": [
+    "directness",
+    "boundaries"
+   ]
+  },
+  {
+   "id": "intimacy_49",
+   "goals": [
+    "INTIMACY"
+   ],
+   "do": "Spend twenty minutes on your body with no goal — stretching, walking, moving.",
+   "why": "Comfort in your own body is upstream of comfort with anyone else's.",
+   "min": 20,
+   "cost": 0,
+   "tier": 0,
+   "exp": 2,
+   "pillar": "ACTIVITY",
+   "themes": [
+    "physicality"
+   ]
+  },
+  {
+   "id": "intimacy_50",
+   "goals": [
+    "INTIMACY"
+   ],
+   "do": "Say the thing you were about to soften, without softening it.",
+   "why": "The softening is where the meaning goes. Say the plain version once and watch what happens.",
+   "min": 10,
+   "cost": 0,
+   "tier": 0,
+   "exp": 7,
+   "pillar": "SOCIAL",
+   "themes": [
+    "directness"
+   ]
+  },
+  {
+   "id": "intimacy_51",
+   "goals": [
+    "INTIMACY"
+   ],
+   "do": "Tell someone about something you find difficult, without apologising for saying it.",
+   "why": "The apology tells them the thing you shared was a burden. It was not.",
+   "min": 15,
+   "cost": 0,
+   "tier": 0,
+   "exp": 7,
+   "pillar": "SOCIAL",
+   "themes": [
+    "vulnerability"
+   ]
+  },
+  {
+   "id": "intimacy_52",
+   "goals": [
+    "INTIMACY"
+   ],
+   "do": "Ask for feedback about something and do not defend yourself while you hear it.",
+   "why": "Being able to hear it without flinching is what makes the next honest conversation possible.",
+   "min": 20,
+   "cost": 0,
+   "tier": 0,
+   "exp": 7,
+   "pillar": "SOCIAL",
+   "themes": [
+    "listening",
+    "resilience"
+   ]
+  },
+  {
+   "id": "intimacy_53",
+   "goals": [
+    "INTIMACY"
+   ],
+   "do": "Initiate a plan with someone you are already close to, rather than waiting.",
+   "why": "Initiating is a skill, and it does not switch on by itself once things are established.",
+   "min": 15,
+   "cost": 0,
+   "tier": 0,
+   "exp": 5,
+   "pillar": "SOCIAL",
+   "themes": [
+    "asking"
+   ]
+  },
+  {
+   "id": "intimacy_54",
+   "goals": [
+    "INTIMACY"
+   ],
+   "do": "Notice one thing you assumed the other person wanted, and ask instead.",
+   "why": "Assumption is comfortable and almost always slightly wrong.",
+   "min": 10,
+   "cost": 0,
+   "tier": 0,
+   "exp": 5,
+   "pillar": "SOCIAL",
+   "themes": [
+    "asking",
+    "listening"
+   ]
+  },
+  {
+   "id": "intimacy_55",
+   "goals": [
+    "INTIMACY"
+   ],
+   "do": "Say what you liked, specifically, after something good happens.",
+   "why": "Naming it afterwards is how it happens again. Silence is how it does not.",
+   "min": 10,
+   "cost": 0,
+   "tier": 0,
+   "exp": 6,
+   "pillar": "SOCIAL",
+   "themes": [
+    "directness",
+    "warmth"
+   ]
+  },
+  {
+   "id": "craft_56",
+   "goals": [
+    "CRAFT"
+   ],
+   "do": "Spend thirty uninterrupted minutes on the thing. Phone in another room.",
+   "why": "Uninterrupted is the whole variable. Thirty real minutes beats three fragmented hours.",
+   "min": 30,
+   "cost": 0,
+   "tier": 0,
+   "exp": 1,
+   "pillar": "ACTIVITY",
+   "themes": [
+    "practice"
+   ]
+  },
+  {
+   "id": "craft_57",
+   "goals": [
+    "CRAFT"
+   ],
+   "do": "Find out what the standard beginner mistake is, and check whether you are making it.",
+   "why": "Twenty minutes of finding out saves months of practising something wrong.",
+   "min": 25,
+   "cost": 0,
+   "tier": 0,
+   "exp": 1,
+   "pillar": "ACTIVITY",
+   "themes": [
+    "practice",
+    "learning"
+   ]
+  },
+  {
+   "id": "craft_58",
+   "goals": [
+    "CRAFT"
+   ],
+   "do": "Show your work to one person.",
+   "why": "Work nobody has seen improves slowly. It is the showing that does it, not the feedback.",
+   "min": 15,
+   "cost": 0,
+   "tier": 0,
+   "exp": 5,
+   "pillar": "SOCIAL",
+   "themes": [
+    "showing"
+   ]
+  },
+  {
+   "id": "craft_59",
+   "goals": [
+    "CRAFT"
+   ],
+   "do": "Finish something badly rather than leaving it unfinished.",
+   "why": "Finished bad work teaches. Unfinished good work does not exist.",
+   "min": 60,
+   "cost": 0,
+   "tier": 0,
+   "exp": 3,
+   "pillar": "ACTIVITY",
+   "themes": [
+    "practice",
+    "shipping"
+   ]
+  },
+  {
+   "id": "craft_60",
+   "goals": [
+    "CRAFT"
+   ],
+   "do": "Practise the specific part you are worst at, not the part you enjoy.",
+   "why": "Practising your strengths is entertainment. Practising the weak part is the thing that moves.",
+   "min": 40,
+   "cost": 0,
+   "tier": 0,
+   "exp": 2,
+   "pillar": "ACTIVITY",
+   "themes": [
+    "practice"
+   ]
+  },
+  {
+   "id": "craft_61",
+   "goals": [
+    "CRAFT"
+   ],
+   "do": "Find one other person who does this and talk to them about it.",
+   "why": "A craft with nobody to talk about it with is a hobby that ends quietly in about four months.",
+   "min": 30,
+   "cost": 0,
+   "tier": 0,
+   "exp": 5,
+   "pillar": "SOCIAL",
+   "themes": [
+    "community"
+   ]
+  },
+  {
+   "id": "craft_62",
+   "goals": [
+    "CRAFT"
+   ],
+   "do": "Buy the one piece of equipment that has genuinely been holding you back.",
+   "why": "Only one. Buying gear is the most popular way of avoiding practice.",
+   "min": 40,
+   "cost": 60,
+   "tier": 2,
+   "exp": 3,
+   "pillar": "ACTIVITY",
+   "themes": [
+    "equipment"
+   ]
+  },
+  {
+   "id": "craft_63",
+   "goals": [
+    "CRAFT"
+   ],
+   "do": "Set a fixed weekly slot for it and defend it for a month.",
+   "why": "Consistency beats intensity here more than almost anywhere else.",
+   "min": 20,
+   "cost": 0,
+   "tier": 0,
+   "exp": 2,
+   "pillar": "ACTIVITY",
+   "themes": [
+    "practice",
+    "habit"
+   ]
+  },
+  {
+   "id": "craft_64",
+   "goals": [
+    "CRAFT"
+   ],
+   "do": "Post or share one piece of work publicly.",
+   "why": "Public is a different threshold from private, and it changes what you make.",
+   "min": 25,
+   "cost": 0,
+   "tier": 0,
+   "exp": 7,
+   "pillar": "SOCIAL",
+   "themes": [
+    "showing",
+    "shipping"
+   ]
+  },
+  {
+   "id": "craft_65",
+   "goals": [
+    "CRAFT"
+   ],
+   "do": "Go to a class, meet-up or workshop for it.",
+   "why": "One room of people who are better than you is worth a month of tutorials.",
+   "min": 120,
+   "cost": 25,
+   "tier": 1,
+   "exp": 6,
+   "pillar": "ACTIVITY",
+   "themes": [
+    "community",
+    "learning"
+   ]
+  },
+  {
+   "id": "craft_66",
+   "goals": [
+    "CRAFT"
+   ],
+   "do": "Copy something good, deliberately, all the way through.",
+   "why": "Copying is how everyone learns and the only stage people are embarrassed to admit to.",
+   "min": 60,
+   "cost": 0,
+   "tier": 0,
+   "exp": 2,
+   "pillar": "ACTIVITY",
+   "themes": [
+    "learning",
+    "practice"
+   ]
+  },
+  {
+   "id": "craft_67",
+   "goals": [
+    "CRAFT"
+   ],
+   "do": "Teach one thing you know to someone who does not.",
+   "why": "Teaching is the fastest audit of what you actually understand.",
+   "min": 30,
+   "cost": 0,
+   "tier": 0,
+   "exp": 5,
+   "pillar": "SOCIAL",
+   "themes": [
+    "showing",
+    "community"
+   ]
+  },
+  {
+   "id": "craft_68",
+   "goals": [
+    "CRAFT"
+   ],
+   "do": "Give yourself a real deadline for a real thing, and tell someone about it.",
+   "why": "A deadline nobody knows about is a wish.",
+   "min": 20,
+   "cost": 0,
+   "tier": 0,
+   "exp": 4,
+   "pillar": "SOCIAL",
+   "themes": [
+    "shipping"
+   ]
+  },
+  {
+   "id": "craft_69",
+   "goals": [
+    "CRAFT"
+   ],
+   "do": "Do it on a day you do not feel like it.",
+   "why": "The days you do not feel like it are the entire difference between someone who does this and someone who did.",
+   "min": 40,
+   "cost": 0,
+   "tier": 0,
+   "exp": 3,
+   "pillar": "ACTIVITY",
+   "themes": [
+    "habit",
+    "practice"
+   ]
+  },
+  {
+   "id": "bridge_friends_partner_70",
+   "goals": [
+    "FRIENDS",
+    "PARTNER"
+   ],
+   "do": "Host something small and invite two people you do not know well.",
+   "why": "One evening satisfies both: you are hosting, and you are meeting people outside your usual circle.",
+   "min": 150,
+   "cost": 20,
+   "tier": 1,
+   "exp": 7,
+   "pillar": "SOCIAL",
+   "themes": [
+    "hosting",
+    "demographics"
+   ]
+  },
+  {
+   "id": "bridge_friends_partner_71",
+   "goals": [
+    "FRIENDS",
+    "PARTNER"
+   ],
+   "do": "Go to a social event with someone you know, and talk to three people they brought.",
+   "why": "A shared friend is the warmest possible introduction and the easiest room to widen.",
+   "min": 120,
+   "cost": 10,
+   "tier": 1,
+   "exp": 6,
+   "pillar": "SOCIAL",
+   "themes": [
+    "community",
+    "demographics"
+   ]
+  },
+  {
+   "id": "bridge_friends_interesting_72",
+   "goals": [
+    "FRIENDS",
+    "INTERESTING"
+   ],
+   "do": "Take someone with you to a place neither of you has been.",
+   "why": "The unfamiliar place gives you something to talk about, which is what makes new friendships survive the second meeting.",
+   "min": 120,
+   "cost": 15,
+   "tier": 1,
+   "exp": 5,
+   "pillar": "ACCESS",
+   "themes": [
+    "novelty",
+    "initiating"
+   ]
+  },
+  {
+   "id": "bridge_friends_interesting_73",
+   "goals": [
+    "FRIENDS",
+    "INTERESTING"
+   ],
+   "do": "Start a group thing around something you actually like doing.",
+   "why": "The best recurring events are built on a real interest. Nobody keeps turning up to a generic one.",
+   "min": 60,
+   "cost": 0,
+   "tier": 0,
+   "exp": 7,
+   "pillar": "SOCIAL",
+   "themes": [
+    "hosting",
+    "novelty"
+   ]
+  },
+  {
+   "id": "bridge_partner_interesting_74",
+   "goals": [
+    "PARTNER",
+    "INTERESTING"
+   ],
+   "do": "Go to something you would enjoy alone, in a room where you might meet someone.",
+   "why": "Doing something you would want to do anyway removes the desperation and puts you in the right room. Both at once.",
+   "min": 120,
+   "cost": 20,
+   "tier": 1,
+   "exp": 6,
+   "pillar": "ACCESS",
+   "themes": [
+    "demographics",
+    "novelty"
+   ]
+  },
+  {
+   "id": "bridge_partner_interesting_75",
+   "goals": [
+    "PARTNER",
+    "INTERESTING"
+   ],
+   "do": "Learn one physical thing in a class with other people in it.",
+   "why": "Dancing, climbing, anything. Physical confidence, a new skill, and a recurring room full of people.",
+   "min": 90,
+   "cost": 20,
+   "tier": 1,
+   "exp": 6,
+   "pillar": "ACTIVITY",
+   "themes": [
+    "physicality",
+    "novelty"
+   ]
+  },
+  {
+   "id": "bridge_partner_intimacy_76",
+   "goals": [
+    "PARTNER",
+    "INTIMACY"
+   ],
+   "do": "Say plainly what you want from the thing you are already in.",
+   "why": "Both campaigns fail the same way — silently, from something never said out loud.",
+   "min": 20,
+   "cost": 0,
+   "tier": 0,
+   "exp": 8,
+   "pillar": "SOCIAL",
+   "themes": [
+    "directness",
+    "asking"
+   ]
+  },
+  {
+   "id": "bridge_partner_intimacy_77",
+   "goals": [
+    "PARTNER",
+    "INTIMACY"
+   ],
+   "do": "Have the conversation you have been rehearsing, today, unrehearsed.",
+   "why": "The rehearsal is avoidance wearing preparation's coat.",
+   "min": 25,
+   "cost": 0,
+   "tier": 0,
+   "exp": 8,
+   "pillar": "SOCIAL",
+   "themes": [
+    "directness",
+    "vulnerability"
+   ]
+  },
+  {
+   "id": "bridge_friends_intimacy_78",
+   "goals": [
+    "FRIENDS",
+    "INTIMACY"
+   ],
+   "do": "Tell one person something true that you have been holding.",
+   "why": "Depth in friendship and depth in intimacy are the same muscle, and it is worked the same way.",
+   "min": 20,
+   "cost": 0,
+   "tier": 0,
+   "exp": 7,
+   "pillar": "SOCIAL",
+   "themes": [
+    "vulnerability",
+    "depth"
+   ]
+  },
+  {
+   "id": "bridge_craft_friends_79",
+   "goals": [
+    "CRAFT",
+    "FRIENDS"
+   ],
+   "do": "Bring someone into the thing you are learning — invite them along or teach them a bit.",
+   "why": "Shared projects make friendships that survive people moving away. Very little else does.",
+   "min": 90,
+   "cost": 0,
+   "tier": 0,
+   "exp": 5,
+   "pillar": "SOCIAL",
+   "themes": [
+    "community",
+    "showing"
+   ]
+  },
+  {
+   "id": "bridge_craft_interesting_80",
+   "goals": [
+    "CRAFT",
+    "INTERESTING"
+   ],
+   "do": "Take the craft somewhere new — a different place, a different setting.",
+   "why": "Practice and range at once, and the change of setting usually improves the work.",
+   "min": 120,
+   "cost": 10,
+   "tier": 1,
+   "exp": 4,
+   "pillar": "ACCESS",
+   "themes": [
+    "practice",
+    "novelty"
+   ]
+  },
+  {
+   "id": "bridge_craft_partner_81",
+   "goals": [
+    "CRAFT",
+    "PARTNER"
+   ],
+   "do": "Go to a class or meet-up for your craft, and talk to two people there.",
+   "why": "The room already shares your interest. That is the hardest part of meeting someone, solved for free.",
+   "min": 120,
+   "cost": 25,
+   "tier": 1,
+   "exp": 6,
+   "pillar": "SOCIAL",
+   "themes": [
+    "community",
+    "demographics"
+   ]
+  },
+  {
+   "id": "bridge_interesting_intimacy_82",
+   "goals": [
+    "INTERESTING",
+    "INTIMACY"
+   ],
+   "do": "Do something slightly outside your comfort zone with someone you are close to.",
+   "why": "Shared novelty is what keeps closeness from flattening into routine.",
+   "min": 120,
+   "cost": 20,
+   "tier": 1,
+   "exp": 5,
+   "pillar": "ACTIVITY",
+   "themes": [
+    "novelty",
+    "physicality"
+   ]
+  },
+  {
+   "id": "bridge_craft_intimacy_83",
+   "goals": [
+    "CRAFT",
+    "INTIMACY"
+   ],
+   "do": "Show your unfinished work to someone whose opinion you actually care about.",
+   "why": "Being seen mid-effort is more exposing than being seen finished, and it is the exposure that matters.",
+   "min": 25,
+   "cost": 0,
+   "tier": 0,
+   "exp": 7,
+   "pillar": "SOCIAL",
+   "themes": [
+    "showing",
+    "vulnerability"
+   ]
+  }
+ ]
+}

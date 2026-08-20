@@ -14,10 +14,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
@@ -54,13 +50,13 @@ import com.debubble.app.ui.theme.accent
  */
 @Composable
 fun GoalPickerScreen(
-    current: Goal?,
+    running: Set<String>,
     firstRun: Boolean,
     progressOf: (Goal) -> GoalState,
-    onChoose: (Goal) -> Unit,
+    onToggle: (Goal) -> Unit,
+    onConfirm: () -> Unit,
     onCancel: (() -> Unit)?
 ) {
-    var chosen by remember { mutableStateOf(current) }
 
     Column(
         modifier = Modifier
@@ -79,24 +75,30 @@ fun GoalPickerScreen(
                 .padding(horizontal = Space.gutter)
         ) {
             Text(
-                text = if (firstRun) "What do you actually want?" else "Pick a different one.",
+                text = if (firstRun) "What do you actually want?" else "What are you working on?",
                 color = Ink.Primary,
                 style = MaterialTheme.typography.displayMedium
             )
             VSpace(12)
             Text(
-                text = "The daily challenges grow your bubble in general. A goal points that " +
-                    "at something specific: 30 steps, daily attempt targets and short reads " +
-                    "of its own. Switch whenever you want — nothing is lost.",
+                text = "Pick as many as you want. They run at the same time and take turns, " +
+                    "and where two of them overlap you get a single challenge that counts " +
+                    "for both.",
                 color = Ink.Secondary,
                 style = MaterialTheme.typography.bodyLarge
+            )
+            VSpace(8)
+            Text(
+                text = "Switching one off keeps everything it earned. Nothing is ever lost.",
+                color = Ink.Muted,
+                style = MaterialTheme.typography.bodyMedium
             )
             VSpace(22)
 
             Goal.all.forEach { goal ->
                 val gs = progressOf(goal)
                 val started = gs.completed > 0
-                val on = goal == chosen
+                val on = goal.name in running
                 val accent = goal.homePillar.accent
 
                 Column(
@@ -104,7 +106,7 @@ fun GoalPickerScreen(
                         .fillMaxWidth()
                         .padding(bottom = Space.gap)
                         .selectablePanel(on, accent, RoundedCornerShape(Space.radiusLarge))
-                        .clickable(role = Role.RadioButton) { chosen = goal }
+                        .clickable(role = Role.Checkbox) { onToggle(goal) }
                         .semantics {
                             stateDescription = if (on) "Selected" else "Not selected"
                         }
@@ -115,7 +117,7 @@ fun GoalPickerScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(11.dp)
                     ) {
-                        CheckBox(selected = on, accent = accent, round = true)
+                        CheckBox(selected = on, accent = accent)
                         Text(
                             text = goal.display,
                             modifier = Modifier.weight(1f),
@@ -149,11 +151,14 @@ fun GoalPickerScreen(
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             PrimaryButton(
-                text = chosen?.let { "Start: ${it.display}" } ?: "Pick one to continue",
-                accent = chosen?.homePillar?.accent ?: Ink.Access,
-                enabled = chosen != null
-            ) { chosen?.let(onChoose) }
-            if (onCancel != null) TextAction("Cancel") { onCancel() }
+                text = when (running.size) {
+                    0 -> "Pick at least one to continue"
+                    1 -> "Start"
+                    else -> "Start all ${running.size}"
+                },
+                enabled = running.isNotEmpty()
+            ) { onConfirm() }
+            if (onCancel != null) TextAction("Done") { onCancel() }
         }
     }
 }

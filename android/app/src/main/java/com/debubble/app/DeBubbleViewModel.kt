@@ -6,7 +6,18 @@ import androidx.lifecycle.viewModelScope
 import com.debubble.app.data.AppState
 import com.debubble.app.data.LogEntry
 import com.debubble.app.data.Repository
+import com.debubble.app.data.Note
+import com.debubble.app.data.Notes
+import com.debubble.app.engine.AuditCatalogue
 import com.debubble.app.engine.Baseline
+import com.debubble.app.engine.BudgetTier
+import com.debubble.app.engine.CampaignPool
+import com.debubble.app.engine.LearnCurriculum
+import com.debubble.app.engine.Remediation
+import com.debubble.app.engine.RemediationPool
+import com.debubble.app.engine.Lesson
+import com.debubble.app.engine.Routed
+import com.debubble.app.engine.Router
 import com.debubble.app.engine.Calibration
 import com.debubble.app.engine.Copy
 import com.debubble.app.engine.Curriculum
@@ -20,6 +31,7 @@ import com.debubble.app.engine.Pillar
 import com.debubble.app.engine.Progress
 import com.debubble.app.engine.Served
 import com.debubble.app.ui.components.RingState
+import com.debubble.app.ui.screens.Tab
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -52,6 +64,16 @@ sealed interface Route {
     data class Transcendence(val pillar: Pillar) : Route
     /** Dressing the avatar. */
     data object AvatarStudio : Route
+    /** The Systems Audit — flagging behaviours to work on. */
+    data class Audit(val firstRun: Boolean) : Route
+    /** The knowledge base. */
+    data object Learn : Route
+    data class ReadLesson(val id: String) : Route
+    /** The journal. */
+    data object Notes : Route
+    data class EditNote(val id: Long?, val linkLogId: Long?, val linkLessonId: String?) : Route
+    /** A routed extra — a campaign challenge or a remediation. */
+    data class Routed(val remediation: Boolean) : Route
 }
 
 class DeBubbleViewModel(app: Application) : AndroidViewModel(app) {
@@ -63,6 +85,12 @@ class DeBubbleViewModel(app: Application) : AndroidViewModel(app) {
 
     /** The five goal campaigns, likewise. */
     val goals: Map<Goal, GoalTrack> = repo.loadGoals()
+
+    /** The Systems Audit catalogue, its remediation pools, the campaign pool and Learn. */
+    val audit: AuditCatalogue = repo.loadAudit()
+    val remediation: RemediationPool = repo.loadRemediation(audit)
+    val campaignPool: CampaignPool = repo.loadCampaignPool()
+    val learn: LearnCurriculum = repo.loadLearn()
 
     fun track(goal: Goal): GoalTrack = goals.getValue(goal)
 
@@ -89,7 +117,8 @@ class DeBubbleViewModel(app: Application) : AndroidViewModel(app) {
             _route.value = when {
                 !loaded.introSeen -> Route.Intro
                 !loaded.onboarded -> Route.Calibration
-                loaded.goalEnum == null -> Route.GoalPicker(firstRun = true)
+                !loaded.auditDone -> Route.Audit(firstRun = true)
+                loaded.running.isEmpty() -> Route.GoalPicker(firstRun = true)
                 else -> Route.Dashboard
             }
         }
@@ -112,7 +141,7 @@ class DeBubbleViewModel(app: Application) : AndroidViewModel(app) {
      * are shared with pillar challenges rather than reimplemented.
      */
     fun serveMission(s: AppState): Served? {
-        val goal = s.goalEnum ?: return null
+        val goal = s.primaryGoal ?: return null
         val gs = s.goalState(goal)
         if (Goals.isComplete(gs)) return null
         val t = track(goal)
@@ -139,16 +168,57 @@ class DeBubbleViewModel(app: Application) : AndroidViewModel(app) {
             daysSinceActive = s.daysSinceActive(today())
         )
 
-    /** Rep types available today, empty when no campaign is active. */
-    fun repTypes(s: AppState) = s.goalEnum?.let { track(it).reps } ?: emptyList()
+    /**
+     * Rep types available today.
+     *
+     * Drawn from every running campaign, de-duplicated by key. Someone running two campaigns
+     * that both count conversations should see one counter, not two that mean the same thing.
+     */
+    fun repTypes(s: AppState) = s.runningGoals
+        .flatMap { track(it).reps }
+        .distinctBy { it.key }
 
     /** How many reps today's mission asks for. Zero means no target, reps still welcome. */
     fun repTargetToday(s: AppState): Int = serveMission(s)?.repTarget ?: 0
+
+    // ------------------------------------------------------- routing: the extra two
+
+    /**
+     * Today's routed pair: one campaign challenge and one remediation.
+     *
+     * Capped at two by [Router]. With five campaigns and forty-eight audit items available,
+     * an uncapped router would hand someone fourteen things on a Tuesday and lose them.
+     */
+    fun routed(s: AppState): Routed = Router.route(
+        day = dayIndex(s),
+        activeGoals = s.running,
+        debuffs = audit.known(s.debuffs),
+        budget = s.budget,
+        pool = campaignPool,
+        remediation = remediation,
+        clearedRemediation = s.clearedRemediation,
+        clearedCampaign = s.clearedCampaign
+    )
 
     // ------------------------------------------------------------------ navigation
 
     fun goDashboard() { _route.value = Route.Dashboard }
     fun goAvatar() { _route.value = Route.AvatarStudio }
+    fun goAudit() { _route.value = Route.Audit(firstRun = false) }
+
+    /** The four-tab bar. One entry point rather than four near-identical lambdas. */
+    fun selectTab(tab: Tab) {
+        _route.value = when (tab) {
+            Tab.TODAY -> Route.Dashboard
+            Tab.LEARN -> Route.Learn
+            Tab.NOTES -> Route.Notes
+            Tab.PROFILE -> Route.Profile
+        }
+    }
+
+    /** Which day of the user's run a given epoch day was. Used by the Notes list. */
+    fun dayIndexOfDay(s: AppState, epochDay: Long): Long =
+        if (s.startedDay == 0L) 1L else (epochDay - s.startedDay + 1).coerceAtLeast(1L)
     fun goProfile() { _route.value = Route.Profile }
     fun goRecalibrate() { _route.value = Route.Calibration }
     fun goGoalPicker() { _route.value = Route.GoalPicker(firstRun = false) }
@@ -464,6 +534,216 @@ class DeBubbleViewModel(app: Application) : AndroidViewModel(app) {
      *  what is already unlocked, and a saved choice is never taken away. */
     fun setAvatar(avatar: AvatarState) {
         viewModelScope.launch { repo.update { it.copy(avatar = avatar) } }
+    }
+
+    // ------------------------------------------------------------ the Systems Audit
+
+    /**
+     * Save the audit.
+     *
+     * Selections are filtered against the catalogue on the way in, so a saved id from an
+     * older build that no longer exists cannot silently starve the remediation rotation.
+     */
+    fun saveAudit(selected: Set<String>, firstRun: Boolean) {
+        viewModelScope.launch {
+            repo.update { it.copy(debuffs = audit.known(selected), auditDone = true) }
+            _route.value =
+                if (firstRun) Route.GoalPicker(firstRun = true) else Route.Dashboard
+        }
+    }
+
+    fun setBudget(tier: BudgetTier) {
+        viewModelScope.launch { repo.update { it.copy(budgetLevel = tier.level) } }
+    }
+
+    // ------------------------------------------------------------ campaigns, in parallel
+
+    /**
+     * Turn a campaign on or off.
+     *
+     * Switching one off keeps every step, rep and reading it accumulated, so it can be
+     * resumed months later exactly where it stopped. Nothing is ever discarded.
+     */
+    fun toggleGoal(goal: Goal) {
+        viewModelScope.launch {
+            repo.update { s ->
+                val now = s.running
+                val next = if (goal.name in now) now - goal.name else now + goal.name
+                s.copy(
+                    activeGoals = next,
+                    goal = next.minOrNull(),
+                    goalStates = if (s.goalStates.containsKey(goal.name)) s.goalStates
+                    else s.goalStates + (goal.name to GoalState())
+                ).rolledTo(today())
+            }
+        }
+    }
+
+    /** Leave the picker. Only reachable once at least one campaign is running. */
+    fun confirmGoals() {
+        viewModelScope.launch {
+            if (repo.state.first().running.isEmpty()) return@launch
+            _route.value = Route.Dashboard
+        }
+    }
+
+    // ------------------------------------------------------------------ routed extras
+
+    fun openRoutedCampaign() { _route.value = Route.Routed(remediation = false) }
+    fun openRoutedRemediation() { _route.value = Route.Routed(remediation = true) }
+
+    /**
+     * Clear a routed extra.
+     *
+     * Both kinds pay the same XP as a pillar challenge and write the same kind of log line,
+     * because from the user's side they were the same act. The only difference is that the
+     * id is recorded so the router does not serve it again.
+     */
+    fun completeRouted(
+        id: String,
+        pillar: Pillar,
+        minutes: Int,
+        title: String,
+        remediation: Boolean
+    ) {
+        viewModelScope.launch {
+            repo.update { s ->
+                val rolled = s.rolledTo(today())
+                val streak = Engine.updateStreak(rolled.streak, rolled.lastActiveDay, today())
+                rolled.copy(
+                    clearedRemediation =
+                    if (remediation) rolled.clearedRemediation + id else rolled.clearedRemediation,
+                    clearedCampaign =
+                    if (remediation) rolled.clearedCampaign else rolled.clearedCampaign + id,
+                    routedDoneToday = rolled.routedDoneToday + id,
+                    xp = rolled.xp + Progress.XP_CHALLENGE,
+                    streak = streak,
+                    bestStreak = maxOf(rolled.bestStreak, streak),
+                    lastActiveDay = today(),
+                    log = listOf(
+                        LogEntry(
+                            id = System.currentTimeMillis(),
+                            pillar = pillar.name,
+                            tier = 0,
+                            title = title,
+                            friction = false,
+                            epochDay = today(),
+                            minutes = minutes,
+                            kind = if (remediation) "AUDIT" else "CAMPAIGN"
+                        )
+                    ) + rolled.log
+                )
+            }
+            _pulse.value = pillar
+            goDashboard()
+        }
+    }
+
+    /** Friction on a routed extra. Does not mark it cleared — it comes back around. */
+    fun frictionRouted(id: String, pillar: Pillar, title: String) {
+        viewModelScope.launch {
+            repo.update { s ->
+                val rolled = s.rolledTo(today())
+                val streak = Engine.updateStreak(rolled.streak, rolled.lastActiveDay, today())
+                rolled.copy(
+                    routedDoneToday = rolled.routedDoneToday + id,
+                    friction = rolled.friction + 1,
+                    xp = rolled.xp + Progress.XP_FRICTION,
+                    streak = streak,
+                    bestStreak = maxOf(rolled.bestStreak, streak),
+                    lastActiveDay = today(),
+                    log = listOf(
+                        LogEntry(
+                            id = System.currentTimeMillis(),
+                            pillar = pillar.name,
+                            tier = 0,
+                            title = title,
+                            friction = true,
+                            epochDay = today(),
+                            kind = "AUDIT"
+                        )
+                    ) + rolled.log
+                )
+            }
+            goDashboard()
+        }
+    }
+
+    // ------------------------------------------------------------------------- Learn
+
+    fun goLearn() { _route.value = Route.Learn }
+
+    fun openLesson(id: String) { _route.value = Route.ReadLesson(id) }
+
+    fun markLessonRead(id: String) {
+        viewModelScope.launch { repo.update { it.copy(lessonsRead = it.lessonsRead + id) } }
+    }
+
+    /** Everything readable right now, course and audit-triggered together. */
+    fun lessons(s: AppState): List<Lesson> =
+        learn.unlocked(dayIndex(s), audit.known(s.debuffs))
+
+    // ------------------------------------------------------------------------- Notes
+
+    fun goNotes() { _route.value = Route.Notes }
+
+    fun newNote(linkLogId: Long? = null, linkLessonId: String? = null) {
+        _route.value = Route.EditNote(id = null, linkLogId = linkLogId, linkLessonId = linkLessonId)
+    }
+
+    fun openNote(id: Long) {
+        _route.value = Route.EditNote(id = id, linkLogId = null, linkLessonId = null)
+    }
+
+    /**
+     * Write or rewrite a note.
+     *
+     * An empty body deletes rather than storing a blank, because a list full of empty entries
+     * is how a journal stops being opened.
+     */
+    fun saveNote(
+        id: Long?,
+        body: String,
+        tagsRaw: String,
+        linkLogId: Long?,
+        linkLessonId: String?
+    ) {
+        viewModelScope.launch {
+            val text = body.trim()
+            repo.update { s ->
+                if (text.isEmpty()) {
+                    return@update if (id == null) s
+                    else s.copy(notes = s.notes.filterNot { it.id == id })
+                }
+                val tags = Notes.cleanTags(tagsRaw)
+                val linked = linkLogId?.let { lid -> s.log.firstOrNull { it.id == lid } }
+                val existing = id?.let { nid -> s.notes.firstOrNull { it.id == nid } }
+                val note = existing?.copy(body = text, tags = tags) ?: Note(
+                    id = System.currentTimeMillis(),
+                    body = text,
+                    epochDay = today(),
+                    tags = tags,
+                    linkedLogId = linkLogId,
+                    linkedTitle = linked?.title ?: (linkLessonId?.let { learn.byId(it)?.title } ?: ""),
+                    linkedKind = when {
+                        linked?.friction == true -> "FRICTION"
+                        linked != null -> linked.kind
+                        linkLessonId != null -> "LESSON"
+                        else -> ""
+                    },
+                    linkedLessonId = linkLessonId
+                )
+                s.copy(notes = listOf(note) + s.notes.filterNot { it.id == note.id })
+            }
+            goNotes()
+        }
+    }
+
+    fun deleteNote(id: Long) {
+        viewModelScope.launch {
+            repo.update { s -> s.copy(notes = s.notes.filterNot { it.id == id }) }
+            goNotes()
+        }
     }
 
     fun markRead(index: Int) {

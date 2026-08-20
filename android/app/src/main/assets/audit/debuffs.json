@@ -1,0 +1,510 @@
+{
+ "categories": [
+  {
+   "id": "kinesics",
+   "name": "Physical presence",
+   "blurb": "How you hold yourself, before anyone has heard you speak.",
+   "note": "This is the fastest category to move. Posture and gaze are habits, and habits answer to reps."
+  },
+  {
+   "id": "conversation",
+   "name": "Conversation",
+   "blurb": "What happens once you are talking.",
+   "note": "Almost everything here is a pattern you learned to stay safe. It worked. It is also why conversations stall."
+  },
+  {
+   "id": "presentation",
+   "name": "Presentation",
+   "blurb": "Grooming, clothes, and the signal they send before you arrive.",
+   "note": "The cheapest points in the whole app are here. Fit and upkeep are almost entirely effort, not money or genetics."
+  },
+  {
+   "id": "mindset",
+   "name": "Mindset",
+   "blurb": "What runs in your head before, during and after.",
+   "note": "The slowest category, and the one the others feed. Expect this to shift last, from evidence rather than from arguing with yourself."
+  }
+ ],
+ "debuffs": [
+  {
+   "id": "posture_slump",
+   "cat": "kinesics",
+   "label": "I stand and sit hunched over",
+   "detail": "Shoulders forward, chest closed, chin down.",
+   "tags": [
+    "posture",
+    "presence"
+   ]
+  },
+  {
+   "id": "avoids_eye_contact",
+   "cat": "kinesics",
+   "label": "I look away when someone looks at me",
+   "detail": "Eye contact never starts, or I break it first every time.",
+   "tags": [
+    "eye_contact",
+    "presence"
+   ]
+  },
+  {
+   "id": "speaks_too_quietly",
+   "cat": "kinesics",
+   "label": "People ask me to repeat myself",
+   "detail": "I get through a sentence and nobody has heard the end of it.",
+   "tags": [
+    "voice",
+    "presence"
+   ]
+  },
+  {
+   "id": "mumbles",
+   "cat": "kinesics",
+   "label": "I trail off at the end of sentences",
+   "detail": "The start is fine. The last few words dissolve.",
+   "tags": [
+    "voice",
+    "diction"
+   ]
+  },
+  {
+   "id": "fidgets",
+   "cat": "kinesics",
+   "label": "My hands are always doing something",
+   "detail": "Phone, sleeve, keys, face. Never still.",
+   "tags": [
+    "stillness",
+    "presence"
+   ]
+  },
+  {
+   "id": "closed_body",
+   "cat": "kinesics",
+   "label": "I stand with my arms crossed or in my pockets",
+   "detail": "Arms folded, hands hidden, angled away from the room.",
+   "tags": [
+    "posture",
+    "openness"
+   ]
+  },
+  {
+   "id": "walks_head_down",
+   "cat": "kinesics",
+   "label": "I walk looking at the ground",
+   "detail": "Eyes on the pavement from door to door.",
+   "tags": [
+    "posture",
+    "eye_contact"
+   ]
+  },
+  {
+   "id": "takes_up_no_space",
+   "cat": "kinesics",
+   "label": "I make myself small in a room",
+   "detail": "Back to the wall, knees together, out of the way.",
+   "tags": [
+    "presence",
+    "space"
+   ]
+  },
+  {
+   "id": "rushed_movement",
+   "cat": "kinesics",
+   "label": "I move fast and jerky when I am nervous",
+   "detail": "Quick, clipped, like I am trying to get it over with.",
+   "tags": [
+    "stillness",
+    "pace"
+   ]
+  },
+  {
+   "id": "no_gestures",
+   "cat": "kinesics",
+   "label": "My hands stay frozen while I talk",
+   "detail": "Everything happens from the neck up.",
+   "tags": [
+    "gesture",
+    "expression"
+   ]
+  },
+  {
+   "id": "flat_expression",
+   "cat": "kinesics",
+   "label": "My face does not move much",
+   "detail": "People tell me they cannot read me, or that I look annoyed.",
+   "tags": [
+    "expression",
+    "warmth"
+   ]
+  },
+  {
+   "id": "stiff_greeting",
+   "cat": "kinesics",
+   "label": "I find hellos and handshakes awkward",
+   "detail": "The first three seconds of every meeting are a mess.",
+   "tags": [
+    "greeting",
+    "presence"
+   ]
+  },
+  {
+   "id": "conversational_narcissist",
+   "cat": "conversation",
+   "label": "I bring most topics back to me",
+   "detail": "Someone tells me something and I answer with my version of it.",
+   "tags": [
+    "listening",
+    "questions"
+   ]
+  },
+  {
+   "id": "interrupts",
+   "cat": "conversation",
+   "label": "I talk over people without meaning to",
+   "detail": "I start my sentence before theirs has finished.",
+   "tags": [
+    "listening",
+    "pace"
+   ]
+  },
+  {
+   "id": "over_apologizes",
+   "cat": "conversation",
+   "label": "I say sorry when nothing is wrong",
+   "detail": "Sorry for asking, sorry for existing, sorry for the delay.",
+   "tags": [
+    "directness",
+    "self_worth"
+   ]
+  },
+  {
+   "id": "cant_hold_silence",
+   "cat": "conversation",
+   "label": "I fill every pause immediately",
+   "detail": "Two seconds of quiet and I say anything to end it.",
+   "tags": [
+    "stillness",
+    "pace"
+   ]
+  },
+  {
+   "id": "people_pleaser",
+   "cat": "conversation",
+   "label": "I cannot say no",
+   "detail": "I agree to things I do not want and resent it later.",
+   "tags": [
+    "boundaries",
+    "directness"
+   ]
+  },
+  {
+   "id": "overshares_early",
+   "cat": "conversation",
+   "label": "I tell people too much, too fast",
+   "detail": "Twenty minutes in and I have handed over the worst year of my life.",
+   "tags": [
+    "calibration",
+    "pace"
+   ]
+  },
+  {
+   "id": "monotone",
+   "cat": "conversation",
+   "label": "My voice stays on one note",
+   "detail": "Same pitch, same speed, whatever I am saying.",
+   "tags": [
+    "voice",
+    "expression"
+   ]
+  },
+  {
+   "id": "no_questions",
+   "cat": "conversation",
+   "label": "I do not ask people anything about themselves",
+   "detail": "I answer what I am asked and the conversation dies there.",
+   "tags": [
+    "questions",
+    "curiosity"
+   ]
+  },
+  {
+   "id": "interview_mode",
+   "cat": "conversation",
+   "label": "I ask questions like a checklist",
+   "detail": "Where are you from, what do you do, and then nothing.",
+   "tags": [
+    "questions",
+    "depth"
+   ]
+  },
+  {
+   "id": "nervous_laugh",
+   "cat": "conversation",
+   "label": "I laugh at things that are not funny",
+   "detail": "It comes out to fill space and it sounds like it.",
+   "tags": [
+    "voice",
+    "stillness"
+   ]
+  },
+  {
+   "id": "cant_tell_stories",
+   "cat": "conversation",
+   "label": "My stories land flat",
+   "detail": "I get to the end and realise there was no end.",
+   "tags": [
+    "stories",
+    "expression"
+   ]
+  },
+  {
+   "id": "agrees_with_everything",
+   "cat": "conversation",
+   "label": "I agree even when I do not",
+   "detail": "It is easier than having the other conversation.",
+   "tags": [
+    "opinions",
+    "directness"
+   ]
+  },
+  {
+   "id": "no_opinions",
+   "cat": "conversation",
+   "label": "I say 'I do not mind' to everything",
+   "detail": "Where to eat, what to watch, what I think. No input.",
+   "tags": [
+    "opinions",
+    "directness"
+   ]
+  },
+  {
+   "id": "exits_badly",
+   "cat": "conversation",
+   "label": "I do not know how to end a conversation",
+   "detail": "I stay too long, or leave mid-sentence.",
+   "tags": [
+    "exits",
+    "calibration"
+   ]
+  },
+  {
+   "id": "ill_fitting_clothes",
+   "cat": "presentation",
+   "label": "My clothes do not fit properly",
+   "detail": "Too big, too long, bought without trying on.",
+   "tags": [
+    "fit",
+    "style"
+   ]
+  },
+  {
+   "id": "no_personal_style",
+   "cat": "presentation",
+   "label": "I dress to not be noticed",
+   "detail": "Neutral, safe, nothing that says anything.",
+   "tags": [
+    "style",
+    "identity"
+   ]
+  },
+  {
+   "id": "grooming_neglect",
+   "cat": "presentation",
+   "label": "I let hair and nails go too long",
+   "detail": "I deal with it when it becomes a problem, not before.",
+   "tags": [
+    "grooming",
+    "upkeep"
+   ]
+  },
+  {
+   "id": "hygiene_slips",
+   "cat": "presentation",
+   "label": "I skip the basics when nobody is watching",
+   "detail": "Days at home turn into days without the routine.",
+   "tags": [
+    "hygiene",
+    "upkeep"
+   ]
+  },
+  {
+   "id": "worn_out_clothes",
+   "cat": "presentation",
+   "label": "My clothes are worn out and I have not replaced them",
+   "detail": "Faded, bobbled, stretched. Still in rotation.",
+   "tags": [
+    "upkeep",
+    "fit"
+   ]
+  },
+  {
+   "id": "one_outfit",
+   "cat": "presentation",
+   "label": "I wear the same thing every day",
+   "detail": "One combination that works, on repeat.",
+   "tags": [
+    "style",
+    "identity"
+   ]
+  },
+  {
+   "id": "avoids_photos",
+   "cat": "presentation",
+   "label": "I get out of every photo",
+   "detail": "I step behind someone or offer to take it.",
+   "tags": [
+    "self_image",
+    "style"
+   ]
+  },
+  {
+   "id": "avoids_mirrors",
+   "cat": "presentation",
+   "label": "I do not look at myself properly",
+   "detail": "A glance to check nothing is wrong, never an actual look.",
+   "tags": [
+    "self_image",
+    "grooming"
+   ]
+  },
+  {
+   "id": "neglected_shoes",
+   "cat": "presentation",
+   "label": "My shoes are the worst thing I own",
+   "detail": "Everything else is fine and then there are the shoes.",
+   "tags": [
+    "fit",
+    "upkeep"
+   ]
+  },
+  {
+   "id": "looks_tired",
+   "cat": "presentation",
+   "label": "I look tired all the time",
+   "detail": "Sleep, water and daylight are all somewhere near zero.",
+   "tags": [
+    "upkeep",
+    "energy"
+   ]
+  },
+  {
+   "id": "fear_of_rejection",
+   "cat": "mindset",
+   "label": "A 'no' ruins my week",
+   "detail": "One refusal and I am done trying for days.",
+   "tags": [
+    "rejection",
+    "resilience"
+   ]
+  },
+  {
+   "id": "assumes_judgement",
+   "cat": "mindset",
+   "label": "I assume people are judging me",
+   "detail": "Every room is a panel and I am being scored.",
+   "tags": [
+    "reframing",
+    "spotlight"
+   ]
+  },
+  {
+   "id": "neediness",
+   "cat": "mindset",
+   "label": "I need people to like me straight away",
+   "detail": "I adjust myself in real time to get approval.",
+   "tags": [
+    "neediness",
+    "self_worth"
+   ]
+  },
+  {
+   "id": "catastrophizes",
+   "cat": "mindset",
+   "label": "I replay small moments for days",
+   "detail": "One awkward sentence, rerun for a week.",
+   "tags": [
+    "reframing",
+    "rumination"
+   ]
+  },
+  {
+   "id": "mind_reading",
+   "cat": "mindset",
+   "label": "I decide what people think without asking",
+   "detail": "They went quiet, so I know exactly what it meant.",
+   "tags": [
+    "reframing",
+    "assumptions"
+   ]
+  },
+  {
+   "id": "pre_rejects_self",
+   "cat": "mindset",
+   "label": "I do not try, so I cannot lose",
+   "detail": "I talk myself out of it before anyone gets the chance to.",
+   "tags": [
+    "rejection",
+    "action"
+   ]
+  },
+  {
+   "id": "compares_constantly",
+   "cat": "mindset",
+   "label": "I measure myself against everyone",
+   "detail": "Every room has a ranking and I know where I am in it.",
+   "tags": [
+    "comparison",
+    "self_worth"
+   ]
+  },
+  {
+   "id": "outcome_dependent",
+   "cat": "mindset",
+   "label": "One bad interaction defines my whole day",
+   "detail": "It goes badly at 10am and the day is written off.",
+   "tags": [
+    "resilience",
+    "reframing"
+   ]
+  },
+  {
+   "id": "waits_to_be_chosen",
+   "cat": "mindset",
+   "label": "I wait for people to approach me",
+   "detail": "I am available, visible, and never the one who starts it.",
+   "tags": [
+    "initiative",
+    "action"
+   ]
+  },
+  {
+   "id": "feels_like_imposition",
+   "cat": "mindset",
+   "label": "I feel like I am imposing on people",
+   "detail": "Asking for anything feels like taking something.",
+   "tags": [
+    "self_worth",
+    "directness"
+   ]
+  },
+  {
+   "id": "perfection_paralysis",
+   "cat": "mindset",
+   "label": "I will not start until I am ready",
+   "detail": "The bar for starting is set where the bar for finishing should be.",
+   "tags": [
+    "action",
+    "standards"
+   ]
+  },
+  {
+   "id": "no_self_narrative",
+   "cat": "mindset",
+   "label": "I cannot say anything interesting about myself",
+   "detail": "Asked what I am into, I go blank.",
+   "tags": [
+    "identity",
+    "stories"
+   ]
+  }
+ ]
+}
