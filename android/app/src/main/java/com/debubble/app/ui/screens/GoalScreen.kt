@@ -3,14 +3,11 @@ package com.debubble.app.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -23,11 +20,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.selected
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.debubble.app.engine.Goal
@@ -35,20 +30,27 @@ import com.debubble.app.engine.GoalState
 import com.debubble.app.engine.GoalTrack
 import com.debubble.app.engine.Goals
 import com.debubble.app.engine.Principle
-import com.debubble.app.ui.components.Instrument
-import com.debubble.app.ui.components.litSurface
+import com.debubble.app.ui.components.CheckBox
+import com.debubble.app.ui.components.Glyph
+import com.debubble.app.ui.components.Glyphs
+import com.debubble.app.ui.components.Label
+import com.debubble.app.ui.components.Pill
+import com.debubble.app.ui.components.PrimaryButton
+import com.debubble.app.ui.components.ProgressTrack
+import com.debubble.app.ui.components.TextAction
+import com.debubble.app.ui.components.TopBar
 import com.debubble.app.ui.components.VSpace
-import com.debubble.app.ui.components.tierCode
+import com.debubble.app.ui.components.panel
+import com.debubble.app.ui.components.selectablePanel
 import com.debubble.app.ui.theme.Ink
 import com.debubble.app.ui.theme.Space
 import com.debubble.app.ui.theme.accent
 
 /**
- * What do you actually want?
+ * Picking what you are actually aiming at.
  *
- * The three pillars measure the shape of a bubble; this is where the user says which
- * direction they want it to grow. Every goal shows its real promise and its actual length,
- * because a campaign you can see the end of is one you might finish.
+ * Selection here is loud on purpose — this is the choice that shapes the next month of the
+ * app, and the old version signalled it with a slightly brighter panel.
  */
 @Composable
 fun GoalPickerScreen(
@@ -64,120 +66,99 @@ fun GoalPickerScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Ink.Void)
-            .padding(horizontal = Space.gutter)
-            .padding(top = 14.dp, bottom = Space.gutter)
     ) {
+        TopBar(
+            title = if (firstRun) "One more thing" else "Change your goal",
+            onBack = onCancel
+        )
+
         Column(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
+                .padding(horizontal = Space.gutter)
         ) {
-            Instrument(if (firstRun) "One more question" else "Change focus")
-            VSpace(12)
             Text(
-                text = if (firstRun) "What do you\nactually want?" else "Pick a\ndifferent one.",
+                text = if (firstRun) "What do you actually want?" else "Pick a different one.",
                 color = Ink.Primary,
                 style = MaterialTheme.typography.displayMedium
             )
             VSpace(12)
             Text(
-                text = "The three daily challenges expand your bubble in general. A campaign " +
-                    "points that expansion at something specific — thirty steps, with reps and " +
-                    "reading of its own. You can switch whenever you like and nothing is lost.",
-                color = Ink.Dim,
-                style = MaterialTheme.typography.bodyMedium
+                text = "The daily challenges grow your bubble in general. A goal points that " +
+                    "at something specific: 30 steps, daily attempt targets and short reads " +
+                    "of its own. Switch whenever you want — nothing is lost.",
+                color = Ink.Secondary,
+                style = MaterialTheme.typography.bodyLarge
             )
-            VSpace(24)
+            VSpace(22)
 
             Goal.all.forEach { goal ->
                 val gs = progressOf(goal)
                 val started = gs.completed > 0
                 val on = goal == chosen
+                val accent = goal.homePillar.accent
+
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = Space.gap)
-                        // Selected surfaces catch more light. The semantics announce the
-                        // selection too, so nothing depends on noticing the brightness.
-                        .litSurface(
-                            tint = goal.homePillar.accent,
-                            emphasis = if (on) 2.4f else 0.6f,
-                            shape = RoundedCornerShape(Space.radiusLarge)
-                        )
-                        // Selection is signalled by a tint and a border, so it is also spoken.
-                        .semantics { selected = on }
+                        .selectablePanel(on, accent, RoundedCornerShape(Space.radiusLarge))
                         .clickable(role = Role.RadioButton) { chosen = goal }
+                        .semantics {
+                            stateDescription = if (on) "Selected" else "Not selected"
+                        }
                         .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(9.dp)
                 ) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(11.dp)
                     ) {
-                        Instrument(
-                            goal.homePillar.display,
-                            color = goal.homePillar.accent,
-                            small = true
+                        CheckBox(selected = on, accent = accent, round = true)
+                        Text(
+                            text = goal.display,
+                            modifier = Modifier.weight(1f),
+                            color = Ink.Primary,
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = if (on) FontWeight.Bold else FontWeight.SemiBold
+                            )
                         )
                         if (started) {
-                            Instrument(
-                                if (Goals.isComplete(gs)) "Complete"
-                                else "Step ${tierCode(gs.step)} / 030",
-                                color = Ink.Ash,
-                                small = true
+                            Pill(
+                                if (Goals.isComplete(gs)) "Done" else "Step ${gs.step}",
+                                accent
                             )
                         }
                     }
                     Text(
-                        text = goal.display,
-                        color = Ink.Primary,
-                        style = MaterialTheme.typography.headlineMedium
-                    )
-                    Text(
                         text = goal.promise,
-                        color = Ink.Ash,
+                        color = Ink.Secondary,
                         style = MaterialTheme.typography.bodyMedium
                     )
                     if (started) {
-                        VSpace(2)
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(3.dp)
-                                .clip(RoundedCornerShape(2.dp))
-                                .background(Ink.EdgeSoft)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth(Goals.progress(gs).coerceIn(0.02f, 1f))
-                                    .height(3.dp)
-                                    .clip(RoundedCornerShape(2.dp))
-                                    .background(goal.homePillar.accent)
-                            )
-                        }
+                        ProgressTrack(Goals.progress(gs), accent, height = 6)
                     }
                 }
             }
-            VSpace(8)
+            VSpace(10)
         }
 
-        Column(verticalArrangement = Arrangement.spacedBy(11.dp)) {
-            chosen?.let { pick ->
-                PrimaryButton(
-                    when {
-                        pick == current -> "Keep this campaign"
-                        progressOf(pick).completed > 0 -> "Resume this campaign"
-                        else -> "Start this campaign"
-                    }
-                ) { onChoose(pick) }
-            }
-            if (onCancel != null) GhostButton("Cancel") { onCancel() }
+        Column(
+            modifier = Modifier.padding(horizontal = Space.gutter, bottom = Space.gutter),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            PrimaryButton(
+                text = chosen?.let { "Start: ${it.display}" } ?: "Pick one to continue",
+                accent = chosen?.homePillar?.accent ?: Ink.Access,
+                enabled = chosen != null
+            ) { chosen?.let(onChoose) }
+            if (onCancel != null) TextAction("Cancel") { onCancel() }
         }
     }
 }
 
-/** The reading list. Principles unlock as the campaign advances, so reading tracks doing. */
+/** The reading list. Ideas unlock as the campaign advances, so reading tracks doing. */
 @Composable
 fun PrinciplesScreen(
     goal: Goal,
@@ -186,79 +167,86 @@ fun PrinciplesScreen(
     onOpen: (Int) -> Unit,
     onBack: () -> Unit
 ) {
+    val unlocked = track.principles.count { it.unlocksAt <= state.step }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Ink.Void)
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = Space.gutter)
-            .padding(top = 10.dp, bottom = 24.dp)
     ) {
-        Instrument(
-            "← Back",
-            modifier = Modifier
-                .sizeIn(minHeight = 48.dp)
-                .clickable(role = Role.Button, onClick = onBack)
-                .padding(vertical = 14.dp)
+        TopBar(
+            title = "The ideas underneath",
+            subtitle = "$unlocked of ${track.principles.size} unlocked",
+            onBack = onBack
         )
-        VSpace(18)
-        Text(
-            text = "The ideas\nunderneath.",
-            color = Ink.Primary,
-            style = MaterialTheme.typography.displayMedium
-        )
-        VSpace(12)
-        Text(
-            text = track.premise,
-            color = Ink.Ash,
-            style = MaterialTheme.typography.bodyMedium
-        )
-        VSpace(24)
 
-        track.principles.forEachIndexed { i, p ->
-            val unlocked = p.unlocksAt <= state.step
-            val read = i in state.read
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = Space.gap)
-                    .litSurface(
-                        tint = if (unlocked) goal.homePillar.accent else Ink.Primary,
-                        emphasis = if (unlocked) 0.9f else 0.4f
-                    )
-                    .sizeIn(minHeight = 48.dp)
-                    // Locked rows look dimmed; that has to be spoken too.
-                    .semantics {
-                        stateDescription = when {
-                            !unlocked -> "Locked until step ${p.unlocksAt}"
-                            read -> "Read"
-                            else -> "Unread"
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = Space.gutter)
+        ) {
+            Text(
+                text = track.premise,
+                color = Ink.Secondary,
+                style = MaterialTheme.typography.bodyLarge
+            )
+            VSpace(22)
+
+            track.principles.forEachIndexed { i, p ->
+                val open = p.unlocksAt <= state.step
+                val read = i in state.read
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = Space.gap)
+                        .panel(
+                            fill = if (open) Ink.Surface else Ink.Void,
+                            border = if (open) goal.homePillar.accent.copy(alpha = 0.55f)
+                            else Ink.Faint
+                        )
+                        .semantics {
+                            stateDescription = when {
+                                !open -> "Locked until step ${p.unlocksAt}"
+                                read -> "Read"
+                                else -> "Unread"
+                            }
                         }
-                    }
-                    .then(
-                        if (unlocked) Modifier.clickable(role = Role.Button) { onOpen(i) }
-                        else Modifier
-                    )
-                    .padding(15.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                        .then(
+                            if (open) Modifier.clickable(role = Role.Button) { onOpen(i) }
+                            else Modifier
+                        )
+                        .padding(15.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Instrument(
-                        if (unlocked) "Idea ${i + 1}" else "Unlocks at step ${tierCode(p.unlocksAt)}",
-                        color = if (unlocked) goal.homePillar.accent else Ink.Faint,
-                        small = true
-                    )
-                    if (read) Instrument("Read", color = Ink.Faint, small = true)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(9.dp)
+                    ) {
+                        Glyph(
+                            if (open) Glyphs.Spark else Glyphs.Lock,
+                            colour = if (open) goal.homePillar.accent else Ink.Muted,
+                            size = 17
+                        )
+                        Text(
+                            text = if (open) p.title else "Idea ${i + 1}",
+                            modifier = Modifier.weight(1f),
+                            color = if (open) Ink.Primary else Ink.Muted,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        if (open && read) Pill("Read", Ink.Activity)
+                    }
+                    if (!open) {
+                        Label("Unlocks at step ${p.unlocksAt}. You are on step ${state.step}.")
+                        ProgressTrack(
+                            fraction = state.step.toFloat() / p.unlocksAt,
+                            accent = Ink.Faint,
+                            height = 6
+                        )
+                    }
                 }
-                Text(
-                    text = if (unlocked) p.title else "Locked",
-                    color = if (unlocked) Ink.Primary else Ink.Faint,
-                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
-                )
             }
+            VSpace(20)
         }
     }
 }
@@ -274,24 +262,19 @@ fun PrincipleScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Ink.Void)
-            .padding(horizontal = Space.gutter)
-            .padding(top = 10.dp, bottom = Space.gutter)
     ) {
+        TopBar(
+            title = goal.display,
+            accent = goal.homePillar.accent,
+            onBack = onDone
+        )
         Column(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
+                .padding(horizontal = Space.gutter)
         ) {
-            Instrument(
-                "← Back",
-                modifier = Modifier
-                    .sizeIn(minHeight = 48.dp)
-                    .clickable(role = Role.Button, onClick = onDone)
-                    .padding(vertical = 14.dp)
-            )
-            VSpace(26)
-            Instrument(goal.display, color = goal.homePillar.accent)
-            VSpace(14)
+            VSpace(8)
             Text(
                 text = principle.title,
                 color = Ink.Primary,
@@ -300,15 +283,17 @@ fun PrincipleScreen(
             VSpace(18)
             Text(
                 text = principle.body,
-                color = Ink.Ash,
+                color = Ink.Secondary,
                 style = MaterialTheme.typography.bodyLarge
             )
             if (principle.source.isNotBlank()) {
-                VSpace(20)
-                Instrument(principle.source, color = Ink.Faint, small = true)
+                VSpace(22)
+                Label(principle.source)
             }
-            VSpace(20)
+            VSpace(24)
         }
-        PrimaryButton("Got it") { onDone() }
+        Column(modifier = Modifier.padding(horizontal = Space.gutter, bottom = Space.gutter)) {
+            PrimaryButton("Got it", accent = goal.homePillar.accent) { onDone() }
+        }
     }
 }

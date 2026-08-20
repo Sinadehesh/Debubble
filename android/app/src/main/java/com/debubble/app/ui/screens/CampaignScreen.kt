@@ -1,7 +1,6 @@
 package com.debubble.app.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,8 +9,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.sizeIn
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -19,16 +16,18 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.debubble.app.engine.Goal
 import com.debubble.app.engine.GoalState
 import com.debubble.app.engine.GoalTrack
 import com.debubble.app.engine.Goals
-import com.debubble.app.ui.components.Instrument
+import com.debubble.app.ui.components.Label
+import com.debubble.app.ui.components.Pill
+import com.debubble.app.ui.components.PrimaryButton
+import com.debubble.app.ui.components.ProgressTrack
+import com.debubble.app.ui.components.TopBar
 import com.debubble.app.ui.components.Topography
 import com.debubble.app.ui.components.VSpace
-import com.debubble.app.ui.components.tierCode
 import com.debubble.app.ui.components.topographyHeight
 import com.debubble.app.ui.theme.Ink
 import com.debubble.app.ui.theme.Space
@@ -57,33 +56,32 @@ fun CampaignScreen(
             .fillMaxSize()
             .background(Ink.Void)
     ) {
-        Column(modifier = Modifier.padding(horizontal = Space.gutter).padding(top = 10.dp)) {
-            Instrument(
-                "← Back",
-                modifier = Modifier
-                    .clickable(role = Role.Button, onClick = onBack)
-                    .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
-                    .wrapContentSize(Alignment.CenterStart)
-            )
-            VSpace(10)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Bottom
-            ) {
-                Text(
-                    text = goal.display,
-                    color = Ink.Primary,
-                    style = MaterialTheme.typography.headlineMedium,
-                    modifier = Modifier.weight(1f)
-                )
-                Instrument(
-                    if (complete) "Cleared" else "${tierCode(state.step)} / 030",
-                    color = accent
+        TopBar(
+            title = goal.display,
+            subtitle = if (complete) "All three phases done" else track.phaseOf(state.step),
+            accent = accent,
+            onBack = onBack,
+            action = {
+                Pill(
+                    if (complete) "Done" else "${state.step} / 30",
+                    accent,
+                    filled = complete
                 )
             }
-            VSpace(8)
-            Instrument(if (complete) "All three phases" else track.phaseOf(state.step))
+        )
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = Space.gutter)
+                .padding(top = 4.dp, bottom = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(7.dp)
+        ) {
+            ProgressTrack(Goals.progress(state), accent, height = 8)
+            Label(
+                if (complete) "Every step behind you"
+                else "${state.completed} done, ${30 - state.completed} to go"
+            )
         }
 
         // The terrain scrolls: the whole campaign is taller than any phone.
@@ -112,9 +110,8 @@ fun CampaignScreen(
         ) {
             if (complete) {
                 Text(
-                    text = "Thirty monuments, all of them lit. This ground stays yours whether " +
-                        "or not you come back to it.",
-                    color = Ink.Ash,
+                    text = "All 30 done. This ground stays yours whether or not you come back.",
+                    color = Ink.Secondary,
                     style = MaterialTheme.typography.bodyMedium
                 )
             } else {
@@ -123,7 +120,7 @@ fun CampaignScreen(
                     color = Ink.Primary,
                     style = MaterialTheme.typography.bodyLarge
                 )
-                PrimaryButton("Open step ${tierCode(state.step)}") { onOpenStep() }
+                PrimaryButton("Open step ${state.step}", accent = accent) { onOpenStep() }
             }
         }
     }

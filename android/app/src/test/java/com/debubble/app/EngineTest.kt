@@ -3,6 +3,7 @@ package com.debubble.app
 import com.debubble.app.engine.Baseline
 import com.debubble.app.engine.Calibration
 import com.debubble.app.engine.Engine
+import com.debubble.app.engine.Mobility
 import com.debubble.app.engine.Needs
 import com.debubble.app.engine.Pillar
 import com.debubble.app.engine.PillarState
@@ -16,7 +17,7 @@ class CalibrationTest {
     @Test
     fun `the most sheltered baseline starts every pillar at tier 1`() {
         val b = Baseline(
-            transport = emptySet(),
+            moves = setOf(Mobility.WALK),
             radiusKm = 0,
             routinePct = 100,
             noveltyRecency = 0,
@@ -31,7 +32,7 @@ class CalibrationTest {
     @Test
     fun `a mobile, varied, sociable baseline starts well up the ladder`() {
         val b = Baseline(
-            transport = setOf(Needs.TRANSIT, Needs.BIKE, Needs.CAR),
+            moves = setOf(Mobility.WALK, Needs.TRANSIT, Needs.BIKE, Needs.CAR),
             radiusKm = 40,
             routinePct = 20,
             noveltyRecency = 4,
@@ -54,7 +55,7 @@ class CalibrationTest {
                     for (novelty in 0..4) {
                         for (convos in 0..20 step 5) {
                             val b = Baseline(
-                                transport = setOf(Needs.TRANSIT, Needs.BIKE, Needs.CAR),
+                                moves = setOf(Mobility.WALK, Needs.TRANSIT, Needs.BIKE, Needs.CAR),
                                 radiusKm = km,
                                 routinePct = routine,
                                 noveltyRecency = novelty,

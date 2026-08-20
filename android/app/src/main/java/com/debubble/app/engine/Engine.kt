@@ -62,11 +62,15 @@ object Engine {
             else -> null
         }
 
+        // Wording only. Adapting "walk" to "roll" must not change what the challenge costs,
+        // so this happens after every difficulty field has been decided.
+        val words = baseline.modes
+
         return Served(
             pillar = pillar,
             tier = state.tier,
-            directive = if (useAlternate) c.alternate else c.directive,
-            coach = c.coach,
+            directive = Copy.adapt(if (useAlternate) c.alternate else c.directive, words),
+            coach = Copy.adapt(c.coach, words),
             // The alternate is designed to sit at the same rung, but it is by construction
             // the cheaper, closer, shorter route to the same lesson.
             minutes = if (useAlternate) maxOf(1, (c.minutes * 2) / 3) else c.minutes,
@@ -144,7 +148,8 @@ object Engine {
         else -> 1
     }
 
-    /** Courage badge tier. Monotonic by construction — Friction can only ever go up. */
+    /** Courage badge tier. Derived from Friction, so undoing a mis-tapped rep can move it
+     *  back down a step — which is correct: the badge should describe what actually happened. */
     fun courageBadge(friction: Int): String = when {
         friction >= 50 -> "Weathered"
         friction >= 25 -> "Iron"

@@ -71,13 +71,13 @@ fun Topography(
                     lineTo(p.x - tileW * 0.5f, p.y - skew * 0.5f)
                     close()
                 }
-                drawPath(plate, if (walked) Ink.Ridge.copy(alpha = 0.92f) else Ink.Void.copy(alpha = 0.85f))
+                drawPath(plate, if (walked) Ink.SurfaceHigh.copy(alpha = 0.92f) else Ink.Void.copy(alpha = 0.85f))
                 drawPath(
                     plate,
                     color = when {
                         walked -> accent.copy(alpha = 0.20f)
-                        near -> Ink.Edge.copy(alpha = 0.55f)
-                        else -> Ink.EdgeSoft.copy(alpha = 0.30f)
+                        near -> Ink.Border.copy(alpha = 0.55f)
+                        else -> Ink.Well.copy(alpha = 0.30f)
                     },
                     style = Stroke(width = 1f)
                 )
@@ -137,7 +137,7 @@ fun Topography(
                 )
             )
 
-            drawPath(left, if (cleared) accent.copy(alpha = 0.16f) else Ink.Strata.copy(alpha = 0.92f))
+            drawPath(left, if (cleared) accent.copy(alpha = 0.16f) else Ink.Surface.copy(alpha = 0.92f))
             drawPath(left, outline, style = stroke)
             drawPath(right, if (cleared) accent.copy(alpha = 0.09f) else Ink.Void.copy(alpha = 0.92f))
             drawPath(right, outline, style = stroke)
@@ -146,7 +146,7 @@ fun Topography(
                 when {
                     cleared -> accent.copy(alpha = 0.42f)
                     here -> Ink.Primary.copy(alpha = 0.22f)
-                    else -> Ink.Raise.copy(alpha = 0.95f)
+                    else -> Ink.SurfaceHigh.copy(alpha = 0.95f)
                 }
             )
             drawPath(cap, outline, style = stroke)

@@ -24,7 +24,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.debubble.app.engine.Pillar
-import com.debubble.app.ui.components.Instrument
+import com.debubble.app.ui.components.Label
+import com.debubble.app.ui.components.PrimaryButton
 import com.debubble.app.ui.components.VSpace
 import com.debubble.app.ui.components.rememberReducedMotion
 import com.debubble.app.ui.theme.Ink
@@ -122,7 +123,7 @@ fun TranscendenceScreen(
             horizontalAlignment = Alignment.Start
         ) {
             Column(modifier = Modifier.alpha(((p - 0.35f) / 0.4f).coerceIn(0f, 1f))) {
-                Instrument("${pillar.display} · tier 100", color = pillar.accent)
+                Label("${pillar.display} · level 100", color = pillar.accent, strong = true)
                 VSpace(16)
                 Text(
                     text = closingLine(pillar),
@@ -132,13 +133,12 @@ fun TranscendenceScreen(
                 )
                 VSpace(18)
                 Text(
-                    text = "There is no tier 101. Whatever you do on this axis now, you will be " +
-                        "doing it without an app telling you to.",
-                    color = Ink.Ash,
+                    text = "There is no level 101. Whatever you do here now, you do without an app telling you to.",
+                    color = Ink.Secondary,
                     style = MaterialTheme.typography.bodyLarge
                 )
                 VSpace(28)
-                PrimaryButton("Close it") { onClose() }
+                PrimaryButton("Close it", accent = pillar.accent) { onClose() }
             }
         }
     }

@@ -8,16 +8,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.sizeIn
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -27,277 +23,298 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.debubble.app.audio.rememberSound
 import com.debubble.app.engine.Engine
 import com.debubble.app.engine.Served
-import com.debubble.app.ui.components.FractureOverlay
+import com.debubble.app.ui.components.Divider
+import com.debubble.app.ui.components.Glyph
+import com.debubble.app.ui.components.Glyphs
+import com.debubble.app.ui.components.GlitchBurst
 import com.debubble.app.ui.components.HoldToCommit
+import com.debubble.app.ui.components.Label
+import com.debubble.app.ui.components.Pill
+import com.debubble.app.ui.components.SecondaryButton
 import com.debubble.app.ui.components.Shockwave
-import com.debubble.app.ui.components.fractureEffect
-import com.debubble.app.ui.components.Instrument
-import com.debubble.app.ui.components.litSurface
+import com.debubble.app.ui.components.TopBar
 import com.debubble.app.ui.components.VSpace
+import com.debubble.app.ui.components.panel
 import com.debubble.app.ui.components.rememberHaptics
-import com.debubble.app.ui.components.tierCode
 import com.debubble.app.ui.theme.Ink
-import com.debubble.app.ui.theme.InstrumentFamily
 import com.debubble.app.ui.theme.Space
 import com.debubble.app.ui.theme.accent
 
 /**
- * The Action Screen.
+ * The action screen: one thing to do, and two honest ways out of it.
  *
- * One challenge, full bleed, nothing else reachable — the tab bar is gone. Two exits:
- * complete it, or log the friction. Both are honourable; only pretending is not.
+ * Committing is a three-second hold. Saying it was too much is a full amber card of its own —
+ * it used to be a line of small grey text at the bottom of a scroll, which is exactly the
+ * wrong place for the option this app most wants people to feel able to take.
  */
 @Composable
 fun ChallengeScreen(
     served: Served,
-    canSwap: Boolean,
-    frictionAfter: Int,
     soundOn: Boolean,
     ambientOn: Boolean,
-    onAbort: () -> Unit,
-    onSwap: () -> Unit,
-    onComplete: () -> Unit,
-    onFriction: () -> Unit
+    onCommit: (Int) -> Unit,
+    onFriction: () -> Unit,
+    onSwap: (() -> Unit)?,
+    onBack: () -> Unit
 ) {
     val pillar = served.pillar
     val haptics = rememberHaptics()
     val sound = rememberSound()
 
-    // The bed only comes up for challenges that genuinely frighten people, and only if the
-    // user asked for it. Exposure 7 is roughly where the ladder stops being a nudge.
-    DisposableEffect(ambientOn, served.exposure, served.tier) {
-        if (ambientOn && served.exposure >= 7) {
-            sound.startBed(((served.exposure - 6) / 4f).coerceIn(0f, 1f))
-        }
-        onDispose { sound.stopBed() }
-    }
+    var committed by remember { mutableStateOf(false) }
+    var glitching by remember { mutableStateOf(false) }
 
-    // The snap needs somewhere to land. Navigating on the same frame as the commit throws
-    // away the moment the three-second hold just bought.
-    var committing by remember { mutableStateOf(false) }
-    LaunchedEffect(committing) {
-        if (committing) {
-            kotlinx.coroutines.delay(380)
-            onComplete()
-        }
+    // The bed is opt-in and tied to this screen only; it never survives leaving it.
+    LaunchedEffect(ambientOn, served.exposure) {
+        if (ambientOn) sound.startBed(served.exposure / 10f) else sound.stopBed()
     }
-
-    // The fracture. Snaps open fast and settles slowly, because a discharge has a sharp
-    // leading edge and a long tail — and because the number underneath needs time to be read.
-    val fracture = remember { Animatable(0f) }
-    var fracturing by remember { mutableStateOf(false) }
-    LaunchedEffect(fracturing) {
-        if (!fracturing) return@LaunchedEffect
-        fracture.animateTo(1f, tween(90))
-        fracture.animateTo(0f, tween(620))
-        onFriction()
-    }
+    DisposableEffect(Unit) { onDispose { sound.stopBed() } }
 
     Box(modifier = Modifier.fillMaxSize().background(Ink.Void)) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .fractureEffect(fracture.value)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = Space.gutter)
-                .padding(top = 10.dp, bottom = 24.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Instrument(
-                    // The arrow is decoration; the spoken label has to carry the destination.
-                    "← Abort",
-                    modifier = Modifier
-                        .clickable(
-                            role = Role.Button,
-                            onClickLabel = "Leave this challenge without logging anything",
-                            onClick = onAbort
-                        )
-                        .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
-                        .wrapContentSize(Alignment.CenterStart)
-                )
-                Instrument(
-                    if (served.kind == "MISSION") "Step ${tierCode(served.tier)} / 030"
-                    else "Tier ${tierCode(served.tier)} · ${pillar.code}",
-                    color = pillar.accent
-                )
-            }
-
-            VSpace(22)
-            Instrument(served.phase ?: "${pillar.display} · ${pillar.dimension}")
-            VSpace(14)
-
-            Text(
-                text = served.directive,
-                color = Ink.Primary,
-                style = MaterialTheme.typography.headlineLarge
+        Column(modifier = Modifier.fillMaxSize()) {
+            TopBar(
+                title = if (served.kind == "MISSION") "Campaign step" else pillar.display,
+                subtitle = if (served.kind == "MISSION") "Step ${served.tier} of 30"
+                else "${pillar.dimension} · Level ${served.tier}",
+                accent = pillar.accent,
+                onBack = onBack,
+                action = {
+                    if (onSwap != null) {
+                        Box(
+                            modifier = Modifier
+                                .heightIn(min = Space.tap)
+                                .panel(border = Ink.Border)
+                                .clickable(role = Role.Button) { onSwap() }
+                                .padding(horizontal = 14.dp, vertical = 12.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Label("Swap", color = Ink.Primary, strong = true)
+                        }
+                    }
+                }
             )
-
-            VSpace(24)
-
-            // TIME · COST · EXPOSURE. Exposure is the vulnerability rating and the number that
-            // climbs hardest across a hundred tiers.
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Param("Time", Engine.formatMinutes(served.minutes), Modifier.weight(1f))
-                Param("Cost", if (served.cost == 0) "Free" else "${served.cost}", Modifier.weight(1f))
-                Param("Exposure", "${served.exposure}/10", Modifier.weight(1f), pillar.accent)
-            }
-
-            VSpace(20)
 
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .litSurface(tint = pillar.accent, emphasis = 1.35f)
-                    .padding(15.dp),
-                verticalArrangement = Arrangement.spacedBy(7.dp)
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = Space.gutter)
             ) {
-                Instrument(if (served.kind == "MISSION") "Why this step" else "Why this tier", color = pillar.accent, small = true)
+                VSpace(8)
+
+                if (served.phase != null) {
+                    Pill(served.phase, pillar.accent)
+                    VSpace(14)
+                }
+
                 Text(
-                    text = served.coach,
+                    text = served.directive,
                     color = Ink.Primary,
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.displayMedium
                 )
-            }
 
-            if (served.substituted && served.substitutionReason != null) {
-                VSpace(12)
-                Instrument(served.substitutionReason, color = pillar.accent.copy(alpha = 0.8f), small = true)
-            }
+                VSpace(20)
 
-            if (served.repTarget > 0) {
-                VSpace(14)
-                Instrument(
-                    "Then log ${served.repTarget} rep${if (served.repTarget == 1) "" else "s"} today",
-                    color = Ink.Ash,
-                    small = true
-                )
-            }
-
-            VSpace(30)
-
-            HoldToCommit(
-                accent = pillar.accent,
-                label = "Hold to commit",
-                modifier = Modifier.fillMaxWidth(),
-                onCommit = {
-                sound.stopBed()
-                if (soundOn) sound.chime()
-                committing = true
-            }
-            )
-
-            VSpace(10)
-
-            // The second exit, in ember. Not hidden, not shamed — it is the courage counter's
-            // entire supply line.
-            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                Instrument(
-                    "Too much today — log friction",
-                    color = Ink.Ember,
-                    modifier = Modifier
-                        .clickable(role = Role.Button) {
-                            haptics.friction()
-                            onFriction()
-                        }
-                        .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
-                        .wrapContentSize(Alignment.Center)
-                )
-            }
-
-            if (canSwap) {
-                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    Instrument(
-                        "Not this one — swap it",
-                        color = Ink.Dim,
-                        modifier = Modifier
-                            .clickable(role = Role.Button, onClick = onSwap)
-                            .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
-                            .wrapContentSize(Alignment.Center),
-                        small = true
+                // The three facts about the task, each in its own boxed cell.
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(Space.gap)
+                ) {
+                    Fact("Time", Engine.formatMinutes(served.minutes), Modifier.weight(1f))
+                    Fact(
+                        "Cost",
+                        if (served.cost == 0) "Free" else "${served.cost}",
+                        Modifier.weight(1f)
+                    )
+                    Fact(
+                        "Nerve",
+                        "${served.exposure}/10",
+                        Modifier.weight(1f),
+                        accent = Ink.Ember
                     )
                 }
+
+                VSpace(18)
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .panel(border = pillar.accent.copy(alpha = 0.5f))
+                        .padding(15.dp),
+                    verticalArrangement = Arrangement.spacedBy(7.dp)
+                ) {
+                    Label(
+                        if (served.kind == "MISSION") "Why this step" else "Why this one",
+                        color = pillar.accent,
+                        strong = true
+                    )
+                    Text(
+                        text = served.coach,
+                        color = Ink.Secondary,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
+
+                if (served.substituted && served.substitutionReason != null) {
+                    VSpace(12)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .panel(fill = Ink.SurfaceHigh)
+                            .padding(horizontal = 14.dp, vertical = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Glyph(Glyphs.Check, colour = pillar.accent, size = 18)
+                        Text(
+                            text = served.substitutionReason,
+                            color = Ink.Secondary,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+
+                if (served.repTarget > 0) {
+                    VSpace(12)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .panel(fill = Ink.SurfaceHigh)
+                            .padding(horizontal = 14.dp, vertical = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Glyph(Glyphs.Spark, colour = Ink.Gold, size = 18)
+                        Text(
+                            text = "Aim for ${served.repTarget} attempts today. " +
+                                "Log them on the home screen.",
+                            color = Ink.Secondary,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+
+                VSpace(30)
+
+                HoldToCommit(
+                    accent = pillar.accent,
+                    label = "Hold to say you did it",
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    if (!committed) {
+                        committed = true
+                        if (soundOn) sound.chime()
+                        onCommit(served.minutes)
+                    }
+                }
+
+                VSpace(30)
+                Divider()
+                VSpace(18)
+
+                FrictionCard {
+                    glitching = true
+                    haptics.friction()
+                    if (soundOn) sound.stab()
+                    onFriction()
+                }
+
+                VSpace(12)
+                SecondaryButton("Not today", onClick = onBack)
+                VSpace(24)
             }
         }
 
-        // Fired the instant the hold closes, and the reason navigation waits 380ms:
-        // the snap needs somewhere to land.
-        if (committing) {
+        if (committed) {
             Shockwave(accent = pillar.accent, modifier = Modifier.fillMaxSize())
         }
+        if (glitching) {
+            GlitchBurst(modifier = Modifier.fillMaxSize())
+        }
+    }
+}
 
-        // Friction: the surface tears, and what is standing when it settles is a bigger
-        // number than was there before. Damage would read as an error; this reads as output.
-        if (fracture.value > 0.001f) {
-            FractureOverlay(amount = fracture.value, modifier = Modifier.fillMaxSize())
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
+/**
+ * The friction exit, as a real card.
+ *
+ * The whole design rests on people being willing to press this, so it gets amber, an icon, a
+ * headline, an explanation of what happens, and a button — not a grey word under a fold.
+ */
+@Composable
+private fun FrictionCard(onClick: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .panel(fill = Ink.SurfaceHigh, border = Ink.Ember, borderWidth = 2.dp)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Glyph(Glyphs.Spark, colour = Ink.Ember, size = 22)
+            Text(
+                text = "This one was too much",
+                color = Ink.Ember,
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+            )
+        }
+        Text(
+            text = "Tried it and bailed? Asked and got a no? Could not make yourself start? " +
+                "Say so. You earn a Friction point, and the next one gets easier, not harder.",
+            color = Ink.Secondary,
+            style = MaterialTheme.typography.bodyMedium
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = Space.tap)
+                .panel(fill = Ink.Ember, border = Ink.Ember)
+                .clickable(role = Role.Button, onClick = onClick),
+            contentAlignment = Alignment.Center
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                Glyph(Glyphs.Spark, colour = Ink.OnAccent, size = 18)
                 Text(
-                    text = frictionAfter.toString(),
-                    color = Ink.Ember,
-                    style = MaterialTheme.typography.displayLarge.copy(
-                        fontFamily = InstrumentFamily
+                    text = "Log friction",
+                    color = Ink.OnAccent,
+                    style = MaterialTheme.typography.labelLarge.copy(
+                        fontWeight = FontWeight.Bold
                     )
                 )
-                VSpace(8)
-                Instrument("Friction", color = Ink.Ember)
-                VSpace(10)
-                Instrument("Contact with the edge", small = true)
             }
         }
     }
 }
 
 @Composable
-private fun Param(
+private fun Fact(
     label: String,
     value: String,
     modifier: Modifier = Modifier,
-    valueColour: Color = Ink.Primary
+    accent: androidx.compose.ui.graphics.Color = Ink.Primary
 ) {
     Column(
         modifier = modifier
-            .litSurface(emphasis = 0.55f)
-            .padding(horizontal = 11.dp, vertical = 13.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp)
+            .panel(fill = Ink.SurfaceHigh)
+            .padding(horizontal = 12.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Instrument(label, small = true)
+        Label(label)
         Text(
             text = value,
-            color = valueColour,
-            style = MaterialTheme.typography.labelLarge
+            color = accent,
+            style = MaterialTheme.typography.titleMedium
         )
     }
-}
-
-@Composable
-internal fun Divider(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(1.dp)
-            .background(
-                Brush.horizontalGradient(
-                    0f to Color.Transparent,
-                    0.5f to Ink.Faint.copy(alpha = 0.42f),
-                    1f to Color.Transparent
-                )
-            )
-    )
 }

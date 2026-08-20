@@ -83,7 +83,25 @@ data class RepType(
     @SerialName("label") val label: String,
     @SerialName("hint") val hint: String,
     @SerialName("friction") val friction: Boolean = false
-)
+) {
+    /**
+     * One plain line on why keeping this count is worth anything.
+     *
+     * Counting attempts works because it moves the thing you are measuring from the outcome,
+     * which you do not control, to the attempt, which you do. Counting the refusals works for
+     * a blunter reason: once a no is a number that goes up, it stops being a verdict. Both of
+     * those are worth saying out loud next to the button rather than assuming people infer
+     * them from a counter.
+     */
+    val why: String
+        get() = if (friction) {
+            "A no you logged is a no you survived. The count only goes up, and it is the " +
+                "best evidence you actually asked."
+        } else {
+            "Counting attempts keeps the score on the part you control. Do it enough " +
+                "times and the nerves stop being the deciding factor."
+        }
+}
 
 /** A short readable idea. Unlocked by progress so the reading tracks the doing. */
 @Serializable
@@ -135,6 +153,10 @@ object Goals {
     )
 
     fun onRep(s: GoalState): GoalState = s.copy(repsLogged = s.repsLogged + 1)
+
+    /** Undo one rep. Floors at zero so a stray undo can never take the count negative. */
+    fun onRepUndone(s: GoalState): GoalState =
+        s.copy(repsLogged = (s.repsLogged - 1).coerceAtLeast(0))
 
     /**
      * Derived from completions, not from [GoalState.step]. The step caps at 30, so a

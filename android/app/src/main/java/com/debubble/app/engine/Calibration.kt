@@ -11,8 +11,16 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class Baseline(
-    /** Which of [Needs.transportModes] the user actually has access to. */
-    val transport: Set<String> = setOf(Needs.TRANSIT),
+    /**
+     * Legacy vehicle-only answer, kept so an install from before mobility existed does not
+     * silently lose its ladder. Read through [modes], never directly.
+     */
+    val transport: Set<String> = emptySet(),
+    /**
+     * How this person moves: any of [Mobility.all]. Empty only on a state written by a build
+     * that predates this field, which [modes] migrates.
+     */
+    val moves: Set<String> = setOf(Mobility.WALK, Mobility.TRANSIT),
     /** Furthest distance from home in the last 30 days, km. */
     val radiusKm: Int = 4,
     /** Percentage of this week that repeated last week. */
@@ -33,8 +41,21 @@ data class Baseline(
     val canStayOut: Boolean = true,
     val hasPassport: Boolean = false
 ) {
+    /**
+     * The user's real set of modes.
+     *
+     * Older saved state has `transport` and no `moves`. Those builds printed "on foot is
+     * assumed" on the calibration card, so walking genuinely was part of that answer and is
+     * added here rather than being invented.
+     */
+    val modes: Set<String>
+        get() = if (moves.isNotEmpty()) moves else transport + Mobility.WALK
+
+    /** Whether the challenge wording needs adapting for this person. */
+    val rewritesCopy: Boolean get() = Copy.rewrites(modes)
+
     fun has(need: String): Boolean = when (need) {
-        Needs.TRANSIT, Needs.BIKE, Needs.CAR -> need in transport
+        Needs.TRANSIT, Needs.BIKE, Needs.CAR -> need in modes
         Needs.OVERNIGHT, Needs.MULTIDAY -> canStayOut
         Needs.PASSPORT -> hasPassport
         // Nothing else is a hard gate: a kitchen and pocket money are assumed present
@@ -56,7 +77,7 @@ object Calibration {
     const val MAX_ENTRY = 14
 
     fun entryTier(pillar: Pillar, b: Baseline): Int = when (pillar) {
-        Pillar.ACCESS -> 1 + (b.radiusKm / 6) + b.transport.size
+        Pillar.ACCESS -> 1 + (b.radiusKm / 6) + (b.modes intersect Mobility.vehicles).size
         Pillar.ACTIVITY -> 1 + ((100 - b.routinePct) / 11) + b.noveltyRecency
         Pillar.SOCIAL -> 1 + (((10 - b.socialResistance) * 8) / 10) + (b.longConversations / 4)
     }.coerceIn(1, MAX_ENTRY)

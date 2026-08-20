@@ -5,6 +5,7 @@ import com.debubble.app.engine.Challenge
 import com.debubble.app.engine.Curriculum
 import com.debubble.app.engine.Engine
 import com.debubble.app.engine.Ladder
+import com.debubble.app.engine.Mobility
 import com.debubble.app.engine.Needs
 import com.debubble.app.engine.Pillar
 import com.debubble.app.engine.PillarState
@@ -246,7 +247,7 @@ class CurriculumTest {
     fun `a user with no transport is never served a challenge that needs it`() {
         val c = curriculum()
         val b = Baseline(
-            transport = emptySet(),
+            moves = setOf(Mobility.WALK),
             canStayOut = false,
             hasPassport = false,
             budgetPerChallenge = 0
@@ -274,7 +275,7 @@ class CurriculumTest {
     fun `a fully equipped user gets the canonical directive`() {
         val c = curriculum()
         val b = Baseline(
-            transport = setOf(Needs.TRANSIT, Needs.BIKE, Needs.CAR),
+            moves = setOf(Mobility.WALK, Needs.TRANSIT, Needs.BIKE, Needs.CAR),
             canStayOut = true,
             hasPassport = true,
             budgetPerChallenge = 100000

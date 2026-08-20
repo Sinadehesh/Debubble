@@ -26,10 +26,16 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.debubble.app.engine.Pillar
-import com.debubble.app.ui.components.ExpansionBurst
-import com.debubble.app.ui.components.Instrument
+import com.debubble.app.engine.Progress
+import com.debubble.app.ui.components.Glyph
+import com.debubble.app.ui.components.Glyphs
+import com.debubble.app.ui.components.Label
+import com.debubble.app.ui.components.ParticleBurst
+import com.debubble.app.ui.components.Pill
+import com.debubble.app.ui.components.PrimaryButton
+import com.debubble.app.ui.components.TextAction
 import com.debubble.app.ui.components.VSpace
-import com.debubble.app.ui.components.tierCode
+import com.debubble.app.ui.components.panel
 import com.debubble.app.ui.theme.Ink
 import com.debubble.app.ui.theme.Space
 import com.debubble.app.ui.theme.accent
@@ -37,11 +43,10 @@ import com.debubble.app.ui.theme.accent
 private const val JOURNAL_MAX = 90
 
 /**
- * Completion and micro-journal.
+ * Done.
  *
- * The reward is a geometric expansion, not confetti, and progress is stated as a physical
- * measurement rather than points. The journal is capped at one sentence by construction —
- * the field cannot hold a paragraph — and skipping it is a plain, unpunished option.
+ * A particle burst, what actually changed, the XP earned, and one optional line about it.
+ * The note field cannot physically hold a paragraph, and skipping it costs nothing.
  */
 @Composable
 fun CompletionScreen(
@@ -53,90 +58,104 @@ fun CompletionScreen(
     var note by remember { mutableStateOf("") }
 
     val delta = when (pillar) {
-        Pillar.ACCESS -> "Access radius extended"
-        Pillar.ACTIVITY -> "One novel act logged"
-        Pillar.SOCIAL -> "One direct contact made"
-    }
-    val closing = when (pillar) {
-        Pillar.ACCESS -> "The perimeter moved. Tomorrow it moves again."
-        Pillar.ACTIVITY -> "One repetition broken. Your routine is now negotiable."
-        Pillar.SOCIAL -> "Contact made. That is the whole mechanism, repeated a hundred times."
+        Pillar.ACCESS -> "You went somewhere new"
+        Pillar.ACTIVITY -> "You did something new"
+        Pillar.SOCIAL -> "You spoke to someone"
     }
 
     Box(modifier = Modifier.fillMaxSize().background(Ink.Void)) {
-        ExpansionBurst(accent = pillar.accent, modifier = Modifier.fillMaxSize())
+        ParticleBurst(accent = pillar.accent, modifier = Modifier.fillMaxSize())
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .imePadding()
-                .padding(Space.gutter)
+                .padding(horizontal = Space.gutter)
+                .padding(top = 40.dp, bottom = Space.gutter),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Instrument("Tier ${tierCode(tierCleared)} cleared")
-                VSpace(12)
+                Glyph(Glyphs.Check, colour = pillar.accent, size = 56, weight = 2.6f)
+                VSpace(20)
                 Text(
-                    text = "Perimeter\nextended.",
+                    text = "Level $tierCleared done.",
                     color = Ink.Primary,
-                    style = MaterialTheme.typography.displayMedium,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.displayMedium
                 )
-                VSpace(14)
-                Instrument(delta, color = pillar.accent)
-                VSpace(14)
+                VSpace(10)
                 Text(
-                    text = closing,
-                    color = Ink.Ash,
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center
+                    text = delta,
+                    color = pillar.accent,
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.titleMedium
+                )
+                VSpace(18)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Pill("+${Progress.XP_CHALLENGE} XP", Ink.Gold, filled = true)
+                    Pill(pillar.display, pillar.accent)
+                }
+                VSpace(28)
+                Text(
+                    text = "Your bubble is bigger than it was this morning. That is the " +
+                        "whole thing — it only ever happens one of these at a time.",
+                    color = Ink.Secondary,
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodyMedium
                 )
             }
 
-            Divider()
-            VSpace(18)
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .panel(shape = RoundedCornerShape(Space.radiusLarge))
+                    .padding(14.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Instrument("Micro-journal")
-                Instrument("${note.length}/$JOURNAL_MAX")
-            }
-            VSpace(10)
-
-            OutlinedTextField(
-                value = note,
-                onValueChange = { if (it.length <= JOURNAL_MAX) note = it.replace("\n", "") },
-                modifier = Modifier.fillMaxWidth(),
-                placeholder = {
-                    Text(
-                        "What actually happened?",
-                        color = Ink.Faint,
-                        style = MaterialTheme.typography.bodyLarge
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Label("Add a note (optional)", color = Ink.Primary, strong = true)
+                    Label("${note.length}/$JOURNAL_MAX")
+                }
+                OutlinedTextField(
+                    value = note,
+                    onValueChange = { if (it.length <= JOURNAL_MAX) note = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = {
+                        Text(
+                            text = "One line about how it went",
+                            color = Ink.Muted,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    },
+                    textStyle = MaterialTheme.typography.bodyLarge,
+                    singleLine = true,
+                    shape = RoundedCornerShape(Space.radius),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Ink.Primary,
+                        unfocusedTextColor = Ink.Primary,
+                        focusedBorderColor = pillar.accent,
+                        unfocusedBorderColor = Ink.Border,
+                        cursorColor = pillar.accent,
+                        focusedContainerColor = Ink.SurfaceHigh,
+                        unfocusedContainerColor = Ink.SurfaceHigh
                     )
-                },
-                singleLine = true,
-                shape = RoundedCornerShape(Space.radius),
-                textStyle = MaterialTheme.typography.bodyLarge,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = pillar.accent,
-                    unfocusedBorderColor = Ink.Edge,
-                    focusedContainerColor = Ink.Ridge,
-                    unfocusedContainerColor = Ink.Ridge,
-                    focusedTextColor = Ink.Primary,
-                    unfocusedTextColor = Ink.Primary,
-                    cursorColor = pillar.accent
                 )
-            )
+            }
 
             VSpace(12)
-            PrimaryButton(if (note.isBlank()) "Done" else "Log it") { onSave(note) }
-            GhostButton("Skip") { onSkip() }
+            PrimaryButton(
+                text = if (note.isBlank()) "Done" else "Save it",
+                accent = pillar.accent
+            ) { onSave(note) }
+            TextAction("Skip") { onSkip() }
         }
     }
 }

@@ -13,20 +13,20 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.debubble.app.engine.Pillar
-import kotlinx.coroutines.delay
+import com.debubble.app.ui.screens.AvatarScreen
 import com.debubble.app.ui.screens.CalibrationScreen
 import com.debubble.app.ui.screens.CampaignScreen
 import com.debubble.app.ui.screens.ChallengeScreen
 import com.debubble.app.ui.screens.CompletionScreen
 import com.debubble.app.ui.screens.DashboardScreen
 import com.debubble.app.ui.screens.GoalPickerScreen
+import com.debubble.app.ui.screens.IntroScreen
 import com.debubble.app.ui.screens.PrincipleScreen
 import com.debubble.app.ui.screens.PrinciplesScreen
 import com.debubble.app.ui.screens.ProfileScreen
@@ -34,9 +34,8 @@ import com.debubble.app.ui.screens.Tab
 import com.debubble.app.ui.screens.TabBar
 import com.debubble.app.ui.screens.TranscendenceScreen
 import com.debubble.app.ui.theme.DeBubbleTheme
-import com.debubble.app.ui.components.Chiaroscuro
-import com.debubble.app.ui.components.LocalAscension
 import com.debubble.app.ui.theme.Ink
+import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,7 +57,7 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
     val route by vm.route.collectAsStateWithLifecycle()
     val pulse by vm.pulse.collectAsStateWithLifecycle()
 
-    // The shockwave is a one-shot: clear it so re-entering the dashboard does not replay it.
+    // The pulse is a one-shot: clear it so re-entering the dashboard does not replay it.
     LaunchedEffect(pulse) {
         if (pulse != null) {
             delay(1400)
@@ -66,21 +65,19 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
         }
     }
 
-    CompositionLocalProvider(LocalAscension provides state.ascension) {
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Ink.Void)
+            .statusBarsPadding()
     ) {
-        // Behind everything, always. The app is a lit room, and the room is lit once.
-        Chiaroscuro(modifier = Modifier.fillMaxSize())
-
-        Box(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
         when (val r = route) {
             is Route.Loading -> Box(modifier = Modifier.fillMaxSize())
 
+            is Route.Intro -> IntroScreen(onDone = vm::finishIntro)
+
             is Route.Calibration -> {
-                // Recalibration is reachable from the profile, so it must be cancellable.
+                // Reachable again from the profile, so it has to be cancellable.
                 CalibrationScreen(
                     initial = state.baseline,
                     isRecalibration = state.onboarded,
@@ -90,22 +87,27 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
             }
 
             is Route.Dashboard -> {
+                val goal = state.goalEnum
                 Column(modifier = Modifier.fillMaxSize()) {
                     Box(modifier = Modifier.weight(1f)) {
                         DashboardScreen(
                             state = state,
                             dayIndex = vm.dayIndex(state),
                             served = Pillar.order.associateWith { vm.serve(it, state) },
-                            bubble = vm.bubble(state, pulsing = pulse != null),
+                            ring = vm.ring(state),
                             mission = vm.serveMission(state),
                             reps = vm.repTypes(state),
+                            principles = goal?.let { vm.track(it).principles } ?: emptyList(),
                             pulse = pulse,
                             onOpen = vm::openChallenge,
                             onOpenMission = vm::openMission,
                             onLogRep = { rep -> vm.logRep(rep.key, rep.friction, rep.label) },
-                            onPrinciples = vm::goPrinciples,
+                            onUndoRep = { rep -> vm.unlogRep(rep.key, rep.friction) },
+                            onOpenPrinciple = vm::openPrinciple,
+                            onAllPrinciples = vm::goPrinciples,
                             onPickGoal = vm::goGoalPicker,
-                            onOpenCampaign = vm::goCampaign
+                            onOpenCampaign = vm::goCampaign,
+                            onOpenAvatar = vm::goAvatar
                         )
                     }
                     TabBar(
@@ -123,9 +125,10 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
                         ProfileScreen(
                             state = state,
                             dayIndex = vm.dayIndex(state),
-                            trackOf = vm::track,
+                            track = state.goalEnum?.let { vm.track(it) },
                             onRecalibrate = vm::goRecalibrate,
                             onChangeGoal = vm::goGoalPicker,
+                            onOpenAvatar = vm::goAvatar,
                             onToggleSound = vm::toggleSound,
                             onToggleAmbient = vm::toggleAmbient
                         )
@@ -138,23 +141,32 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
                 }
             }
 
+            is Route.AvatarStudio -> {
+                BackHandler { vm.goDashboard() }
+                Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
+                    AvatarScreen(
+                        avatar = state.avatar,
+                        xp = state.xp,
+                        friction = state.friction,
+                        onChange = vm::setAvatar,
+                        onBack = vm::goDashboard
+                    )
+                }
+            }
+
             is Route.Challenge -> {
                 BackHandler { vm.abort() }
-                // No tab bar here on purpose: the Action Screen is a locked focus.
+                // No tab bar here on purpose: the action screen is a locked focus.
                 val served = vm.serve(r.pillar, state)
                 Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
                     ChallengeScreen(
                         served = served,
-                        canSwap = r.pillar.name !in state.swappedToday,
-                        frictionAfter = state.friction + 1,
                         soundOn = state.soundOn,
                         ambientOn = state.ambientOn,
-                        onAbort = vm::abort,
-                        onSwap = { vm.swap(r.pillar) },
-                        onComplete = {
+                        onCommit = { minutes ->
                             vm.complete(
                                 pillar = r.pillar,
-                                minutes = served.minutes,
+                                minutes = minutes,
                                 tier = served.tier,
                                 title = served.directive
                             )
@@ -165,7 +177,11 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
                                 tier = served.tier,
                                 title = served.directive
                             )
-                        }
+                        },
+                        onSwap = if (r.pillar.name !in state.swappedToday) {
+                            { vm.swap(r.pillar) }
+                        } else null,
+                        onBack = vm::abort
                     )
                 }
             }
@@ -190,15 +206,11 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
                     Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
                         ChallengeScreen(
                             served = mission,
-                            canSwap = false,
-                            frictionAfter = state.friction + 1,
                             soundOn = state.soundOn,
                             ambientOn = state.ambientOn,
-                            onAbort = vm::abort,
-                            onSwap = {},
-                            onComplete = {
+                            onCommit = { minutes ->
                                 vm.completeMission(
-                                    minutes = mission.minutes,
+                                    minutes = minutes,
                                     step = mission.tier,
                                     title = mission.directive
                                 )
@@ -208,7 +220,9 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
                                     step = mission.tier,
                                     title = mission.directive
                                 )
-                            }
+                            },
+                            onSwap = null,
+                            onBack = vm::abort
                         )
                     }
                 }
@@ -251,7 +265,7 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
             }
 
             is Route.ReadPrinciple -> {
-                BackHandler { vm.goPrinciples() }
+                BackHandler { vm.goDashboard() }
                 val goal = state.goalEnum
                 val principle = goal?.let { vm.track(it).principles.getOrNull(r.index) }
                 if (goal == null || principle == null) {
@@ -262,7 +276,7 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
                         PrincipleScreen(
                             goal = goal,
                             principle = principle,
-                            onDone = vm::goPrinciples
+                            onDone = vm::goDashboard
                         )
                     }
                 }
@@ -279,7 +293,7 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
             }
 
             is Route.Completion -> {
-                // Back out of the journal is the same as skipping it.
+                // Backing out of the note is the same as skipping it.
                 BackHandler { vm.goDashboard() }
                 Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
                     CompletionScreen(
@@ -290,8 +304,6 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
                     )
                 }
             }
-        }
-    }
         }
     }
 }

@@ -36,27 +36,31 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.debubble.app.ui.theme.Ink
-import com.debubble.app.ui.theme.Space
 import kotlinx.coroutines.launch
+import kotlin.math.ceil
 import kotlin.math.sin
 
-/** How long the user has to hold their nerve. */
+/** How long the user has to hold. */
 const val HOLD_MILLIS = 3000
 
 /**
- * The commit gesture, built to physically resist the user.
+ * The commit gesture.
  *
- * A tap is too cheap to mean anything, and so is a short press. Accepting a challenge costs a
- * full three seconds of sustained pressure against escalating haptic tension — the phone winds
- * up like a spring being drawn back, the button shakes harder as the ring closes, and letting
- * go early collapses all of it with a hollow thud. Holding past the threshold releases
- * everything at once: one sharp strike and a shockwave.
+ * A tap is too cheap for "I am going to go and do this", so committing costs three seconds of
+ * sustained pressure against rising haptic tension: the ring fills, the button shakes harder
+ * as it closes, and letting go early collapses the whole thing with a hollow thud.
  *
- * Two things keep that from being hostile rather than demanding. The shake is suppressed when
- * the system asks for reduced animation, and screen-reader users get a plain click action
- * instead — a timed gesture is a bad interaction for someone driving the phone with TalkBack.
+ * Made deliberately large and loud. The previous version was a 112dp circle with a hairline
+ * ring and a tick, which read as decoration — people did not know it was the button, and a
+ * control you have to hold for three seconds is the last thing that should be subtle. It is
+ * now 176dp, filled, labelled in words, and it counts down while you hold it.
+ *
+ * Two things keep it demanding rather than hostile: the shake is suppressed under
+ * reduced-motion, and screen-reader users get a plain click action instead, because a timed
+ * press is a bad interaction for anyone driving the phone with TalkBack.
  */
 @Composable
 fun HoldToCommit(
@@ -83,30 +87,33 @@ fun HoldToCommit(
         }
     }
 
-    // Tension curve, not the raw fill: shake stays imperceptible for the first second and
-    // becomes violent only near the threshold, so the effort reads as accelerating.
-    val tension = progress.value * progress.value
-    val shake = if (reduceMotion) 0f else tension * 5.5f
+    // Tension curve rather than the raw fill: the first second is quiet and the last is
+    // violent, so the effort reads as accelerating.
+    val p = progress.value
+    val tension = p * p
+    val shake = if (reduceMotion) 0f else tension * 6f
+    val secondsLeft = ceil((1f - p) * holdMillis / 1000f).toInt()
 
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(Space.gap)
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Box(
             modifier = Modifier
-                .size(112.dp)
+                .size(176.dp)
                 .graphicsLayer {
                     translationX = sin(phase * 47f) * shake
                     translationY = sin(phase * 61f + 1.7f) * shake
-                    val squeeze = 1f - tension * 0.06f
+                    val squeeze = 1f - tension * 0.05f
                     scaleX = squeeze
                     scaleY = squeeze
                 }
                 .clip(CircleShape)
                 .semantics {
                     role = Role.Button
-                    contentDescription = "Hold for three seconds to commit to this challenge"
+                    contentDescription =
+                        "$label. Press and hold for three seconds to commit."
                     onClick(label = "commit") { onCommit(); true }
                 }
                 .pointerInput(holdMillis) {
@@ -132,7 +139,7 @@ fun HoldToCommit(
                                 fill.cancel()
                                 haptics.stop()
                                 haptics.thud()
-                                // Collapse, do not ease: hesitation should cost the whole hold.
+                                // Collapse, do not ease: hesitation costs the whole hold.
                                 progress.animateTo(0f, tween(140, easing = LinearEasing))
                             }
                         }
@@ -140,17 +147,20 @@ fun HoldToCommit(
                 },
             contentAlignment = Alignment.Center
         ) {
-            Canvas(modifier = Modifier.size(112.dp)) {
-                val stroke = 2.dp.toPx()
+            Canvas(modifier = Modifier.size(176.dp)) {
+                val stroke = 10.dp.toPx()
                 val inset = stroke / 2f
                 val arcSize = Size(size.width - stroke, size.height - stroke)
 
+                // The body of the button, so it reads as a solid object at rest.
                 drawCircle(
-                    color = accent.copy(alpha = 0.08f + 0.16f * tension),
+                    color = accent.copy(alpha = 0.14f + 0.34f * tension),
                     radius = size.minDimension / 2f - stroke
                 )
+                // The empty track. Visible from the start, so the shape of the task is clear
+                // before the user has touched anything.
                 drawArc(
-                    color = Ink.Edge,
+                    color = Ink.Border,
                     startAngle = 0f,
                     sweepAngle = 360f,
                     useCenter = false,
@@ -158,27 +168,49 @@ fun HoldToCommit(
                     size = arcSize,
                     style = Stroke(width = stroke)
                 )
+                // The fill.
                 drawArc(
                     color = accent,
                     startAngle = -90f,
-                    sweepAngle = 360f * progress.value,
+                    sweepAngle = 360f * p,
                     useCenter = false,
                     topLeft = Offset(inset, inset),
                     size = arcSize,
-                    style = Stroke(width = stroke + tension * 2f, cap = StrokeCap.Round)
+                    style = Stroke(width = stroke, cap = StrokeCap.Round)
                 )
             }
-            Text(
-                text = "✓",
-                color = accent,
-                style = MaterialTheme.typography.headlineMedium
-            )
+
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                if (p > 0.02f) {
+                    Text(
+                        text = secondsLeft.coerceAtLeast(1).toString(),
+                        color = accent,
+                        style = MaterialTheme.typography.displayLarge
+                    )
+                    Text(
+                        text = "keep holding",
+                        color = Ink.Primary,
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                } else {
+                    Glyph(Glyphs.Check, colour = accent, size = 40, weight = 2.6f)
+                    Text(
+                        text = "HOLD",
+                        color = Ink.Primary,
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                }
+            }
         }
 
         Text(
-            text = if (progress.value > 0.02f) "Keep holding" else label,
-            color = if (progress.value > 0.02f) accent else Ink.Ash,
-            style = MaterialTheme.typography.labelMedium
+            text = if (p > 0.02f) "Do not let go" else label,
+            color = if (p > 0.02f) accent else Ink.Secondary,
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.bodyLarge
         )
     }
 }

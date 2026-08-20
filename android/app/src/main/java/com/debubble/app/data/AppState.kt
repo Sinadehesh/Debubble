@@ -1,11 +1,13 @@
 package com.debubble.app.data
 
+import com.debubble.app.engine.AvatarState
 import com.debubble.app.engine.Baseline
 import com.debubble.app.engine.Goal
 import com.debubble.app.engine.GoalState
 import com.debubble.app.engine.Goals
 import com.debubble.app.engine.Pillar
 import com.debubble.app.engine.PillarState
+import com.debubble.app.engine.Progress
 import kotlinx.serialization.Serializable
 
 /** One line in the history. Completions and friction live in the same stream, deliberately. */
@@ -34,11 +36,18 @@ data class LogEntry(
  */
 @Serializable
 data class AppState(
+    /** The three-card intro has been seen. Separate from [onboarded] so someone who
+     *  recalibrates later is not shown the explainer again. */
+    val introSeen: Boolean = false,
     val onboarded: Boolean = false,
     val baseline: Baseline = Baseline(),
     val pillars: Map<String, PillarState> = Pillar.order.associate { it.name to PillarState() },
 
-    /** The anti-score. Monotonic: nothing in the app decreases it. */
+    /**
+     * The anti-score. Nothing in the app ever spends or penalises it; the one thing that
+     * lowers it is the user undoing a rep they logged by mistake, which is a correction
+     * rather than a cost.
+     */
     val friction: Int = 0,
 
     val streak: Int = 0,
@@ -63,8 +72,14 @@ data class AppState(
     /** "GOAL:repKey" -> lifetime count. Never reset — this is the evidence. */
     val repTotals: Map<String, Int> = emptyMap(),
 
-    /** Pillars whose tier-100 ending has been shown. It only ever plays once. */
+    /** Pillars whose level-100 ending has been shown. It only ever plays once. */
     val transcended: Set<String> = emptySet(),
+
+    /* ---- the avatar: how the user is shown back to themselves ---- */
+
+    /** Earned by doing things. Unlocks casual wear. */
+    val xp: Int = 0,
+    val avatar: AvatarState = AvatarState(),
 
     /** One-shot feedback on deliberate actions. Expected, so it is on. */
     val soundOn: Boolean = true,
@@ -97,6 +112,12 @@ data class AppState(
 
     fun evidence(p: Pillar): Int = log.count { !it.friction && it.pillar == p.name }
 
+    /* ---- levels and armour ---- */
+
+    val level: Int get() = Progress.level(xp)
+    val levelProgress: Float get() = Progress.levelProgress(xp)
+    val plates: Int get() = Progress.plates(friction)
+
     /* ---- goal helpers ---- */
 
     val goalEnum: Goal? get() = Goal.from(goal)
@@ -118,16 +139,6 @@ data class AppState(
     fun hasStarted(g: Goal): Boolean = goalStates.containsKey(g.name)
 
     fun goalProgress(g: Goal): Float = Goals.progress(goalState(g))
-
-    /**
-     * How far open the whole interface should be, 0..1.
-     *
-     * Drives the app coming apart as the ladder is climbed: at the bottom it is a tight, dark
-     * instrument panel, and near the top the borders fade and the light takes over.
-     */
-    val ascension: Float
-        get() = ((Pillar.order.map { state(it).tier }.average().toFloat() - 1f) / 99f)
-            .coerceIn(0f, 1f)
 
     /**
      * A new day resets what was served without touching any progress. Called on load and

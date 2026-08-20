@@ -18,50 +18,68 @@ import androidx.core.view.WindowCompat
 import com.debubble.app.engine.Pillar
 
 /* ------------------------------------------------------------------ palette
-   Chiaroscuro. Absolute black rather than a dark grey, because tenebrism needs real shadow
-   for the light to mean anything — at tier 1 the screen should feel like a small lit space
-   inside a large dark one. Grounds are warm, the colour of aged varnish, and the accents are
-   earth pigments rather than neon: lapis, verdigris, madder, candlelight.
 
-   Names are semantic and unchanged from the previous identity, so every screen inherits this
-   without being touched. Contrast was measured, not eyeballed; the figures are per token.   */
+   High-affordance dark. The previous identity was dark-on-dark by design — surfaces were
+   separated by a few points of luminance and defined by where light fell on them. It looked
+   like a painting and read like nothing: you could not tell what was tappable.
+
+   This palette does the opposite. Every layer is a clearly visible step up from the one
+   below, borders exist again, and selection states are loud. The rule is simple: if you
+   cannot tell at a glance whether something is a button, the design has failed.
+
+   Contrast ratios below are measured against Surface (#181D26) unless stated.              */
 
 object Ink {
-    /** Absolute. Not #0A0A0A — the shadow has to be genuinely empty. */
-    val Void = Color(0xFF000000)
+    /** App ground. Deep slate rather than pure black, so a raised surface can read as raised. */
+    val Void = Color(0xFF0E1116)
 
-    /** Panel. Warm near-black, like varnish over a dark ground. */
-    val Strata = Color(0xFF0B0907)
-    val Ridge = Color(0xFF141009)
-    val Raise = Color(0xFF1C160E)
-    val Edge = Color(0xFF241D14)
-    val EdgeSoft = Color(0xFF17120C)
+    /** Default card. A clear, obvious step up from the ground. */
+    val Surface = Color(0xFF181D26)
 
-    /** Warm parchment rather than white. 16.6:1 on the panel ground. */
-    val Primary = Color(0xFFF2EAD9)
+    /** Raised card — pressed states, nested panels, the thing in front. */
+    val SurfaceHigh = Color(0xFF232B38)
 
-    /** 9.6:1 on the panel. */
-    val Ash = Color(0xFFC3B295)
+    /** Inset wells: progress tracks, counters, anything that should look recessed. */
+    val Well = Color(0xFF11151C)
 
-    /** The floor for anything that is text. 5.9:1 on the panel, 6.3:1 on the void. */
-    val Dim = Color(0xFF9C8A6E)
+    /** Visible resting border. Not decoration — this is what makes a control look like one.
+     *  3.7:1 on Surface, which clears the WCAG 3:1 floor for non-text UI boundaries. */
+    val Border = Color(0xFF6B7789)
 
-    /** Structure only — tracks, rules, inactive marks. Never text: it does not clear 4.5. */
-    val Faint = Color(0xFF544838)
+    /** Border on a focused or selected control. 5.4:1. */
+    val BorderStrong = Color(0xFF8593A6)
 
-    /** Lapis. 5.3:1 on the panel. */
-    val Access = Color(0xFF5E82CC)
+    /** 15.8:1 on Surface. */
+    val Primary = Color(0xFFF5F7FA)
 
-    /** Verdigris. 9.3:1. */
-    val Activity = Color(0xFFA8BA5C)
+    /** 9.0:1. Body copy. */
+    val Secondary = Color(0xFFB4BECD)
 
-    /** Madder. 4.6:1 — chosen over a deeper red specifically so the small pillar labels
-     *  that use it still clear the small-text threshold. */
-    val Social = Color(0xFFCC4E62)
+    /** 5.4:1, and 4.6:1 on SurfaceHigh. The floor for anything that is text at any size. */
+    val Muted = Color(0xFF8593A6)
 
-    /** Candlelight, and reserved for Friction alone. It never marks a warning or an error
-     *  anywhere in the app, so the colour permanently reads as credit rather than fault. */
-    val Ember = Color(0xFFE0A94A)
+    /** Structure only — inactive ticks, dividers. Never text. */
+    val Faint = Color(0xFF4A5462)
+
+    /** Access. 6.4:1. */
+    val Access = Color(0xFF4DA3FF)
+
+    /** Activity. 9.6:1. */
+    val Activity = Color(0xFF3DDC97)
+
+    /** Social. 6.2:1. */
+    val Social = Color(0xFFFF6B81)
+
+    /** Friction. Amber, and reserved for it — it never marks an error anywhere in the app,
+     *  so the colour permanently reads as credit rather than fault. 9.2:1. */
+    val Ember = Color(0xFFFFB020)
+
+    /** XP and unlocks. 11.0:1. */
+    val Gold = Color(0xFFFFC94D)
+
+    /** Text/icon colour to place on top of a filled accent block. 7.1:1 on the worst
+     *  accent (Social), so filled buttons are readable in every pillar colour. */
+    val OnAccent = Color(0xFF0B0E13)
 }
 
 val Pillar.accent: Color
@@ -71,94 +89,99 @@ val Pillar.accent: Color
         Pillar.SOCIAL -> Ink.Social
     }
 
+/** The wash behind a selected control in this pillar's colour. */
+val Pillar.wash: Color get() = accent.copy(alpha = 0.16f)
+
 /* ------------------------------------------------------------------ type
-   A serif carries the app now — the weight of a printed page rather than a dashboard.
-   Directives are set large and quietly, at regular weight: an instruction in a book does
-   not shout, and a heavy grotesque at 30sp was doing exactly that.
 
-   Monospace survives in one place only, for figures that have to align in columns. If it is
-   a measurement it is monospace; everything else is set.                                   */
+   Plain sans throughout. The serif was doing the same job as the literary copy — making
+   simple instructions feel like literature — and both are gone. Sizes are up across the
+   board; the old 10-12sp tracked capitals were unreadable in ordinary light.
 
-private val Bookish = FontFamily.Serif
-val InstrumentFamily = FontFamily.Monospace
+   Monospace survives for figures only, where digits have to line up in columns.            */
+
+private val Plain = FontFamily.SansSerif
+val NumberFamily = FontFamily.Monospace
 
 val Type = Typography(
-    // Directives — the thing to go and do.
     displayLarge = TextStyle(
-        fontFamily = Bookish, fontWeight = FontWeight.Normal,
-        fontSize = 42.sp, lineHeight = 48.sp, letterSpacing = (-0.6).sp
+        fontFamily = Plain, fontWeight = FontWeight.Bold,
+        fontSize = 40.sp, lineHeight = 46.sp, letterSpacing = (-0.8).sp
     ),
     displayMedium = TextStyle(
-        fontFamily = Bookish, fontWeight = FontWeight.Normal,
-        fontSize = 31.sp, lineHeight = 37.sp, letterSpacing = (-0.4).sp
+        fontFamily = Plain, fontWeight = FontWeight.Bold,
+        fontSize = 30.sp, lineHeight = 37.sp, letterSpacing = (-0.5).sp
     ),
     headlineLarge = TextStyle(
-        fontFamily = Bookish, fontWeight = FontWeight.Normal,
-        fontSize = 27.sp, lineHeight = 33.sp, letterSpacing = (-0.3).sp
+        fontFamily = Plain, fontWeight = FontWeight.Bold,
+        fontSize = 25.sp, lineHeight = 32.sp, letterSpacing = (-0.3).sp
     ),
     headlineMedium = TextStyle(
-        fontFamily = Bookish, fontWeight = FontWeight.Medium,
-        fontSize = 22.sp, lineHeight = 28.sp, letterSpacing = (-0.2).sp
+        fontFamily = Plain, fontWeight = FontWeight.SemiBold,
+        fontSize = 20.sp, lineHeight = 27.sp, letterSpacing = (-0.2).sp
     ),
-    // Body.
+    titleMedium = TextStyle(
+        fontFamily = Plain, fontWeight = FontWeight.SemiBold,
+        fontSize = 17.sp, lineHeight = 23.sp
+    ),
     bodyLarge = TextStyle(
-        fontFamily = Bookish, fontWeight = FontWeight.Normal,
-        fontSize = 16.sp, lineHeight = 23.sp
+        fontFamily = Plain, fontWeight = FontWeight.Normal,
+        fontSize = 16.sp, lineHeight = 24.sp
     ),
     bodyMedium = TextStyle(
-        fontFamily = Bookish, fontWeight = FontWeight.Normal,
-        fontSize = 14.sp, lineHeight = 21.sp
+        fontFamily = Plain, fontWeight = FontWeight.Normal,
+        fontSize = 15.sp, lineHeight = 22.sp
     ),
-    // Labels: set in the serif too, uppercase and widely tracked, so they read as engraving
-    // rather than as UI chrome. Compose has no reliable small-caps, and tracked capitals are
-    // the honest substitute.
+    // Labels are sentence case at a readable size. Tracked micro-capitals were the single
+    // biggest legibility problem in the old design.
     labelLarge = TextStyle(
-        fontFamily = Bookish, fontWeight = FontWeight.Medium,
-        fontSize = 12.sp, letterSpacing = 2.6.sp
+        fontFamily = Plain, fontWeight = FontWeight.SemiBold,
+        fontSize = 15.sp, letterSpacing = 0.2.sp
     ),
     labelMedium = TextStyle(
-        fontFamily = Bookish, fontWeight = FontWeight.Normal,
-        fontSize = 11.sp, letterSpacing = 2.2.sp
+        fontFamily = Plain, fontWeight = FontWeight.Medium,
+        fontSize = 13.sp, letterSpacing = 0.2.sp
     ),
     labelSmall = TextStyle(
-        fontFamily = Bookish, fontWeight = FontWeight.Normal,
-        fontSize = 10.sp, letterSpacing = 1.7.sp
+        fontFamily = Plain, fontWeight = FontWeight.Medium,
+        fontSize = 12.sp, letterSpacing = 0.3.sp
     )
 )
 
 /* ------------------------------------------------------------------ spacing */
 
 object Space {
-    val gutter = 22.dp
-    val gap = 9.dp
-    val block = 20.dp
-    // Near-square. A 12dp radius reads as a widget; a painted panel has corners. Pills that
-    // genuinely want to be round ask for it explicitly.
-    val radius = 3.dp
-    val radiusLarge = 4.dp
+    val gutter = 20.dp
+    val gap = 10.dp
+    val block = 18.dp
+
+    /** Rounded and tactile. Things you can press should look like things you can press. */
+    val radius = 14.dp
+    val radiusLarge = 20.dp
+
+    /** Minimum touch target. Nothing interactive is allowed below this. */
+    val tap = 52.dp
 }
 
-/** Centre-aligned variant used on the completion screen. */
+/** Centre-aligned variant used on completion and onboarding surfaces. */
 val TextStyle.centered: TextStyle get() = copy(textAlign = TextAlign.Center)
 
 @Composable
 fun DeBubbleTheme(content: @Composable () -> Unit) {
-    // No light scheme and no dynamic colour. Chiaroscuro is not a preference — the whole
-    // design depends on the shadow being real, so the system theme is not consulted.
     val scheme = darkColorScheme(
-        primary = Ink.Primary,
-        onPrimary = Ink.Void,
-        secondary = Ink.Access,
+        primary = Ink.Access,
+        onPrimary = Ink.OnAccent,
+        secondary = Ink.Activity,
         background = Ink.Void,
         onBackground = Ink.Primary,
-        surface = Ink.Strata,
+        surface = Ink.Surface,
         onSurface = Ink.Primary,
-        surfaceVariant = Ink.Ridge,
-        onSurfaceVariant = Ink.Ash,
-        outline = Ink.Edge,
-        outlineVariant = Ink.EdgeSoft,
+        surfaceVariant = Ink.SurfaceHigh,
+        onSurfaceVariant = Ink.Secondary,
+        outline = Ink.Border,
+        outlineVariant = Ink.Faint,
         error = Ink.Social,
-        onError = Ink.Primary
+        onError = Ink.OnAccent
     )
 
     val view = LocalView.current

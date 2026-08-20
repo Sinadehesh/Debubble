@@ -10,12 +10,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -25,84 +25,28 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.debubble.app.engine.Engine
 import com.debubble.app.engine.Pillar
 import com.debubble.app.engine.Served
 import com.debubble.app.ui.theme.Ink
-import com.debubble.app.ui.theme.InstrumentFamily
 import com.debubble.app.ui.theme.Space
 import com.debubble.app.ui.theme.accent
 
 /**
- * How far open the interface is, 0..1, supplied at the root from the mean tier.
+ * One of the day's offers.
  *
- * Page 10 of the design doctrine: the app should visually stop being able to contain the life
- * it is measuring. Rather than a switch at some threshold, every surface that reads it opens
- * continuously — nobody should be able to point at the day it changed.
- */
-val LocalAscension = androidx.compose.runtime.compositionLocalOf { 0f }
-
-/**
- * A surface catching light, which is how every panel in the app is built now.
- *
- * There are no outlines anywhere: an object is legible because one edge of it is lit and the
- * other falls into the dark, not because a 1px rule has been drawn around it. [tint] carries
- * identity — ember for friction, a pillar accent for a campaign — and [emphasis] is how much
- * light the surface is catching, which is the only hierarchy this design has.
- */
-fun Modifier.litSurface(
-    tint: Color = Ink.Primary,
-    emphasis: Float = 1f,
-    shape: Shape = RoundedCornerShape(Space.radius)
-): Modifier = this
-    .clip(shape)
-    .background(
-        Brush.linearGradient(
-            0f to tint.copy(alpha = 0.055f * emphasis),
-            0.55f to tint.copy(alpha = 0.014f * emphasis),
-            1f to Color.Transparent
-        )
-    )
-
-/** Widely tracked capitals in the serif: labels read as engraving, not as UI chrome. */
-@Composable
-fun Instrument(
-    text: String,
-    modifier: Modifier = Modifier,
-    color: Color = Ink.Dim,
-    small: Boolean = false
-) {
-    Text(
-        text = text.uppercase(),
-        modifier = modifier,
-        color = color,
-        style = if (small) MaterialTheme.typography.labelSmall
-        else MaterialTheme.typography.labelMedium
-    )
-}
-
-fun tierCode(tier: Int): String = tier.toString().padStart(3, '0')
-
-/**
- * One of the day's three offers. The card *is* the button — there is no separate CTA,
- * because a second tap target on a card this size is just a smaller card.
+ * Built to be obviously a button: a filled panel with a visible border, the pillar's colour
+ * on a chunky left edge, and an explicit "Start" affordance in the corner. The previous
+ * version relied on the whole card being tappable with nothing indicating that it was.
  */
 @Composable
 fun ChallengeCard(
@@ -112,143 +56,110 @@ fun ChallengeCard(
     modifier: Modifier = Modifier
 ) {
     val pillar = served.pillar
-    // Low on the ladder a card is a tight box in a void. High up the edges give way and the
-    // accent starts to leak past them.
-    val open = LocalAscension.current
-    Column(
+    val shape = RoundedCornerShape(Space.radius)
+
+    Row(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(3.dp))
-            // Sfumato: no outline anywhere. A card is a surface catching light from the upper
-            // left and falling off into the dark, which is what stops the screen reading as a
-            // dashboard of boxes.
-            .background(
-                Brush.linearGradient(
-                    0f to Ink.Primary.copy(alpha = (if (done) 0.018f else 0.055f) + open * 0.030f),
-                    0.6f to Ink.Primary.copy(alpha = (if (done) 0.004f else 0.012f)),
-                    1f to Color.Transparent
-                )
+            // Intrinsic min height so the accent edge below can fillMaxHeight — inside a
+            // scrolling column the incoming height constraint is infinite otherwise.
+            .height(IntrinsicSize.Min)
+            .panel(
+                shape = shape,
+                fill = if (done) Ink.Void else Ink.Surface,
+                border = if (done) Ink.Faint else Ink.Border
             )
-            .drawLeftRail(pillar.accent)
-            // Done is signalled visually by strikethrough and dimming alone, so the state has
-            // to be spoken as well.
-            .semantics { stateDescription = if (done) "Completed today" else "Not started" }
+            .semantics { stateDescription = if (done) "Done today" else "Not started" }
             .then(
-                if (done) Modifier.alpha(0.42f)
+                if (done) Modifier
                 else Modifier.clickable(role = Role.Button, onClick = onClick)
             )
-            .padding(start = 15.dp, top = 14.dp, end = 15.dp, bottom = 14.dp),
-        verticalArrangement = Arrangement.spacedBy(Space.gap)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        // The pillar's colour as a solid edge. Reads instantly, and does not depend on the
+        // user having learned which accent means what.
+        Box(
+            modifier = Modifier
+                .width(5.dp)
+                .fillMaxHeight()
+                .background(if (done) Ink.Faint else pillar.accent)
+        )
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 14.dp, vertical = 13.dp),
+            verticalArrangement = Arrangement.spacedBy(9.dp)
         ) {
-            Instrument(pillar.display, color = pillar.accent, small = true)
-            Instrument("Tier ${tierCode(served.tier)} · ${pillar.code}", small = true)
-        }
-        Text(
-            text = served.directive,
-            color = Ink.Primary,
-            style = MaterialTheme.typography.bodyLarge.copy(
-                fontWeight = FontWeight.Medium,
-                textDecoration = if (done) TextDecoration.LineThrough else TextDecoration.None
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Pill(
+                    text = pillar.display,
+                    colour = if (done) Ink.Muted else pillar.accent
+                )
+                Label(
+                    if (served.kind == "MISSION") "Step ${served.tier} of 30"
+                    else "Level ${served.tier}"
+                )
+            }
+
+            Text(
+                text = served.directive,
+                color = if (done) Ink.Muted else Ink.Primary,
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    fontWeight = FontWeight.SemiBold
+                )
             )
-        )
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Instrument(Engine.formatMinutes(served.minutes), small = true)
-            Instrument(if (served.cost == 0) "Free" else "${served.cost} spend", small = true)
-            Instrument("Exposure ${served.exposure}/10", small = true)
-        }
-        if (served.substituted && served.substitutionReason != null && !done) {
-            Instrument(served.substitutionReason, color = pillar.accent.copy(alpha = 0.75f), small = true)
-        }
-    }
-}
 
-/**
- * The pillar rail: the only chrome identifying a card, and it fades out at both ends rather
- * than stopping. A hard-terminated bar is a UI element; a rail that dissolves is lit edge.
- */
-private fun Modifier.drawLeftRail(colour: Color): Modifier =
-    drawWithContent {
-        drawContent()
-        val inset = size.height * 0.10f
-        drawRect(
-            brush = Brush.verticalGradient(
-                0f to Color.Transparent,
-                0.5f to colour,
-                1f to Color.Transparent,
-                startY = inset,
-                endY = size.height - inset
-            ),
-            topLeft = Offset(0f, inset),
-            size = Size(2.dp.toPx(), size.height - inset * 2f)
-        )
-    }
+            Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                Pill(Engine.formatMinutes(served.minutes), Ink.Muted)
+                Pill(if (served.cost == 0) "Free" else "Costs ${served.cost}", Ink.Muted)
+                Pill("Nerve ${served.exposure}/10", if (done) Ink.Muted else Ink.Ember)
+            }
 
-/**
- * The reward. Four concentric geometric frames expanding from the press point, rotating 45°,
- * fading at the edge.
- *
- * Not confetti: confetti is a slot machine telling you that you won something. This is a
- * perimeter visibly getting bigger, which is the only thing that actually happened.
- */
-@Composable
-fun ExpansionBurst(
-    accent: Color,
-    modifier: Modifier = Modifier
-) {
-    // animateFloatAsState would start *at* its target on first composition and never move,
-    // so the burst is driven explicitly from 0 on first appearance.
-    val progress = remember { Animatable(0f) }
-    val reducedMotion = rememberReducedMotion()
-    LaunchedEffect(reducedMotion) {
-        // At 1f every ring has already passed its own cutoff below, so the burst simply does
-        // not draw. The haptic and the state change still land; only the motion is dropped.
-        if (reducedMotion) progress.snapTo(1f)
-        else progress.animateTo(1f, tween(durationMillis = 2000, easing = LinearOutSlowInEasing))
-    }
+            if (served.substituted && served.substitutionReason != null && !done) {
+                Text(
+                    text = served.substitutionReason,
+                    color = pillar.accent,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
 
-    Canvas(modifier = modifier.fillMaxSize()) {
-        val unit = minOf(size.width, size.height)
-        val centre = Offset(size.width / 2f, size.height * 0.42f)
-        // Staggered so it reads as one expansion rather than four rings.
-        val stagger = listOf(0f, 0.08f, 0.16f, 0.24f)
-        stagger.forEachIndexed { i, delay ->
-            val p = ((progress.value - delay) / (1f - delay)).coerceIn(0f, 1f)
-            if (p <= 0f || p >= 1f) return@forEachIndexed
-            val r = unit * (0.12f + p * (0.30f + i * 0.12f))
-            val alpha = (1f - p) * 0.7f
-            rotate(degrees = 45f, pivot = centre) {
-                if (i < 2) {
-                    drawRect(
-                        color = accent.copy(alpha = alpha),
-                        topLeft = Offset(centre.x - r, centre.y - r),
-                        size = Size(r * 2, r * 2),
-                        style = Stroke(width = 1.5.dp.toPx()),
-                        blendMode = BlendMode.Plus
-                    )
+            // The call to action, or the receipt.
+            Row(
+                modifier = Modifier.padding(top = 2.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(7.dp)
+            ) {
+                if (done) {
+                    CheckBox(selected = true, accent = Ink.Activity, size = 20)
+                    Label("Done today", color = Ink.Activity, strong = true)
                 } else {
-                    drawCircle(
-                        color = accent.copy(alpha = alpha),
-                        radius = r,
-                        center = centre,
-                        style = Stroke(width = 1.5.dp.toPx()),
-                        blendMode = BlendMode.Plus
-                    )
+                    Label("Start this", color = pillar.accent, strong = true)
+                    Glyph(Glyphs.ArrowRight, colour = pillar.accent, size = 17)
                 }
             }
         }
     }
 }
 
+/** Progress up one pillar's hundred levels. */
+@Composable
+fun PillarBar(pillar: Pillar, tier: Int, modifier: Modifier = Modifier) {
+    LabelledProgress(
+        label = pillar.display,
+        value = "Level $tier of 100",
+        fraction = tier / 100f,
+        accent = pillar.accent,
+        modifier = modifier
+    )
+}
+
 /**
- * The release. A single ring crossing the entire surface, fired the instant a hold closes.
- *
- * Deliberately one ring rather than a particle burst: the burst belongs to the completion
- * screen a beat later, and firing both at once turns a decisive moment into noise.
+ * The release, fired the instant a hold closes: one ring crossing the whole surface.
+ * The particle burst belongs to the completion screen a beat later — firing both at once
+ * turns a decisive moment into noise.
  */
 @Composable
 fun Shockwave(
@@ -283,65 +194,13 @@ fun Shockwave(
     }
 }
 
-/** Thin progress bar to 100, in the pillar's accent. */
+/** A plain horizontal rule. */
 @Composable
-fun PillarBar(pillar: Pillar, tier: Int, modifier: Modifier = Modifier) {
-    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(7.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Instrument(pillar.display, color = pillar.accent, small = true)
-            Instrument("${tierCode(tier)} / 100", small = true)
-        }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(4.dp)
-                .clip(RoundedCornerShape(3.dp))
-                .background(Ink.EdgeSoft)
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(fraction = (tier / 100f).coerceIn(0.01f, 1f))
-                    .height(4.dp)
-                    .clip(RoundedCornerShape(3.dp))
-                    .background(pillar.accent)
-            )
-        }
-    }
-}
-
-/** A labelled statistic tile. */
-@Composable
-fun StatTile(label: String, value: String, modifier: Modifier = Modifier, accent: Color = Ink.Primary) {
-    Column(
-        modifier = modifier
-            .litSurface(emphasis = 0.8f)
-            .padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
-        Instrument(label, small = true)
-        Text(
-            text = value,
-            color = accent,
-            style = MaterialTheme.typography.headlineMedium.copy(fontFamily = InstrumentFamily)
-        )
-    }
-}
-
-@Composable
-fun VSpace(height: Int) = Spacer(modifier = Modifier.height(height.dp))
-
-@Composable
-fun HSpace(width: Int) = Spacer(modifier = Modifier.width(width.dp))
-
-@Composable
-fun Dot(colour: Color, size: Int = 7) {
+fun Divider(modifier: Modifier = Modifier, colour: Color = Ink.Border) {
     Box(
-        modifier = Modifier
-            .size(size.dp)
-            .clip(RoundedCornerShape(50))
-            .background(colour)
+        modifier = modifier
+            .fillMaxWidth()
+            .height(1.dp)
+            .background(colour.copy(alpha = 0.6f))
     )
 }

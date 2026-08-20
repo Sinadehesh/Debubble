@@ -8,10 +8,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -19,45 +19,53 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.debubble.app.data.AppState
+import com.debubble.app.data.LogEntry
 import com.debubble.app.engine.Engine
 import com.debubble.app.engine.Goal
 import com.debubble.app.engine.GoalTrack
 import com.debubble.app.engine.Goals
 import com.debubble.app.engine.Pillar
+import com.debubble.app.engine.Progress
+import com.debubble.app.ui.components.Avatar
+import com.debubble.app.ui.components.CheckBox
+import com.debubble.app.ui.components.Divider
 import com.debubble.app.ui.components.Dot
-import com.debubble.app.ui.components.Instrument
-import com.debubble.app.ui.components.litSurface
+import com.debubble.app.ui.components.Figure
+import com.debubble.app.ui.components.Glyph
+import com.debubble.app.ui.components.Glyphs
+import com.debubble.app.ui.components.Label
 import com.debubble.app.ui.components.PillarBar
+import com.debubble.app.ui.components.Pill
+import com.debubble.app.ui.components.ProgressTrack
+import com.debubble.app.ui.components.SecondaryButton
+import com.debubble.app.ui.components.SectionHeader
 import com.debubble.app.ui.components.StatTile
 import com.debubble.app.ui.components.VSpace
-import com.debubble.app.ui.components.tierCode
+import com.debubble.app.ui.components.panel
 import com.debubble.app.ui.theme.Ink
-import com.debubble.app.ui.theme.InstrumentFamily
 import com.debubble.app.ui.theme.Space
 import com.debubble.app.ui.theme.accent
 
 /**
- * Profile and the Anti-Score.
+ * You.
  *
- * The screen that decides whether the product works. Streaks reward compliance; Friction
- * rewards contact with the edge — so Friction sits above the streak, in the largest numeral
- * on the surface. The hierarchy states the thesis without a word of copy.
+ * The avatar sits at the top because it is the summary — level, clothes and armour say more
+ * at a glance than any of the numbers underneath. Friction gets its own card, styled as a
+ * credit, because that is the number this app wants people to be proud of.
  */
 @Composable
 fun ProfileScreen(
     state: AppState,
     dayIndex: Long,
-    trackOf: (Goal) -> GoalTrack,
+    track: GoalTrack?,
     onRecalibrate: () -> Unit,
     onChangeGoal: () -> Unit,
+    onOpenAvatar: () -> Unit,
     onToggleSound: () -> Unit,
     onToggleAmbient: () -> Unit
 ) {
@@ -67,150 +75,307 @@ fun ProfileScreen(
             .background(Ink.Void)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = Space.gutter)
-            .padding(top = 10.dp, bottom = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(Space.block)
     ) {
+        VSpace(18)
+
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Bottom
+            modifier = Modifier
+                .fillMaxWidth()
+                .panel(shape = RoundedCornerShape(Space.radiusLarge))
+                .clickable(role = Role.Button, onClick = onOpenAvatar)
+                .padding(14.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "Your friction",
-                color = Ink.Primary,
-                style = MaterialTheme.typography.headlineMedium
-            )
-            Instrument("Day ${tierCode(dayIndex.toInt())}")
+            Avatar(avatar = state.avatar, friction = state.friction, size = 104)
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(7.dp)
+            ) {
+                Text(
+                    text = "Level ${state.level}",
+                    color = Ink.Primary,
+                    style = MaterialTheme.typography.headlineMedium
+                )
+                ProgressTrack(state.levelProgress, Ink.Gold, height = 8)
+                Label(
+                    "${Progress.xpIntoLevel(state.xp)} / ${Progress.XP_PER_LEVEL} XP " +
+                        "to level ${state.level + 1}"
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Label("Change how you look", color = Ink.Access, strong = true)
+                    Glyph(Glyphs.ArrowRight, colour = Ink.Access, size = 15)
+                }
+            }
         }
 
+        VSpace(14)
         FrictionCard(friction = state.friction)
 
+        VSpace(14)
         Row(horizontalArrangement = Arrangement.spacedBy(Space.gap)) {
+            StatTile("Day", "$dayIndex", Modifier.weight(1f))
             StatTile(
-                label = "Day streak",
-                value = state.streak.toString(),
-                modifier = Modifier.weight(1f)
+                "Streak",
+                "${state.streak}",
+                Modifier.weight(1f),
+                accent = if (state.streak > 0) Ink.Activity else Ink.Primary
             )
-            StatTile(
-                label = "Tiers cleared",
-                value = state.tiersCleared.toString(),
-                modifier = Modifier.weight(1f)
-            )
+            StatTile("Done", "${state.tiersCleared}", Modifier.weight(1f))
         }
 
-        Text(
-            text = "A missed day pauses the streak. It never clears your friction, your tiers, " +
-                "or your evidence — nothing you have already done can be taken back.",
-            color = Ink.Dim,
-            style = MaterialTheme.typography.bodyMedium
-        )
-
-        Column(verticalArrangement = Arrangement.spacedBy(13.dp)) {
+        VSpace(24)
+        SectionHeader("How far out you are")
+        VSpace(12)
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Pillar.order.forEach { p ->
                 PillarBar(pillar = p, tier = state.state(p).tier)
             }
         }
 
-        state.goalEnum?.let { goal ->
-            CampaignBlock(state, goal, trackOf(goal), onChangeGoal)
+        if (track != null && state.goalEnum != null) {
+            VSpace(24)
+            CampaignBlock(state.goalEnum!!, track, state)
         }
 
+        VSpace(24)
         EvidenceBlock(state)
 
-        // History: completions and friction in one stream, never a separate failures list.
-        Column {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
+        VSpace(24)
+        SectionHeader("History", trailing = "${state.log.size} entries")
+        VSpace(10)
+        if (state.log.isEmpty()) {
+            Text(
+                text = "Nothing here yet. Finish something today and it shows up.",
+                color = Ink.Muted,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .panel(shape = RoundedCornerShape(Space.radiusLarge))
+                    .padding(horizontal = 14.dp, vertical = 4.dp)
             ) {
-                Instrument("History")
-                Instrument("${state.log.size} entries")
-            }
-            if (state.log.isEmpty()) {
-                Divider()
-                VSpace(12)
-                Text(
-                    text = "Nothing logged yet. Complete a challenge and it lands here.",
-                    color = Ink.Dim,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            } else {
-                state.log.take(40).forEach { entry ->
-                    Divider()
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 11.dp),
-                        horizontalArrangement = Arrangement.spacedBy(11.dp)
-                    ) {
-                        Dot(if (entry.friction) Ink.Ember else entry.pillarEnum.accent, size = 6)
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            verticalArrangement = Arrangement.spacedBy(3.dp)
-                        ) {
-                            Text(
-                                text = entry.title,
-                                color = Ink.Primary,
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            )
-                            Text(
-                                text = when {
-                                    entry.note.isNotBlank() -> "“${entry.note}”"
-                                    entry.kind == "REP" && entry.friction ->
-                                        "Rep logged. This one counts double."
-                                    entry.kind == "REP" -> "Rep logged."
-                                    entry.friction -> "Logged as friction. Same tier tomorrow."
-                                    entry.kind == "MISSION" -> "Campaign step cleared."
-                                    else -> "Completed."
-                                },
-                                color = Ink.Ash,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
-                        Instrument(
-                            text = when {
-                                entry.kind == "REP" -> "REP"
-                                entry.friction -> "FR" + tierCode(entry.tier)
-                                entry.kind == "MISSION" -> "S" + tierCode(entry.tier)
-                                else -> "T" + tierCode(entry.tier)
-                            },
-                            color = if (entry.friction) Ink.Ember else Ink.Faint,
-                            small = true
-                        )
-                    }
+                state.log.take(30).forEachIndexed { i, entry ->
+                    if (i > 0) Divider()
+                    HistoryRow(entry, dayIndex, state)
                 }
             }
         }
 
+        VSpace(24)
+        SectionHeader("Sound")
+        VSpace(10)
         Column(verticalArrangement = Arrangement.spacedBy(Space.gap)) {
-            Instrument("Sound")
             SettingRow(
-                label = "Feedback",
-                detail = "A chime on commit, a stab on friction.",
+                label = "Sound effects",
+                detail = "Short sounds when you commit or log something",
                 on = state.soundOn,
                 onToggle = onToggleSound
             )
             SettingRow(
-                label = "Tension bed",
-                detail = "A low drone under high-exposure challenges. Off by default, and " +
-                    "never over music or on silent.",
+                label = "Background hum",
+                detail = "A low drone on the action screen. Never plays over music.",
                 on = state.ambientOn,
                 onToggle = onToggleAmbient
             )
         }
 
-        VSpace(4)
-        GhostButton(if (state.goalEnum == null) "Choose a campaign" else "Change campaign") { onChangeGoal() }
-        GhostButton("Recalibrate baseline") { onRecalibrate() }
+        VSpace(24)
+        Column(verticalArrangement = Arrangement.spacedBy(Space.gap)) {
+            SecondaryButton(
+                if (state.goalEnum == null) "Pick a goal" else "Change your goal"
+            ) { onChangeGoal() }
+            SecondaryButton("Redo your setup") { onRecalibrate() }
+        }
+
+        VSpace(20)
         Text(
-            text = "Life changes. Recalibrating re-pitches the ladder to where you are now " +
-                "and keeps every tier you have already cleared.",
-            color = Ink.Faint,
+            text = "Everything here stays on this phone. There is no account and nothing " +
+                "is sent anywhere.",
+            color = Ink.Muted,
+            style = MaterialTheme.typography.bodyMedium
+        )
+        VSpace(28)
+    }
+}
+
+/**
+ * Friction, presented as the achievement it is.
+ *
+ * Amber, prominent, with the badge and the armour count. Nowhere in this app is friction
+ * shown in a warning colour or with a downward arrow.
+ */
+@Composable
+private fun FrictionCard(friction: Int) {
+    val plates = Progress.plates(friction)
+    val toNext = Progress.toNextPlate(friction)
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .panel(
+                shape = RoundedCornerShape(Space.radiusLarge),
+                fill = Ink.SurfaceHigh,
+                border = Ink.Ember,
+                borderWidth = 2.dp
+            )
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(9.dp)
+            ) {
+                Glyph(Glyphs.Spark, colour = Ink.Ember, size = 20)
+                Label("Friction", color = Ink.Ember, strong = true)
+            }
+            Pill(Engine.courageBadge(friction), Ink.Ember, filled = true)
+        }
+        Figure("$friction", color = Ink.Ember, large = true)
+        Text(
+            text = "Times you went past what was comfortable — a no, a bail, an awkward " +
+                "moment. This is the number worth having.",
+            color = Ink.Secondary,
+            style = MaterialTheme.typography.bodyMedium
+        )
+        ProgressTrack(plates / Progress.MAX_PLATES.toFloat(), Ink.Ember, height = 8)
+        Label(
+            if (toNext == null) "$plates armour plates — all of them"
+            else "$plates armour plates · $toNext more for the next"
+        )
+    }
+}
+
+@Composable
+private fun CampaignBlock(goal: Goal, track: GoalTrack, state: AppState) {
+    val gs = state.goalState(goal)
+    val complete = Goals.isComplete(gs)
+    val accent = goal.homePillar.accent
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .panel(shape = RoundedCornerShape(Space.radiusLarge), border = accent.copy(alpha = 0.6f))
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Label("Your goal", color = accent, strong = true)
+        Text(
+            text = goal.display,
+            color = Ink.Primary,
+            style = MaterialTheme.typography.headlineMedium
+        )
+        ProgressTrack(Goals.progress(gs), accent, height = 8)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Label(if (complete) "All 30 steps done" else "Step ${gs.step} of 30")
+            Label("${gs.read.size} of ${track.principles.size} ideas read")
+        }
+        Divider()
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(Space.gap)
+        ) {
+            StatTile("Attempts", "${state.repsOnGoal(goal)}", Modifier.weight(1f), accent)
+            StatTile("Steps done", "${gs.completed}", Modifier.weight(1f), accent)
+        }
+    }
+}
+
+@Composable
+private fun EvidenceBlock(state: AppState) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .panel(shape = RoundedCornerShape(Space.radiusLarge))
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Label("What you have actually done", color = Ink.Primary, strong = true)
+        Pillar.order.forEach { p ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(11.dp)
+            ) {
+                Dot(p.accent)
+                Text(
+                    text = "${state.evidence(p)} ${p.evidenceNoun}",
+                    modifier = Modifier.weight(1f),
+                    color = Ink.Secondary,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+        }
+        Divider()
+        Text(
+            text = "${state.minutesInvested} minutes spent outside the routine.",
+            color = Ink.Muted,
             style = MaterialTheme.typography.bodyMedium
         )
     }
+}
+
+@Composable
+private fun HistoryRow(entry: LogEntry, dayIndex: Long, state: AppState) {
+    val colour: Color = if (entry.friction) Ink.Ember else entry.pillarEnum.accent
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(11.dp),
+        verticalAlignment = Alignment.Top
+    ) {
+        Box(modifier = Modifier.padding(top = 6.dp)) { Dot(colour, size = 8) }
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(3.dp)
+        ) {
+            Text(
+                text = entry.title,
+                color = Ink.Primary,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = FontWeight.Medium
+                )
+            )
+            if (entry.note.isNotBlank()) {
+                Text(
+                    text = entry.note,
+                    color = Ink.Muted,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                if (entry.friction) Pill("Friction", Ink.Ember)
+                Label(
+                    when (entry.kind) {
+                        "MISSION" -> "Goal step ${entry.tier}"
+                        "REP" -> "Attempt"
+                        else -> "Level ${entry.tier}"
+                    }
+                )
+                Label("Day ${state.dayIndexOfEntry(entry, dayIndex)}")
+            }
+        }
+    }
+}
+
+/** Which day of the user's run an entry happened on. */
+private fun AppState.dayIndexOfEntry(entry: LogEntry, todayIndex: Long): Long {
+    if (startedDay == 0L) return todayIndex
+    return (entry.epochDay - startedDay + 1).coerceAtLeast(1L)
 }
 
 @Composable
@@ -223,226 +388,30 @@ private fun SettingRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .litSurface(emphasis = if (on) 1.1f else 0.55f)
-            .sizeIn(minHeight = 48.dp)
-            .semantics {
-                role = Role.Switch
-                stateDescription = if (on) "On" else "Off"
-            }
-            .clickable(onClick = onToggle)
-            .padding(horizontal = 15.dp, vertical = 13.dp),
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
+            .heightIn(min = Space.tap)
+            .panel(border = if (on) Ink.Activity else Ink.Border)
+            .toggleable(value = on, role = Role.Switch, onValueChange = { onToggle() })
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+        CheckBox(selected = on, accent = Ink.Activity)
+        Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = label,
                 color = Ink.Primary,
-                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium)
-            )
-            Text(text = detail, color = Ink.Dim, style = MaterialTheme.typography.bodyMedium)
-        }
-        Instrument(if (on) "On" else "Off", color = if (on) Ink.Activity else Ink.Faint)
-    }
-}
-
-@Composable
-private fun FrictionCard(friction: Int) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .litSurface(tint = Ink.Ember, emphasis = 1.5f, shape = RoundedCornerShape(Space.radiusLarge))
-            .padding(17.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = friction.toString(),
-                    color = Ink.Ember,
-                    style = MaterialTheme.typography.displayLarge.copy(
-                        fontFamily = InstrumentFamily,
-                        fontWeight = FontWeight.Bold
-                    )
-                )
-                Instrument("Friction score", color = Ink.Ember)
-            }
-            Box(
-                modifier = Modifier
-                    .litSurface(tint = Ink.Ember, emphasis = 2.2f, shape = RoundedCornerShape(50))
-                    .padding(horizontal = 12.dp, vertical = 6.dp)
-            ) {
-                Instrument(Engine.courageBadge(friction), color = Ink.Ember, small = true)
-            }
-        }
-        Text(
-            text = if (friction == 0) {
-                "No contact with the edge yet. A zero here means the tiers are still too easy."
-            } else {
-                "$friction point${if (friction == 1) "" else "s"} of contact with the edge — " +
-                    "awkward, refused, or abandoned as too hard. This number only goes up."
-            },
-            color = Ink.Ash,
-            style = MaterialTheme.typography.bodyMedium
-        )
-    }
-}
-
-/**
- * The active campaign: how far through, and how much volume has gone in.
- *
- * Reps are given more room than the step counter because they are the number the user can
- * move today. Steps advance once a day at most; reps have no ceiling, and over a month it is
- * the rep count that separates someone who used the app from someone the app changed.
- */
-@Composable
-private fun CampaignBlock(
-    state: AppState,
-    goal: Goal,
-    track: GoalTrack,
-    onChange: () -> Unit
-) {
-    val gs = state.goalState(goal)
-    val accent = goal.homePillar.accent
-    val complete = Goals.isComplete(gs)
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .litSurface(tint = accent, emphasis = 1.25f, shape = RoundedCornerShape(Space.radiusLarge))
-            .padding(17.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top
-        ) {
-            Instrument("Campaign", color = accent)
-            Instrument(
-                if (complete) "Cleared" else track.phaseOf(gs.step),
-                color = Ink.Ash,
-                small = true
-            )
-        }
-        Text(
-            text = goal.display,
-            color = Ink.Primary,
-            style = MaterialTheme.typography.headlineMedium
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalAlignment = Alignment.Bottom
-        ) {
-            Text(
-                text = state.repsOnGoal(goal).toString(),
-                color = accent,
-                style = MaterialTheme.typography.displayLarge.copy(
-                    fontFamily = InstrumentFamily,
-                    fontWeight = FontWeight.Bold
-                )
+                style = MaterialTheme.typography.bodyLarge
             )
             Text(
-                text = "reps logged",
-                color = Ink.Ash,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(bottom = 6.dp)
+                text = detail,
+                color = Ink.Muted,
+                style = MaterialTheme.typography.bodyMedium
             )
-        }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(4.dp)
-                .clip(RoundedCornerShape(3.dp))
-                .background(Ink.EdgeSoft)
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(Goals.progress(gs).coerceIn(0.01f, 1f))
-                    .height(4.dp)
-                    .clip(RoundedCornerShape(3.dp))
-                    .background(accent)
-            )
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Instrument(
-                if (complete) "30 / 30 steps" else "Step ${tierCode(gs.step)} of 030",
-                small = true
-            )
-            Instrument("${gs.read.size} / ${track.principles.size} ideas read", small = true)
         }
         Text(
-            text = if (complete) {
-                "Campaign cleared. The reps carry on regardless — pick the next thirty steps " +
-                    "whenever you want them."
-            } else {
-                "Steps move once a day. Reps have no ceiling, and over a month they are the " +
-                    "number that actually separates people."
-            },
-            color = Ink.Dim,
-            style = MaterialTheme.typography.bodyMedium
-        )
-    }
-}
-
-/**
- * Evidence, not score.
- *
- * Streaks and tiers measure compliance with the app. This measures what actually changed
- * about the person — stated in things done, not points earned. It is the answer to "am I
- * actually different?", which is the only question that matters at day 60.
- */
-@Composable
-private fun EvidenceBlock(state: AppState) {
-    val hours = state.minutesInvested / 60
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .litSurface(emphasis = 0.7f, shape = RoundedCornerShape(Space.radiusLarge))
-            .padding(17.dp),
-        verticalArrangement = Arrangement.spacedBy(11.dp)
-    ) {
-        Instrument("Evidence")
-        Pillar.order.forEach { p ->
-            val n = state.evidence(p)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = n.toString(),
-                    color = p.accent,
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        fontFamily = InstrumentFamily
-                    )
-                )
-                Text(
-                    text = p.evidenceNoun,
-                    color = Ink.Ash,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        }
-        Divider()
-        Text(
-            text = if (hours < 1) {
-                "Under an hour invested so far. It compounds."
-            } else {
-                "$hours hour${if (hours == 1) "" else "s"} invested in becoming someone with " +
-                    "a bigger radius. None of it was spent on this screen."
-            },
-            color = Ink.Dim,
-            style = MaterialTheme.typography.bodyMedium
+            text = if (on) "On" else "Off",
+            color = if (on) Ink.Activity else Ink.Muted,
+            style = MaterialTheme.typography.labelLarge
         )
     }
 }

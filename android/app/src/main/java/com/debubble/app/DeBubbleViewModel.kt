@@ -8,15 +8,18 @@ import com.debubble.app.data.LogEntry
 import com.debubble.app.data.Repository
 import com.debubble.app.engine.Baseline
 import com.debubble.app.engine.Calibration
+import com.debubble.app.engine.Copy
 import com.debubble.app.engine.Curriculum
 import com.debubble.app.engine.Engine
+import com.debubble.app.engine.AvatarState
 import com.debubble.app.engine.Goal
 import com.debubble.app.engine.GoalState
 import com.debubble.app.engine.GoalTrack
 import com.debubble.app.engine.Goals
 import com.debubble.app.engine.Pillar
+import com.debubble.app.engine.Progress
 import com.debubble.app.engine.Served
-import com.debubble.app.ui.components.BubbleState
+import com.debubble.app.ui.components.RingState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -28,6 +31,8 @@ import java.time.LocalDate
 /** Which surface is on screen. Five screens, so an explicit route beats a nav graph. */
 sealed interface Route {
     data object Loading : Route
+    /** The three-card explainer, first run only. */
+    data object Intro : Route
     data object Calibration : Route
     data object Dashboard : Route
     data class Challenge(val pillar: Pillar) : Route
@@ -45,6 +50,8 @@ sealed interface Route {
     data class ReadPrinciple(val index: Int) : Route
     /** The end of one ladder. Shown once, then never again. */
     data class Transcendence(val pillar: Pillar) : Route
+    /** Dressing the avatar. */
+    data object AvatarStudio : Route
 }
 
 class DeBubbleViewModel(app: Application) : AndroidViewModel(app) {
@@ -80,6 +87,7 @@ class DeBubbleViewModel(app: Application) : AndroidViewModel(app) {
             repo.update { it.rolledTo(today()) }
             val loaded = repo.state.first()
             _route.value = when {
+                !loaded.introSeen -> Route.Intro
                 !loaded.onboarded -> Route.Calibration
                 loaded.goalEnum == null -> Route.GoalPicker(firstRun = true)
                 else -> Route.Dashboard
@@ -112,8 +120,8 @@ class DeBubbleViewModel(app: Application) : AndroidViewModel(app) {
         return Served(
             pillar = goal.homePillar,
             tier = m.step,
-            directive = m.directive,
-            coach = m.coach,
+            directive = Copy.adapt(m.directive, s.baseline.modes),
+            coach = Copy.adapt(m.coach, s.baseline.modes),
             minutes = m.minutes,
             cost = 0,
             exposure = m.exposure,
@@ -124,15 +132,11 @@ class DeBubbleViewModel(app: Application) : AndroidViewModel(app) {
         )
     }
 
-    /**
-     * Everything the living bubble reads. Energy spikes on a fresh completion and otherwise
-     * reflects how much of today has already been taken.
-     */
-    fun bubble(s: AppState, pulsing: Boolean): BubbleState =
-        BubbleState.from(
+    /** Everything the bubble ring reads. */
+    fun ring(s: AppState): RingState =
+        RingState.from(
             tiers = Pillar.order.associateWith { s.state(it).tier },
-            daysSinceActive = s.daysSinceActive(today()),
-            energy = if (pulsing) 1f else (s.doneToday.size / 3f) * 0.35f
+            daysSinceActive = s.daysSinceActive(today())
         )
 
     /** Rep types available today, empty when no campaign is active. */
@@ -144,6 +148,7 @@ class DeBubbleViewModel(app: Application) : AndroidViewModel(app) {
     // ------------------------------------------------------------------ navigation
 
     fun goDashboard() { _route.value = Route.Dashboard }
+    fun goAvatar() { _route.value = Route.AvatarStudio }
     fun goProfile() { _route.value = Route.Profile }
     fun goRecalibrate() { _route.value = Route.Calibration }
     fun goGoalPicker() { _route.value = Route.GoalPicker(firstRun = false) }
@@ -158,6 +163,14 @@ class DeBubbleViewModel(app: Application) : AndroidViewModel(app) {
     fun abort() { _route.value = Route.Dashboard }
 
     // ------------------------------------------------------------------ actions
+
+    /** The explainer is seen once, and never blocks the app again. */
+    fun finishIntro() {
+        viewModelScope.launch {
+            repo.update { it.copy(introSeen = true) }
+            _route.value = Route.Calibration
+        }
+    }
 
     fun finishCalibration(baseline: Baseline) {
         viewModelScope.launch {
@@ -204,6 +217,7 @@ class DeBubbleViewModel(app: Application) : AndroidViewModel(app) {
                     .withPillar(pillar, advanced)
                     .copy(
                         doneToday = rolled.doneToday + pillar.name,
+                        xp = rolled.xp + Progress.XP_CHALLENGE,
                         streak = streak,
                         bestStreak = maxOf(rolled.bestStreak, streak),
                         lastActiveDay = today(),
@@ -261,6 +275,7 @@ class DeBubbleViewModel(app: Application) : AndroidViewModel(app) {
                     .withPillar(pillar, adjusted)
                     .copy(
                         friction = rolled.friction + 1,
+                        xp = rolled.xp + Progress.XP_FRICTION,
                         streak = streak,
                         bestStreak = maxOf(rolled.bestStreak, streak),
                         lastActiveDay = today(),
@@ -309,6 +324,7 @@ class DeBubbleViewModel(app: Application) : AndroidViewModel(app) {
                 val streak = Engine.updateStreak(rolled.streak, rolled.lastActiveDay, today())
                 rolled.withGoal(goal, advanced).copy(
                     missionDoneToday = true,
+                    xp = rolled.xp + Progress.XP_MISSION,
                     streak = streak,
                     bestStreak = maxOf(rolled.bestStreak, streak),
                     lastActiveDay = today(),
@@ -339,6 +355,7 @@ class DeBubbleViewModel(app: Application) : AndroidViewModel(app) {
                 val streak = Engine.updateStreak(rolled.streak, rolled.lastActiveDay, today())
                 rolled.copy(
                     friction = rolled.friction + 1,
+                    xp = rolled.xp + Progress.XP_FRICTION,
                     streak = streak,
                     bestStreak = maxOf(rolled.bestStreak, streak),
                     lastActiveDay = today(),
@@ -377,6 +394,8 @@ class DeBubbleViewModel(app: Application) : AndroidViewModel(app) {
                         repsToday = rolled.repsToday + (key to (rolled.repsToday[key] ?: 0) + 1),
                         repTotals = rolled.repTotals + (totalKey to (rolled.repTotals[totalKey] ?: 0) + 1),
                         friction = rolled.friction + if (isFriction) 1 else 0,
+                        xp = rolled.xp + Progress.XP_REP +
+                            if (isFriction) Progress.XP_FRICTION else 0,
                         streak = streak,
                         bestStreak = maxOf(rolled.bestStreak, streak),
                         lastActiveDay = today(),
@@ -394,6 +413,57 @@ class DeBubbleViewModel(app: Application) : AndroidViewModel(app) {
                     )
             }
         }
+    }
+
+    /**
+     * Take one rep back.
+     *
+     * Reps are logged with a single tap on a phone that lives in a pocket, so mis-taps are
+     * inevitable and a counter with no way back is a counter people stop trusting. This
+     * reverses everything the tap did — the daily count, the lifetime total, the campaign's
+     * rep tally, the XP, and the friction point if it was a friction rep — and drops the log
+     * line it wrote. It never goes below zero, and it will not touch a rep from a previous
+     * day: yesterday's record is closed.
+     */
+    fun unlogRep(key: String, wasFriction: Boolean) {
+        val goal = state.value.goalEnum ?: return
+        viewModelScope.launch {
+            repo.update { s ->
+                val rolled = s.rolledTo(today())
+                val todayCount = rolled.repsToday[key] ?: 0
+                if (todayCount <= 0) return@update rolled
+
+                val totalKey = "${goal.name}:$key"
+                val newToday =
+                    if (todayCount == 1) rolled.repsToday - key
+                    else rolled.repsToday + (key to todayCount - 1)
+                val newTotal = ((rolled.repTotals[totalKey] ?: 0) - 1).coerceAtLeast(0)
+
+                // Drop only the most recent matching entry, and only if it is from today.
+                val index = rolled.log.indexOfFirst {
+                    it.kind == "REP" && it.epochDay == today() && it.friction == wasFriction
+                }
+                val trimmedLog =
+                    if (index >= 0) rolled.log.filterIndexed { i, _ -> i != index } else rolled.log
+
+                rolled
+                    .withGoal(goal, Goals.onRepUndone(rolled.goalState(goal)))
+                    .copy(
+                        repsToday = newToday,
+                        repTotals = rolled.repTotals + (totalKey to newTotal),
+                        friction = (rolled.friction - if (wasFriction) 1 else 0).coerceAtLeast(0),
+                        xp = (rolled.xp - Progress.XP_REP -
+                            if (wasFriction) Progress.XP_FRICTION else 0).coerceAtLeast(0),
+                        log = trimmedLog
+                    )
+            }
+        }
+    }
+
+    /** Dress the avatar. Nothing here is validated against level — the studio only offers
+     *  what is already unlocked, and a saved choice is never taken away. */
+    fun setAvatar(avatar: AvatarState) {
+        viewModelScope.launch { repo.update { it.copy(avatar = avatar) } }
     }
 
     fun markRead(index: Int) {

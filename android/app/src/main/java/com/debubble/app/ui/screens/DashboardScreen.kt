@@ -9,10 +9,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -22,50 +23,60 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import com.debubble.app.data.AppState
 import com.debubble.app.engine.Goal
 import com.debubble.app.engine.Pillar
+import com.debubble.app.engine.Principle
+import com.debubble.app.engine.Progress
 import com.debubble.app.engine.RepType
 import com.debubble.app.engine.Served
-import com.debubble.app.ui.components.BubbleState
-import com.debubble.app.ui.components.LivingBubble
+import com.debubble.app.ui.components.Avatar
+import com.debubble.app.ui.components.BubbleRing
 import com.debubble.app.ui.components.ChallengeCard
 import com.debubble.app.ui.components.Dot
-import com.debubble.app.ui.components.Instrument
-import com.debubble.app.ui.components.litSurface
+import com.debubble.app.ui.components.Glyph
+import com.debubble.app.ui.components.Glyphs
+import com.debubble.app.ui.components.Label
+import com.debubble.app.ui.components.Pill
+import com.debubble.app.ui.components.ProgressTrack
 import com.debubble.app.ui.components.RepTracker
-import com.debubble.app.ui.components.rememberReducedMotion
+import com.debubble.app.ui.components.RingState
+import com.debubble.app.ui.components.SectionHeader
 import com.debubble.app.ui.components.VSpace
-import com.debubble.app.ui.components.tierCode
+import com.debubble.app.ui.components.panel
+import com.debubble.app.ui.components.rememberReducedMotion
 import com.debubble.app.ui.theme.Ink
 import com.debubble.app.ui.theme.Space
 import com.debubble.app.ui.theme.accent
 
 /**
- * The Expanding Reality.
+ * Home.
  *
- * Split hard down the middle: the top belongs to feeling (the Bubble Map), the bottom to
- * deciding (three offers, one per pillar, always in the same order). Nothing else competes.
+ * Top to bottom: who you are and how far along, the bubble itself, today's three challenges,
+ * the campaign, the attempt counters, and the ideas behind all of it. Every section is a
+ * labelled block with a visible boundary, so the screen can be scanned rather than decoded.
  */
 @Composable
 fun DashboardScreen(
     state: AppState,
     dayIndex: Long,
     served: Map<Pillar, Served>,
-    bubble: BubbleState,
+    ring: RingState,
     mission: Served?,
     reps: List<RepType>,
+    principles: List<Principle>,
     pulse: Pillar?,
     onOpen: (Pillar) -> Unit,
     onOpenMission: () -> Unit,
     onLogRep: (RepType) -> Unit,
-    onPrinciples: () -> Unit,
+    onUndoRep: (RepType) -> Unit,
+    onOpenPrinciple: (Int) -> Unit,
+    onAllPrinciples: () -> Unit,
     onPickGoal: () -> Unit,
-    onOpenCampaign: () -> Unit
+    onOpenCampaign: () -> Unit,
+    onOpenAvatar: () -> Unit
 ) {
     val tiers = Pillar.order.associateWith { state.state(it).tier }
     val open = Pillar.order.count { !state.isDoneToday(it) }
@@ -76,43 +87,45 @@ fun DashboardScreen(
             .background(Ink.Void)
             .verticalScroll(rememberScrollState())
     ) {
+        HeroBar(state = state, dayIndex = dayIndex, onOpenAvatar = onOpenAvatar)
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(1.16f)
+                .aspectRatio(1.05f)
+                .padding(horizontal = 8.dp)
         ) {
-            LivingBubble(
-                state = bubble,
+            BubbleRing(
+                state = ring,
                 pulse = pulse,
-                // The membrane breathes forever, so it is the one surface that must go still
-                // when the user has asked the system for no animation.
                 animate = !rememberReducedMotion(),
                 modifier = Modifier.fillMaxSize()
             )
-            // HUD is overlaid and deliberately non-interactive: the map reports, it is not a control.
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = Space.gutter, vertical = 14.dp)
-            ) {
-                Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-                    Text(
-                        text = "DAY ${tierCode(dayIndex.toInt())}",
-                        color = Ink.Primary,
-                        style = MaterialTheme.typography.headlineMedium
-                    )
-                    Instrument("Perimeter live", modifier = Modifier.padding(bottom = 3.dp), small = true)
-                }
-                Box(modifier = Modifier.weight(1f))
-                Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                    Pillar.order.forEach { p ->
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Dot(p.accent, size = 5)
-                            Instrument("${p.code} ${tierCode(tiers.getValue(p))}", color = Ink.Ash, small = true)
-                        }
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = Space.gutter),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Pillar.order.forEach { p ->
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .panel(fill = Ink.Surface)
+                        .padding(horizontal = 10.dp, vertical = 9.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(7.dp)
+                ) {
+                    Dot(p.accent, size = 8)
+                    Column {
+                        Label(p.display)
+                        Text(
+                            text = "Lv ${tiers.getValue(p)}",
+                            color = p.accent,
+                            style = MaterialTheme.typography.labelLarge
+                        )
                     }
                 }
             }
@@ -122,15 +135,11 @@ fun DashboardScreen(
             modifier = Modifier.padding(horizontal = Space.gutter),
             verticalArrangement = Arrangement.spacedBy(Space.gap)
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp, bottom = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Instrument("Today's serve")
-                Instrument(if (open == 0) "All taken" else "$open open")
-            }
+            VSpace(12)
+            SectionHeader(
+                title = "Today",
+                trailing = if (open == 0) "All done" else "$open left"
+            )
 
             Pillar.order.forEach { pillar ->
                 served[pillar]?.let { s ->
@@ -143,16 +152,23 @@ fun DashboardScreen(
             }
 
             if (open == 0) {
-                VSpace(2)
-                Text(
-                    text = "Three for three. The perimeter moved on every axis today — " +
-                        "that is a rare day, not a normal one.",
-                    color = Ink.Ash,
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .panel(border = Ink.Activity.copy(alpha = 0.6f))
+                        .padding(14.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Glyph(Glyphs.Check, colour = Ink.Activity, size = 22)
+                    Text(
+                        text = "All three done. Your bubble got bigger in every direction " +
+                            "today — that is not a normal day.",
+                        color = Ink.Secondary,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
             }
-
-            /* ---- the goal layer: a campaign step, then unlimited reps ---- */
 
             val goal = state.goalEnum
             VSpace(14)
@@ -160,32 +176,36 @@ fun DashboardScreen(
             if (goal == null) {
                 NoGoalCard(onPickGoal)
             } else {
+                SectionHeader(
+                    title = "Your goal",
+                    trailing = if (mission == null) "Finished" else "Step ${mission.tier} of 30"
+                )
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .sizeIn(minHeight = 48.dp)
+                        .heightIn(min = Space.tap)
+                        .panel(fill = Ink.Surface)
                         .clickable(role = Role.Button, onClick = onOpenCampaign)
-                        .padding(bottom = 4.dp),
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Instrument("Campaign · ${goal.display}")
-                    Instrument(
-                        if (mission == null) "Complete →"
-                        else "Step ${tierCode(mission.tier)} / 030 →"
-                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = goal.display,
+                            color = Ink.Primary,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Label("See the whole plan")
+                    }
+                    Glyph(Glyphs.ArrowRight, colour = Ink.Muted, size = 18)
                 }
 
                 when {
                     mission == null -> CampaignComplete(goal, onPickGoal)
-                    state.missionDoneToday -> ChallengeCard(
-                        served = mission,
-                        done = true,
-                        onClick = {}
-                    )
                     else -> ChallengeCard(
                         served = mission,
-                        done = false,
+                        done = state.missionDoneToday,
                         onClick = onOpenMission
                     )
                 }
@@ -197,44 +217,251 @@ fun DashboardScreen(
                     target = mission?.repTarget ?: 0,
                     lifetime = state.repsOnGoal(goal),
                     accent = goal.homePillar.accent,
-                    onLog = onLogRep
+                    onLog = onLogRep,
+                    onUndo = onUndoRep
                 )
 
-                VSpace(14)
-                ReadingNudge(goal, onPrinciples)
+                VSpace(18)
+                MindsetSection(
+                    principles = principles,
+                    step = state.goalState(goal).step,
+                    read = state.goalState(goal).read,
+                    accent = goal.homePillar.accent,
+                    onOpen = onOpenPrinciple,
+                    onSeeAll = onAllPrinciples
+                )
             }
 
-            VSpace(20)
+            VSpace(24)
         }
     }
 }
 
-/** Shown until a campaign is chosen. The daily three work fine without one, but this is
- *  where the app stops being generic, so it asks once and then stays out of the way. */
+/**
+ * Who you are, at the top of your own home screen.
+ *
+ * The avatar is here rather than buried in a profile tab because it is the thing that changes
+ * when you do something, and a reward you have to navigate to is not a reward.
+ */
+@Composable
+private fun HeroBar(state: AppState, dayIndex: Long, onOpenAvatar: () -> Unit) {
+    val level = state.level
+    val plates = state.plates
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = Space.gutter)
+            .padding(top = 14.dp, bottom = 4.dp)
+            .panel(fill = Ink.Surface, shape = RoundedCornerShape(Space.radiusLarge))
+            .clickable(role = Role.Button, onClick = onOpenAvatar)
+            .padding(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Avatar(
+            avatar = state.avatar,
+            friction = state.friction,
+            size = 76
+        )
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "Level $level",
+                    color = Ink.Primary,
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Pill("Day $dayIndex", Ink.Muted)
+                if (plates > 0) Pill("$plates armour", Ink.Ember)
+            }
+            ProgressTrack(
+                fraction = state.levelProgress,
+                accent = Ink.Gold,
+                height = 8
+            )
+            Label(
+                "${Progress.xpIntoLevel(state.xp)} / ${Progress.XP_PER_LEVEL} XP " +
+                    "to level ${level + 1}"
+            )
+        }
+        Glyph(Glyphs.ArrowRight, colour = Ink.Muted, size = 18)
+    }
+}
+
+/**
+ * The ideas behind the app, promoted from a single link into a real list.
+ *
+ * Unlocked ideas look like something you would want to read. Locked ones state exactly what
+ * unlocks them and how close you are, rather than being invisible until they appear.
+ */
+@Composable
+private fun MindsetSection(
+    principles: List<Principle>,
+    step: Int,
+    read: Set<Int>,
+    accent: androidx.compose.ui.graphics.Color,
+    onOpen: (Int) -> Unit,
+    onSeeAll: () -> Unit
+) {
+    if (principles.isEmpty()) return
+    val unlocked = principles.count { it.unlocksAt <= step }
+
+    Column(verticalArrangement = Arrangement.spacedBy(Space.gap)) {
+        SectionHeader(
+            title = "The ideas underneath",
+            trailing = "$unlocked of ${principles.size} unlocked"
+        )
+        Text(
+            text = "Short reads on why any of this works. One unlocks every few steps.",
+            color = Ink.Secondary,
+            style = MaterialTheme.typography.bodyMedium
+        )
+
+        // Two cards, chosen to always give the reader something: whatever is unlocked and
+        // still unread, then the next thing to look forward to.
+        val unreadUnlocked = principles.indices
+            .filter { principles[it].unlocksAt <= step && it !in read }
+        val nextLocked = principles.indexOfFirst { it.unlocksAt > step }
+        val featured = buildList {
+            addAll(unreadUnlocked.take(2))
+            if (size < 2 && nextLocked >= 0) add(nextLocked)
+            // Everything read and everything unlocked: show the last one rather than nothing.
+            if (isEmpty()) {
+                principles.indices.lastOrNull { principles[it].unlocksAt <= step }?.let { add(it) }
+            }
+        }
+
+        featured.forEach { i ->
+            PrincipleCard(
+                principle = principles[i],
+                index = i,
+                step = step,
+                isRead = i in read,
+                accent = accent,
+                onOpen = { onOpen(i) }
+            )
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = Space.tap)
+                .panel()
+                .clickable(role = Role.Button, onClick = onSeeAll)
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Label("See all ${principles.size} ideas", color = Ink.Primary, strong = true)
+            Glyph(Glyphs.ArrowRight, colour = Ink.Muted, size = 18)
+        }
+    }
+}
+
+@Composable
+private fun PrincipleCard(
+    principle: Principle,
+    index: Int,
+    step: Int,
+    isRead: Boolean,
+    accent: androidx.compose.ui.graphics.Color,
+    onOpen: () -> Unit
+) {
+    val locked = principle.unlocksAt > step
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .panel(
+                fill = if (locked) Ink.Void else Ink.Surface,
+                border = if (locked) Ink.Faint else accent.copy(alpha = 0.55f)
+            )
+            .then(
+                if (locked) Modifier
+                else Modifier.clickable(role = Role.Button, onClick = onOpen)
+            )
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(9.dp)
+        ) {
+            if (locked) {
+                Glyph(Glyphs.Lock, colour = Ink.Muted, size = 17)
+            } else {
+                Glyph(Glyphs.Spark, colour = accent, size = 17)
+            }
+            Text(
+                text = principle.title,
+                modifier = Modifier.weight(1f),
+                color = if (locked) Ink.Muted else Ink.Primary,
+                style = MaterialTheme.typography.titleMedium
+            )
+            if (!locked && isRead) Pill("Read", Ink.Activity)
+        }
+
+        if (locked) {
+            Label("Unlocks at step ${principle.unlocksAt}. You are on step $step.")
+            ProgressTrack(
+                fraction = step.toFloat() / principle.unlocksAt,
+                accent = Ink.Faint,
+                height = 6
+            )
+        } else {
+            Text(
+                text = principle.body.take(110).trimEnd().let {
+                    if (principle.body.length > 110) "$it…" else it
+                },
+                color = Ink.Secondary,
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Label(if (isRead) "Read it again" else "Read this", color = accent, strong = true)
+                Glyph(Glyphs.ArrowRight, colour = accent, size = 15)
+            }
+        }
+    }
+}
+
 @Composable
 private fun NoGoalCard(onPick: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .litSurface(emphasis = 0.8f, shape = RoundedCornerShape(Space.radiusLarge))
+            .panel(shape = RoundedCornerShape(Space.radiusLarge), border = Ink.Access)
             .clickable(role = Role.Button, onClick = onPick)
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(9.dp)
     ) {
-        Instrument("No campaign running")
+        Label("No goal picked yet")
         Text(
-            text = "Point this at something.",
+            text = "What do you actually want?",
             color = Ink.Primary,
             style = MaterialTheme.typography.headlineMedium
         )
         Text(
-            text = "Friends, a partner, a craft, a life worth describing. Thirty steps, " +
-                "daily reps and reading of its own on top of the three above.",
-            color = Ink.Ash,
+            text = "More friends. Someone to date. A hobby you are good at. Pick one and " +
+                "you get a 30-step plan, daily attempt targets and short reads of its own.",
+            color = Ink.Secondary,
             style = MaterialTheme.typography.bodyMedium
         )
-        VSpace(2)
-        Instrument("Choose one →", color = Ink.Primary, small = true)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(7.dp)
+        ) {
+            Label("Pick a goal", color = Ink.Access, strong = true)
+            Glyph(Glyphs.ArrowRight, colour = Ink.Access, size = 16)
+        }
     }
 }
 
@@ -243,53 +470,42 @@ private fun CampaignComplete(goal: Goal, onPick: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .litSurface(tint = goal.homePillar.accent, emphasis = 1.3f, shape = RoundedCornerShape(Space.radiusLarge))
+            .panel(
+                shape = RoundedCornerShape(Space.radiusLarge),
+                border = goal.homePillar.accent
+            )
             .clickable(role = Role.Button, onClick = onPick)
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(9.dp)
     ) {
-        Instrument("Campaign cleared", color = goal.homePillar.accent)
-        Text(
-            text = "Thirty steps of\n${goal.display.lowercase()}.",
-            color = Ink.Primary,
-            style = MaterialTheme.typography.headlineMedium
-        )
-        Text(
-            text = "The reps do not stop — keep logging them. When you are ready, point the " +
-                "next thirty steps somewhere else.",
-            color = Ink.Ash,
-            style = MaterialTheme.typography.bodyMedium
-        )
-        VSpace(2)
-        Instrument("Pick the next one →", color = Ink.Primary, small = true)
-    }
-}
-
-@Composable
-private fun ReadingNudge(goal: Goal, onOpen: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .litSurface(tint = goal.homePillar.accent, emphasis = 0.8f)
-            .sizeIn(minHeight = 48.dp)
-            .clickable(role = Role.Button, onClick = onOpen)
-            .padding(horizontal = 15.dp, vertical = 14.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Instrument("The ideas underneath", color = goal.homePillar.accent, small = true)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(9.dp)
+        ) {
+            Glyph(Glyphs.Check, colour = goal.homePillar.accent, size = 22)
             Text(
-                text = "Why any of this works",
-                color = Ink.Primary,
-                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium)
+                text = "All 30 steps done",
+                color = goal.homePillar.accent,
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
             )
         }
-        Instrument("→", color = Ink.Dim)
+        Text(
+            text = "Keep logging your attempts — those never stop. When you are ready, " +
+                "point the next 30 steps at something else.",
+            color = Ink.Secondary,
+            style = MaterialTheme.typography.bodyMedium
+        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(7.dp)
+        ) {
+            Label("Pick the next goal", color = Ink.Primary, strong = true)
+            Glyph(Glyphs.ArrowRight, colour = Ink.Primary, size = 16)
+        }
     }
 }
 
-/** Bottom navigation. Three destinations, no hamburger, no settings gear on the home surface. */
+/** Bottom navigation. Two destinations, both labelled. */
 @Composable
 fun TabBar(
     current: Tab,
@@ -299,8 +515,8 @@ fun TabBar(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            // No fill: the bar is part of the same dark room, not a tray attached to it.
-            .padding(top = 12.dp, bottom = 14.dp),
+            .background(Ink.Surface)
+            .padding(top = 8.dp, bottom = 10.dp),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         Tab.entries.forEach { tab ->
@@ -308,18 +524,17 @@ fun TabBar(
                 modifier = Modifier
                     .clickable(role = Role.Tab) { onSelect(tab) }
                     .semantics { selected = tab == current }
-                    .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+                    .heightIn(min = Space.tap)
                     .wrapContentSize(Alignment.Center)
-                    .padding(horizontal = 18.dp, vertical = 4.dp),
+                    .padding(horizontal = 22.dp, vertical = 4.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(5.dp)
             ) {
-                // The dot may stay Faint — it is decoration, and the label carries the meaning.
-                Dot(if (tab == current) Ink.Primary else Ink.Faint, size = 5)
-                Instrument(
-                    tab.label,
-                    color = if (tab == current) Ink.Primary else Ink.Dim,
-                    small = true
+                Dot(if (tab == current) Ink.Access else Ink.Faint, size = 7)
+                Text(
+                    text = tab.label,
+                    color = if (tab == current) Ink.Primary else Ink.Muted,
+                    style = MaterialTheme.typography.labelMedium
                 )
             }
         }
@@ -328,5 +543,5 @@ fun TabBar(
 
 enum class Tab(val label: String) {
     TODAY("Today"),
-    PROFILE("Profile")
+    PROFILE("You")
 }
