@@ -145,7 +145,7 @@ fun GoalPickerScreen(
         }
 
         Column(
-            modifier = Modifier.padding(horizontal = Space.gutter, bottom = Space.gutter),
+            modifier = Modifier.padding(start = Space.gutter, end = Space.gutter, bottom = Space.gutter),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             PrimaryButton(
@@ -292,7 +292,7 @@ fun PrincipleScreen(
             }
             VSpace(24)
         }
-        Column(modifier = Modifier.padding(horizontal = Space.gutter, bottom = Space.gutter)) {
+        Column(modifier = Modifier.padding(start = Space.gutter, end = Space.gutter, bottom = Space.gutter)) {
             PrimaryButton("Got it", accent = goal.homePillar.accent) { onDone() }
         }
     }

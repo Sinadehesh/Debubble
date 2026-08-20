@@ -102,7 +102,9 @@ fun CalibrationScreen(
         TopBar(
             title = if (isRecalibration) "Update your setup" else "Setting you up",
             subtitle = "Question ${(step + 1).coerceAtMost(cards + 1)} of ${cards + 1}",
-            onBack = if (step > 0) ({ step-- }) else onCancel
+            // `step--` is an Int expression, so a bare lambda here types as Function0<Any>
+            // once it is unified with onCancel. Assignment keeps it Unit.
+            onBack = if (step > 0) ({ step = step - 1 }) else onCancel
         )
 
         Row(
@@ -269,7 +271,7 @@ fun CalibrationScreen(
         }
 
         Column(
-            modifier = Modifier.padding(horizontal = Space.gutter, bottom = Space.gutter),
+            modifier = Modifier.padding(start = Space.gutter, end = Space.gutter, bottom = Space.gutter),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             PrimaryButton(
