@@ -15,6 +15,10 @@ This does not type-check. It catches the specific mistakes that have actually re
      {start, top, end, bottom} one. There is no such overload, and the compiler reports it
      as "None of the following candidates is applicable" pointing at the call, which reads
      like an unrelated problem with whatever composable is nearby.
+  4. androidx extensions used without their own import. These are top-level functions and
+     extension properties that live beside the class they extend rather than on it, so the
+     obvious import does not bring them in. This has been the single most frequent CI
+     failure on this project: `withStyle`, `role`, `getValue`/`setValue` for `by remember`.
 
 Run: python3 android/tools/check.py
 """
@@ -141,12 +145,82 @@ def check_padding(files):
     return problems
 
 
+# Extensions that need importing separately from the class they extend. Each entry is the
+# symbol, the import that provides it, and a regex matching real use.
+EXTENSIONS = [
+    ("withStyle", "androidx.compose.ui.text.withStyle", r"\bwithStyle\s*\("),
+    # These are extension properties inside a `semantics { }` block and ordinary named
+    # parameters everywhere else — `clickable(role = ...)` needs no import, `semantics {
+    # role = ... }` does. Two things separate them: the assignment starts its own line, and
+    # it has no trailing comma. A multi-line argument list satisfies the first but never the
+    # second, which is what makes the comma the reliable half of the test.
+    ("role", "androidx.compose.ui.semantics.role", r"^\s*role\s*=[^,]*$"),
+    ("stateDescription", "androidx.compose.ui.semantics.stateDescription", r"^\s*stateDescription\s*=[^,]*$"),
+    ("contentDescription", "androidx.compose.ui.semantics.contentDescription", r"^\s*contentDescription\s*=[^,]*$"),
+    ("selected", "androidx.compose.ui.semantics.selected", r"^\s*selected\s*=[^,]*$"),
+    ("liveRegion", "androidx.compose.ui.semantics.liveRegion", r"^\s*liveRegion\s*=[^,]*$"),
+    ("translate", "androidx.compose.ui.graphics.drawscope.translate", r"\btranslate\s*\("),
+    ("rotate", "androidx.compose.ui.graphics.drawscope.rotate", r"\brotate\s*\("),
+    ("scale", "androidx.compose.ui.graphics.drawscope.scale", r"\bscale\s*\(.*\)\s*\{"),
+    ("clipRect", "androidx.compose.ui.graphics.drawscope.clipRect", r"\bclipRect\s*\("),
+]
+
+# `role =` and friends are only extensions inside a semantics block; elsewhere they are
+# ordinary named arguments. Only flag them when the file uses semantics at all.
+SEMANTICS_ONLY = {"role", "stateDescription", "contentDescription", "selected", "liveRegion"}
+
+
+def check_extensions(files):
+    problems = []
+    for path in files:
+        src = open(path).read()
+        imports = {l.strip().removeprefix("import ") for l in src.splitlines()
+                   if l.strip().startswith("import ")}
+        body = "\n".join(l for l in src.splitlines() if not l.strip().startswith("import "))
+        code = strip_code(body)
+        uses_semantics = "semantics" in code or "clearAndSetSemantics" in code
+
+        for symbol, imp, pattern in EXTENSIONS:
+            if imp in imports:
+                continue
+            if symbol in SEMANTICS_ONLY and not uses_semantics:
+                continue
+            if re.search(pattern, code, re.M):
+                problems.append(
+                    f"{path}: uses '{symbol}' without 'import {imp}' — "
+                    f"it is a separate extension, not a member"
+                )
+    return problems
+
+
+def check_delegates(files):
+    """`by remember { mutableStateOf(...) }` needs the getValue/setValue operators in scope."""
+    problems = []
+    for path in files:
+        src = open(path).read()
+        imports = {l.strip().removeprefix("import ") for l in src.splitlines()
+                   if l.strip().startswith("import ")}
+        code = strip_code("\n".join(
+            l for l in src.splitlines() if not l.strip().startswith("import ")))
+        if not re.search(r"\bby\s+(remember|rememberSaveable|rememberInfiniteTransition)", code):
+            continue
+        needs = ["androidx.compose.runtime.getValue"]
+        if re.search(r"\bvar\s+\w+\s+by\s+", code):
+            needs.append("androidx.compose.runtime.setValue")
+        for n in needs:
+            if n not in imports:
+                problems.append(f"{path}: uses a `by remember` delegate without 'import {n}'")
+    return problems
+
+
 def main() -> int:
     files = list(kotlin_files())
     checks = (
         ("balance", check_balance),
         ("imports", check_imports),
         ("padding", check_padding),
+        ("extensions", check_extensions),
+        ("delegates", check_delegates),
     )
     failed = 0
     for name, fn in checks:
