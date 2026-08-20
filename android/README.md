@@ -108,6 +108,20 @@ carried by light rather than by layout: `LocalAscension` supplies mean tier as 0
 root, and the surfaces that read it soften continuously — nobody should be able to point at the
 day it changed.
 
+The look is chiaroscuro, and that word is doing real work rather than decorating a colour
+choice. The ground is `#000000` — not a dark grey, because tenebrism needs somewhere for the
+light to fall off *to*. Pigments are earth: lapis for Access, verdigris for Activity, madder
+for Social, all held above 4.5:1 on the panel, with candlelight reserved for Friction and used
+nowhere else so that ember never reads as fault. Text is parchment at 16.6:1; `Ink.Faint` is
+structure only and is never allowed to carry a word.
+
+Nothing is outlined. Panels are defined by where light lands on them — `Modifier.litSurface`
+rakes a gradient across a surface and falls off to transparent — and hierarchy is carried by
+that treatment's emphasis rather than by borders of differing weight, which is a register the
+old uniform 1px rules had no way to express. Corners are 3dp. Rules that survive at all, like
+the divider, fade to transparent at both ends. The one thing that keeps a visible edge is a
+progress groove, because a track has to be seen to read as a track.
+
 | Piece | What it is |
 | --- | --- |
 | **Living bubble** | An AGSL membrane: three metaball lobes with fbm-displaced boundaries, breathing at 60 BPM. Viscosity comes from days since last activity, so a neglected bubble goes *heavy* rather than merely small; energy spikes on a completion; light comes from mean tier; touch pulls the fluid toward the thumb. |
@@ -281,4 +295,4 @@ question.
 - Rep logging is self-reported and unverifiable, which is the correct trade for not asking
   for location, contacts or any other permission.
 - Instrumented UI tests are not written; only JVM unit tests exist.
-- Typography uses the platform grotesque and monospace rather than a licensed display face.
+- Typography uses the platform serif and monospace rather than a licensed display face.
