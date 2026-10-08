@@ -63,13 +63,26 @@ def strip_code(src: str) -> str:
                 i += 1
             i += 1
             continue
+        if c == "`":
+            # Kotlin backtick identifiers. Test names live in these and routinely contain
+            # apostrophes and punctuation that would otherwise be read as code.
+            j = src.find("`", i + 1)
+            i = n if j < 0 else j + 1
+            continue
         if c == "'":
-            i += 1
-            while i < n and src[i] != "'":
-                if src[i] == "\\":
-                    i += 1
+            # A char literal is 'x' or '\\n' — short. A lone apostrophe in prose is not one,
+            # and treating it as one silently swallows the rest of the file, which is the
+            # worst possible failure for a checker: it reports balance it never verified.
+            close = -1
+            for k in range(i + 1, min(i + 5, n)):
+                if src[k] == "'" and src[k - 1] != "\\":
+                    close = k
+                    break
+            if close < 0:
+                out.append(c)
                 i += 1
-            i += 1
+                continue
+            i = close + 1
             continue
         out.append(c)
         i += 1
