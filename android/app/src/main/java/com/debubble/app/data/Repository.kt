@@ -15,6 +15,7 @@ import com.debubble.app.engine.GoalTrack
 import com.debubble.app.engine.Goals
 import com.debubble.app.engine.Ladder
 import com.debubble.app.engine.Pillar
+import com.debubble.app.widget.DayWidget
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.encodeToString
@@ -48,6 +49,10 @@ class Repository(private val context: Context) {
                 ?: AppState()
             prefs[stateKey] = json.encodeToString(transform(current))
         }
+        // Every state change goes through here, so this is the only place the home-screen
+        // widget needs to be told about. Doing it per-screen would mean finding out, one bug
+        // report at a time, which screens were forgotten. It is a no-op when none is placed.
+        DayWidget.refresh(context)
     }
 
     /**

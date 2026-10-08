@@ -72,7 +72,10 @@ fun ProfileScreen(
     onOpenAudit: () -> Unit,
     onSetBudget: (BudgetTier) -> Unit,
     onToggleSound: () -> Unit,
-    onToggleAmbient: () -> Unit
+    onToggleAmbient: () -> Unit,
+    /** Whether a widget is already on a home screen, which changes the wording only. */
+    widgetPlaced: Boolean,
+    onAddWidget: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -244,6 +247,33 @@ fun ProfileScreen(
                 detail = "A low drone on the action screen. Never plays over music.",
                 on = state.ambientOn,
                 onToggle = onToggleAmbient
+            )
+        }
+
+        VSpace(24)
+        SectionHeader("Home screen")
+        VSpace(10)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .panel()
+                .padding(15.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Text(
+                text = if (widgetPlaced) {
+                    "The widget is on your home screen. It shows the moment you planned " +
+                        "for, so it is in front of you when the moment arrives."
+                } else {
+                    "A widget showing the moment you planned for. The plan only works if " +
+                        "you see it when the cue turns up, and an app has to be opened first."
+                },
+                color = Ink.Secondary,
+                style = MaterialTheme.typography.bodyMedium
+            )
+            SecondaryButton(
+                if (widgetPlaced) "Add another" else "Add the widget",
+                onClick = onAddWidget
             )
         }
 

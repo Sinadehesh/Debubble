@@ -1,5 +1,6 @@
 package com.debubble.app
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -15,6 +16,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -42,27 +45,64 @@ import com.debubble.app.ui.screens.TabBar
 import com.debubble.app.ui.screens.TranscendenceScreen
 import com.debubble.app.ui.theme.DeBubbleTheme
 import com.debubble.app.ui.theme.Ink
+import com.debubble.app.widget.DayWidget
 import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
+
+    /**
+     * What the home-screen widget asked for, if anything.
+     *
+     * Compose state rather than a read of `intent`, because the widget's PendingIntent carries
+     * CLEAR_TOP: a second tap reuses this activity, and a composable that read the intent once
+     * at startup would never see the new one. The listener is androidx's rather than an
+     * `onNewIntent` override, whose parameter nullability has moved between SDK versions.
+     */
+    private var widgetLink by mutableStateOf<String?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        widgetLink = linkOf(intent)
+        addOnNewIntentListener { next -> widgetLink = linkOf(next) }
         setContent {
             DeBubbleTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = Ink.Void) {
-                    DeBubbleApp()
+                    DeBubbleApp(
+                        widgetLink = widgetLink,
+                        onWidgetLinkHandled = { widgetLink = null }
+                    )
                 }
             }
         }
     }
+
+    private fun linkOf(intent: Intent?): String? = when {
+        intent == null -> null
+        intent.hasExtra(DayWidget.EXTRA_OPEN_REVIEW) -> WIDGET_REVIEW
+        else -> intent.getStringExtra(DayWidget.EXTRA_OPEN_CHALLENGE)?.takeIf { it.isNotBlank() }
+    }
 }
 
 @Composable
-private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
+private fun DeBubbleApp(
+    widgetLink: String? = null,
+    onWidgetLinkHandled: () -> Unit = {},
+    vm: DeBubbleViewModel = viewModel()
+) {
     val state by vm.state.collectAsStateWithLifecycle()
     val route by vm.route.collectAsStateWithLifecycle()
     val pulse by vm.pulse.collectAsStateWithLifecycle()
+
+    // Deliberately gated on the dashboard. The widget must not be able to skip the intro or
+    // the calibration, and it must not fire while the state is still loading, which is when
+    // "done today" and "no live plan" both read as false.
+    LaunchedEffect(widgetLink, route) {
+        if (widgetLink != null && route is Route.Dashboard) {
+            onWidgetLinkHandled()
+            vm.openFromWidget(widgetLink)
+        }
+    }
 
     // The pulse is a one-shot: clear it so re-entering the dashboard does not replay it.
     LaunchedEffect(pulse) {
@@ -137,7 +177,10 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
                             onAllPrinciples = vm::goPrinciples,
                             onPickGoal = vm::goGoalPicker,
                             onOpenCampaign = vm::goCampaign,
-                            onOpenAvatar = vm::goAvatar
+                            onOpenAvatar = vm::goAvatar,
+                            offerWidget = vm.shouldOfferWidget(state),
+                            onAddWidget = vm::requestWidget,
+                            onDismissWidget = vm::declineWidget
                         )
                     }
                     TabBar(
@@ -162,7 +205,9 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
                             onOpenAudit = vm::goAudit,
                             onSetBudget = vm::setBudget,
                             onToggleSound = vm::toggleSound,
-                            onToggleAmbient = vm::toggleAmbient
+                            onToggleAmbient = vm::toggleAmbient,
+                            widgetPlaced = vm.widgetPlaced(),
+                            onAddWidget = vm::requestWidget
                         )
                     }
                     TabBar(

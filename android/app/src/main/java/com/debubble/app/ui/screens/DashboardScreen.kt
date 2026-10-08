@@ -26,14 +26,14 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.debubble.app.data.AppState
-import com.debubble.app.engine.Goal
-import com.debubble.app.engine.Pillar
 import com.debubble.app.engine.Forecast
+import com.debubble.app.engine.Goal
 import com.debubble.app.engine.Intention
+import com.debubble.app.engine.Pillar
 import com.debubble.app.engine.Principle
-import com.debubble.app.engine.Routed
 import com.debubble.app.engine.Progress
 import com.debubble.app.engine.RepType
+import com.debubble.app.engine.Routed
 import com.debubble.app.engine.Served
 import com.debubble.app.ui.components.Avatar
 import com.debubble.app.ui.components.BubbleRing
@@ -43,9 +43,11 @@ import com.debubble.app.ui.components.Glyph
 import com.debubble.app.ui.components.Glyphs
 import com.debubble.app.ui.components.Label
 import com.debubble.app.ui.components.Pill
+import com.debubble.app.ui.components.PrimaryButton
 import com.debubble.app.ui.components.ProgressTrack
 import com.debubble.app.ui.components.RepTracker
 import com.debubble.app.ui.components.RingState
+import com.debubble.app.ui.components.SecondaryButton
 import com.debubble.app.ui.components.SectionHeader
 import com.debubble.app.ui.components.VSpace
 import com.debubble.app.ui.components.panel
@@ -87,7 +89,11 @@ fun DashboardScreen(
     onAllPrinciples: () -> Unit,
     onPickGoal: () -> Unit,
     onOpenCampaign: () -> Unit,
-    onOpenAvatar: () -> Unit
+    onOpenAvatar: () -> Unit,
+    /** Whether to offer the home-screen widget. See [WidgetOffer]. */
+    offerWidget: Boolean,
+    onAddWidget: () -> Unit,
+    onDismissWidget: () -> Unit
 ) {
     val tiers = Pillar.order.associateWith { state.state(it).tier }
     val open = Pillar.order.count { !state.isDoneToday(it) }
@@ -166,6 +172,14 @@ fun DashboardScreen(
                     livePlans.take(3).forEach { PlanRow(it) }
                 }
                 VSpace(6)
+            }
+
+            // Directly under the plans, because that is what the widget shows and the
+            // adjacency is the argument. Offering it on an empty dashboard on day one would
+            // be asking for home-screen space before the app has earned any.
+            if (offerWidget) {
+                VSpace(12)
+                WidgetOffer(onAdd = onAddWidget, onDismiss = onDismissWidget)
             }
 
             VSpace(12)
@@ -665,4 +679,49 @@ enum class Tab(val label: String) {
     LEARN("Learn"),
     NOTES("Notes"),
     PROFILE("You")
+}
+
+/**
+ * The offer to put today's cue on the home screen.
+ *
+ * This is the one piece of promotion in the app, and it is here because the mechanism needs
+ * it rather than because growth does. An if-then plan works by being retrieved at the moment
+ * it names; a plan filed inside an app that has to be opened is retrieved by someone who
+ * already remembered, which is the group that did not need the plan. On the home screen it is
+ * in front of them at the moment the cue arrives.
+ *
+ * Shown once. The launcher never reports back whether the user accepted, so a card that
+ * reappeared until it detected a widget would reappear forever for everyone who said no.
+ */
+@Composable
+private fun WidgetOffer(onAdd: () -> Unit, onDismiss: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .panel(fill = Ink.SurfaceHigh, border = Ink.Gold.copy(alpha = 0.7f))
+            .padding(15.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(9.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Glyph(Glyphs.Spark, colour = Ink.Gold, size = 18)
+            Label("Put it on your home screen", color = Ink.Gold, strong = true)
+        }
+        Text(
+            text = "A plan you have to open an app to read gets read by people who already " +
+                "remembered. On your home screen it is there when the moment is.",
+            color = Ink.Secondary,
+            style = MaterialTheme.typography.bodyMedium
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(Space.gap)) {
+            Box(modifier = Modifier.weight(1f)) {
+                PrimaryButton("Add the widget", accent = Ink.Gold, onClick = onAdd)
+            }
+            Box(modifier = Modifier.weight(1f)) {
+                SecondaryButton("Not now", onClick = onDismiss)
+            }
+        }
+    }
 }

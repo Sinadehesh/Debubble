@@ -35,6 +35,7 @@ import com.debubble.app.engine.Pillar
 import com.debubble.app.engine.Progress
 import com.debubble.app.engine.Protocol
 import com.debubble.app.engine.Served
+import com.debubble.app.widget.DayWidget
 import com.debubble.app.ui.components.RingState
 import com.debubble.app.ui.screens.Tab
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -92,7 +93,13 @@ sealed interface Route {
     data class Review(val forecastId: Long) : Route
 }
 
-class DeBubbleViewModel(app: Application) : AndroidViewModel(app) {
+/** The widget's "check your prediction" link. Matched, not parsed. */
+const val WIDGET_REVIEW = "review"
+
+// `app` is a property, not just a constructor argument: the widget helpers below need a
+// context after construction, and a stored application reference is the one kind that is
+// safe to hold in a view model.
+class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
 
     private val repo = Repository(app)
 
@@ -249,6 +256,31 @@ class DeBubbleViewModel(app: Application) : AndroidViewModel(app) {
     fun openMission() { _route.value = Route.Mission }
 
     fun openChallenge(pillar: Pillar) { _route.value = Route.Challenge(pillar) }
+
+    /**
+     * Arrived from the home-screen widget.
+     *
+     * Only ever called once the app has settled on the dashboard, so it cannot jump over
+     * onboarding or the calibration. Unrecognised links do nothing rather than guess — a
+     * widget placed before an update and tapped after one must not drop someone into a
+     * screen that no longer means what it did.
+     */
+    fun openFromWidget(link: String) {
+        val s = state.value
+        when {
+            link == WIDGET_REVIEW -> {
+                // The oldest unchecked prediction, because that is the one most at risk of
+                // being forgotten entirely.
+                s.openForecasts.minByOrNull { it.createdDay }?.let { openReview(it.id) }
+            }
+            link.startsWith("tier:") -> {
+                val pillar = link.split(':').getOrNull(1)
+                    ?.let { name -> Pillar.order.firstOrNull { it.name == name } }
+                if (pillar != null && !s.isDoneToday(pillar)) openChallenge(pillar)
+            }
+            link.startsWith("mission:") -> if (!s.missionDoneToday) _route.value = Route.Mission
+        }
+    }
 
     /** Back out of a challenge without penalty. Abandoning is not friction — only saying so is. */
     fun abort() { _route.value = Route.Dashboard }
@@ -890,6 +922,37 @@ class DeBubbleViewModel(app: Application) : AndroidViewModel(app) {
     fun toggleAmbient() {
         viewModelScope.launch { repo.update { it.copy(ambientOn = !it.ambientOn) } }
     }
+
+    /* ---------------------------------------------------------------- the widget */
+
+    /**
+     * Whether to offer the home-screen widget on the dashboard.
+     *
+     * Four conditions, and all four matter. Not already placed, because offering someone
+     * something they have is noise. The launcher must support pinning, because asking and
+     * then failing is worse than never asking. Something must have been completed, because
+     * asking for home-screen space on day one is asking before the app has earned any. And
+     * it is asked once — the launcher never reports back whether the user accepted, so a
+     * card that waited to detect a widget would wait forever for everyone who declined.
+     */
+    fun shouldOfferWidget(s: AppState): Boolean =
+        !s.widgetOffered &&
+            s.log.any { !it.friction } &&
+            DayWidget.canRequestPin(app) &&
+            !DayWidget.isInstalled(app)
+
+    /** Hand it to the launcher, which shows its own dialog. We are told nothing either way. */
+    fun requestWidget() {
+        DayWidget.requestPin(app)
+        viewModelScope.launch { repo.update { it.copy(widgetOffered = true) } }
+    }
+
+    fun declineWidget() {
+        viewModelScope.launch { repo.update { it.copy(widgetOffered = true) } }
+    }
+
+    /** True once one is actually on a home screen, for the profile's wording. */
+    fun widgetPlaced(): Boolean = DayWidget.isInstalled(app)
 
     fun clearPulse() { _pulse.value = null }
 

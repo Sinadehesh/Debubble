@@ -123,6 +123,13 @@ data class AppState(
     val soundOn: Boolean = true,
     /** The continuous bed. An intrusion if it starts by itself, so it is opt-in. */
     val ambientOn: Boolean = false,
+    /**
+     * Whether the home-screen widget has been offered. Asked once, never again from the
+     * dashboard — the launcher does not tell us whether the user accepted, and an offer that
+     * reappears every day is the thing that gets an app uninstalled. The profile keeps a
+     * permanent way in for anyone who changes their mind.
+     */
+    val widgetOffered: Boolean = false,
 
     val log: List<LogEntry> = emptyList()
 ) {

@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The home-screen widget.
+
+    Its job is narrower than the app's: it is a retrieval cue, not a dashboard. Craske lists
+    retrieval cues among the strategies that make exposure stick, and an if-then plan only
+    works if it is actually retrieved at the moment it names — which is why the biggest text
+    here is the "when", not the challenge title. A widget that showed a score would be a score
+    nobody acts on.
+
+    RemoteViews only, so: LinearLayout, TextView, ImageView, ProgressBar. No ConstraintLayout,
+    no custom views, no Compose.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/widget_background"
+    android:padding="14dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:baselineAligned="false">
+
+        <TextView
+            android:id="@+id/widget_kicker"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:textColor="@color/ink_access"
+            android:text="@string/widget_kicker_default" />
+
+        <TextView
+            android:id="@+id/widget_badge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:textColor="@color/ink_muted"
+            android:text="" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/widget_cue"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="9dp"
+        android:textSize="17sp"
+        android:textStyle="bold"
+        android:lineSpacingExtra="2sp"
+        android:maxLines="3"
+        android:ellipsize="end"
+        android:textColor="@color/ink_primary"
+        android:text="@string/widget_cue_default" />
+
+    <TextView
+        android:id="@+id/widget_body"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="6dp"
+        android:textSize="14sp"
+        android:lineSpacingExtra="2sp"
+        android:maxLines="4"
+        android:ellipsize="end"
+        android:textColor="@color/ink_secondary"
+        android:text="" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal"
+        android:baselineAligned="false">
+
+        <TextView
+            android:id="@+id/widget_action"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/widget_button"
+            android:gravity="center"
+            android:paddingTop="11dp"
+            android:paddingBottom="11dp"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:textColor="@color/ink_primary"
+            android:text="@string/widget_action_default" />
+
+        <TextView
+            android:id="@+id/widget_second"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/widget_button"
+            android:gravity="center"
+            android:paddingTop="11dp"
+            android:paddingBottom="11dp"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:visibility="gone"
+            android:textColor="@color/ink_ember"
+            android:text="@string/widget_review" />
+    </LinearLayout>
+</LinearLayout>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    updatePeriodMillis is 0 on purpose. The content changes when the user's state changes or
+    when the date rolls over, and both of those are events we already have — a timer would
+    wake the device to redraw text that had not changed. Repository.update() refreshes the
+    widget on every write, and the receiver listens for DATE_CHANGED so the cue is right in
+    the morning even if the app has not been opened.
+-->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="250dp"
+    android:minHeight="110dp"
+    android:minResizeWidth="180dp"
+    android:minResizeHeight="110dp"
+    android:targetCellWidth="4"
+    android:targetCellHeight="2"
+    android:updatePeriodMillis="0"
+    android:initialLayout="@layout/widget_day"
+    android:previewLayout="@layout/widget_day"
+    android:previewImage="@mipmap/ic_launcher"
+    android:resizeMode="horizontal|vertical"
+    android:description="@string/widget_description"
+    android:widgetCategory="home_screen" />

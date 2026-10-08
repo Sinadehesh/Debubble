@@ -1,4 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">DeBubble</string>
+
+    <!-- Widget. The defaults are what shows in the picker before any state exists, so they
+         have to describe the product honestly rather than say "Loading". -->
+    <string name="widget_name">Today\'s cue</string>
+    <string name="widget_description">The moment you decided to act, on your home screen.</string>
+    <string name="widget_kicker_default">Today</string>
+    <string name="widget_cue_default">When I next join the back of a queue.</string>
+    <string name="widget_action_default">Open</string>
+    <string name="widget_review">How did it go?</string>
 </resources>
