@@ -203,6 +203,11 @@ fun ChallengeScreen(
                     }
                 }
 
+                if (served.hasProtocol) {
+                    VSpace(14)
+                    ProtocolBlock(served = served, accent = pillar.accent)
+                }
+
                 VSpace(22)
                 PlanBlock(plan = plan, accent = pillar.accent, onPlan = onPlan)
 
@@ -231,6 +236,11 @@ fun ChallengeScreen(
                     onFriction()
                 }
 
+                if (served.ease.isNotBlank()) {
+                    VSpace(14)
+                    EaseBlock(served.ease)
+                }
+
                 VSpace(12)
                 SecondaryButton("Not today", onClick = onBack)
                 VSpace(24)
@@ -243,6 +253,120 @@ fun ChallengeScreen(
         if (glitching) {
             GlitchBurst(modifier = Modifier.fillMaxSize())
         }
+    }
+}
+
+/**
+ * The protocol: when, the first move, the words, the finish line, and what comes off.
+ *
+ * This block is the whole of this phase of the work. The challenge text above it was always
+ * fine as prose and useless as an instruction, because it answered only "what" — and the four
+ * literatures the curriculum now draws on all say the same thing about why that fails. A cue
+ * with no moment in it competes with the rest of the day and loses. An entry step that is not
+ * trivially small gets deferred. A task with no success criterion cannot be completed, only
+ * abandoned. And a frightening thing survived while holding a safety behaviour teaches that
+ * the safety behaviour was what saved you. [Protocol] carries the sources.
+ *
+ * One panel rather than five cards, deliberately. These are five parts of one instruction, and
+ * five separate boxes would read as five more things to do.
+ */
+@Composable
+private fun ProtocolBlock(served: Served, accent: androidx.compose.ui.graphics.Color) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .panel(border = Ink.Border)
+    ) {
+        if (served.anchor.isNotBlank()) {
+            Step(
+                label = "When",
+                text = "When ${served.anchor}.",
+                accent = accent,
+                emphasis = true
+            )
+        }
+        if (served.opener.isNotBlank()) {
+            Divider()
+            Step(
+                label = "Start with this — under two minutes",
+                text = served.opener,
+                accent = accent,
+                emphasis = true
+            )
+        }
+        if (served.script.isNotBlank()) {
+            Divider()
+            Step(label = "Words, if you want them", text = served.script, accent = accent)
+        }
+        if (served.done.isNotBlank()) {
+            Divider()
+            Step(label = "Done when", text = served.done.replaceFirstChar { it.uppercase() }, accent = accent)
+        }
+        if (served.drop.isNotBlank()) {
+            Divider()
+            // Amber, like Friction, because it belongs to the same honest-discomfort family
+            // and never to the error family. Nothing in this app is red.
+            Step(label = "Leave this behind", text = served.drop, accent = Ink.Ember)
+        }
+    }
+}
+
+@Composable
+private fun Step(
+    label: String,
+    text: String,
+    accent: androidx.compose.ui.graphics.Color,
+    emphasis: Boolean = false
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 15.dp, vertical = 13.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Label(label, color = accent, strong = true)
+        Text(
+            text = text,
+            color = if (emphasis) Ink.Primary else Ink.Secondary,
+            style = if (emphasis) {
+                MaterialTheme.typography.titleMedium
+            } else {
+                MaterialTheme.typography.bodyLarge
+            }
+        )
+    }
+}
+
+/**
+ * The smaller rung, offered without being asked for.
+ *
+ * Behavioural activation calls this graded task assignment, and the detail that matters is the
+ * timing: the smaller step has to be visible *before* someone decides they cannot do the
+ * bigger one, because by the time they have decided, they have closed the app. It sits under
+ * the Friction card rather than above it, so the order on the page reads "it was too much" and
+ * then "here is the smaller one" — which is the order the conversation actually happens in.
+ *
+ * It is not a button. Tapping it would mean logging a completion against a rung the user is
+ * not standing on, and the ladder would start lying about where they are.
+ */
+@Composable
+private fun EaseBlock(ease: String) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .panel(fill = Ink.Well, border = Ink.Faint)
+            .padding(horizontal = 15.dp, vertical = 13.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Label("If this one is too big today", color = Ink.Muted, strong = true)
+        Text(
+            text = ease,
+            color = Ink.Secondary,
+            style = MaterialTheme.typography.bodyLarge
+        )
+        Text(
+            text = "Do that instead. It counts as the day, and the level stays where it is.",
+            color = Ink.Muted,
+            style = MaterialTheme.typography.labelMedium
+        )
     }
 }
 

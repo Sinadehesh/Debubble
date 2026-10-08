@@ -77,7 +77,21 @@ object Engine {
             cost = if (useAlternate) minOf(c.cost, baseline.budgetPerChallenge) else c.cost,
             exposure = c.exposure,
             substituted = useAlternate,
-            substitutionReason = reason
+            substitutionReason = reason,
+            // The protocol travels with the challenge, not with the variant: swapping to the
+            // accessible route changes what you do, never when you start it, how you know you
+            // are finished, or which safety behaviour comes off.
+            anchor = Copy.adapt(
+                c.anchor.ifBlank { Protocol.genericAnchor(pillar) },
+                words
+            ),
+            opener = Copy.adapt(c.opener, words),
+            done = Copy.adapt(c.done, words),
+            drop = Copy.adapt(c.drop, words),
+            test = Copy.adapt(c.test, words),
+            script = c.script,
+            ease = Copy.adapt(curriculum.ladder(pillar).easierThan(state.tier), words),
+            celebration = Protocol.celebration(pillar, state.tier)
         )
     }
 

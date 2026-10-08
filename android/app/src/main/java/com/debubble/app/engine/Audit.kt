@@ -87,7 +87,9 @@ data class Remediation(
         exposure = exposure,
         substituted = false,
         kind = "AUDIT",
-        phase = label
+        phase = label,
+        anchor = Protocol.genericAnchor(pillarEnum),
+        celebration = Protocol.celebration(pillarEnum, rung)
     )
 }
 

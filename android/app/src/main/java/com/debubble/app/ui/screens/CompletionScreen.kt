@@ -27,6 +27,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.debubble.app.engine.Pillar
 import com.debubble.app.engine.Progress
+import com.debubble.app.engine.Protocol
 import com.debubble.app.ui.components.Glyph
 import com.debubble.app.ui.components.Glyphs
 import com.debubble.app.ui.components.Label
@@ -94,12 +95,50 @@ fun CompletionScreen(
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.titleMedium
                 )
+                VSpace(22)
+
+                // The celebration, and it is an instruction rather than a decoration.
+                //
+                // Fogg's claim is that anchor plus behaviour is only a routine, and that what
+                // turns it into a habit is feeling good about it within seconds of finishing.
+                // An XP pill is a record of the behaviour; saying the sentence out loud is the
+                // reward, and it has to happen here, before the screen is dismissed. So it is
+                // the loudest thing on the page and the pills sit underneath it.
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .panel(
+                            shape = RoundedCornerShape(Space.radiusLarge),
+                            fill = Ink.SurfaceHigh,
+                            border = Ink.Gold,
+                            borderWidth = 2.dp
+                        )
+                        .padding(horizontal = 16.dp, vertical = 15.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(9.dp)
+                ) {
+                    Label("Do this now", color = Ink.Gold, strong = true)
+                    Text(
+                        text = Protocol.celebration(pillar, tierCleared),
+                        color = Ink.Primary,
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        text = "Three seconds, out loud. It is the part that makes the next " +
+                            "one easier.",
+                        color = Ink.Muted,
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                }
+
                 VSpace(18)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Pill("+${Progress.XP_CHALLENGE} XP", Ink.Gold, filled = true)
                     Pill(pillar.display, pillar.accent)
                 }
-                VSpace(28)
+                VSpace(24)
                 Text(
                     text = "Your bubble is bigger than it was this morning. That is the " +
                         "whole thing — it only ever happens one of these at a time.",

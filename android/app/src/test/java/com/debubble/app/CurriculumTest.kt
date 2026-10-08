@@ -2,6 +2,7 @@ package com.debubble.app
 
 import com.debubble.app.engine.Baseline
 import com.debubble.app.engine.Challenge
+import com.debubble.app.engine.Cues
 import com.debubble.app.engine.Curriculum
 import com.debubble.app.engine.Engine
 import com.debubble.app.engine.Ladder
@@ -9,15 +10,17 @@ import com.debubble.app.engine.Mobility
 import com.debubble.app.engine.Needs
 import com.debubble.app.engine.Pillar
 import com.debubble.app.engine.PillarState
+import com.debubble.app.engine.Protocol
+import java.io.File
+import kotlin.math.ln
+import kotlin.math.pow
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.io.File
-import kotlin.math.ln
-import kotlin.math.pow
 
 /**
  * The curriculum is authored data, not generated at runtime, so these tests are what stop a
@@ -338,5 +341,219 @@ class CurriculumTest {
         val at30 = (30 / 100.0).pow(1.9)
         val at100 = 1.0
         assertTrue("curve should be under 12% of full range by tier 30", at30 < 0.12 * at100)
+    }
+}
+
+/**
+ * The protocol around each challenge.
+ *
+ * These tests exist because the protocol is the part of the curriculum a careless edit would
+ * break invisibly. A missing directive is obvious the moment anyone opens the app; a cue that
+ * no longer names a moment, or a success criterion that reads as a second instruction, still
+ * renders perfectly and quietly returns the challenge to the state it was in before — a clear
+ * sentence that nobody can act on.
+ */
+class ProtocolTest {
+
+    private val json = Json { ignoreUnknownKeys = true }
+
+    private fun assetsDir(): File {
+        val candidates = listOf(
+            File("src/main/assets/curriculum"),
+            File("app/src/main/assets/curriculum")
+        )
+        return candidates.firstOrNull { it.isDirectory }
+            ?: error("cannot locate curriculum assets from ${File(".").absolutePath}")
+    }
+
+    private fun ladder(pillar: Pillar): Ladder =
+        json.decodeFromString(
+            File(assetsDir(), pillar.asset.substringAfterLast('/')).readText()
+        )
+
+    private fun every(block: (Pillar, Challenge) -> Unit) {
+        Pillar.order.forEach { p -> ladder(p).tiers.forEach { block(p, it) } }
+    }
+
+    // ---------------------------------------------------------------- completeness
+
+    @Test
+    fun `every challenge on every ladder carries the whole protocol`() {
+        every { p, c ->
+            val at = "${p.name} t${c.tier}"
+            assertTrue("$at has no anchor", c.anchor.isNotBlank())
+            assertTrue("$at has no opener", c.opener.isNotBlank())
+            assertTrue("$at has no success criterion", c.done.isNotBlank())
+            assertTrue("$at names no safety behaviour", c.drop.isNotBlank())
+            assertTrue("$at has no prediction to disconfirm", c.test.isNotBlank())
+        }
+    }
+
+    /**
+     * The hard one. The app refuses vague cues typed by the user; shipping vague ones of its
+     * own would be the app failing its own test, which is exactly the bug the intention tests
+     * caught in [Cues.anchors].
+     */
+    @Test
+    fun `every authored anchor passes the specificity test the app applies to users`() {
+        every { p, c ->
+            val at = "${p.name} t${c.tier}"
+            assertTrue("$at ships a cue the app would reject: '${c.anchor}'", Cues.isSpecific(c.anchor))
+            assertNull("$at anchor would be critiqued", Cues.critique(c.anchor))
+        }
+    }
+
+    /** The anchor is dropped into "When ___, I will ___", so it has to be first person. */
+    @Test
+    fun `anchors are written to fit the sentence they go into`() {
+        every { p, c ->
+            val at = "${p.name} t${c.tier}"
+            // Mid-sentence, so not sentence-cased — but "I" is capitalised in English and
+            // most of these start with it, so that is the one allowed capital.
+            val opensLowerOrPronoun = c.anchor.first().isLowerCase() || c.anchor.startsWith("I ")
+            assertTrue("$at anchor is sentence-cased: '${c.anchor}'", opensLowerOrPronoun)
+            assertFalse("$at anchor ends a sentence", c.anchor.endsWith("."))
+            val firstPerson = c.anchor.contains(Regex("""\b(I|my|me)\b"""))
+            val eventForm = c.anchor.startsWith("someone ") || c.anchor.startsWith("the doors ")
+            assertTrue("$at anchor names no subject: '${c.anchor}'", firstPerson || eventForm)
+        }
+    }
+
+    /** "Done when <done>" has to read as one sentence. */
+    @Test
+    fun `the success criterion continues the lead-in rather than restarting`() {
+        every { p, c ->
+            val at = "${p.name} t${c.tier}"
+            assertTrue("$at done is capitalised: '${c.done}'", c.done.first().isLowerCase())
+            assertTrue("$at done is not a sentence", c.done.endsWith("."))
+        }
+    }
+
+    /**
+     * The opener is the two-minute rule made concrete. Length is a crude proxy, but a long
+     * opener is reliably a second task wearing the first one's clothes.
+     */
+    @Test
+    fun `the opener stays small enough to be the thing nobody can refuse`() {
+        every { p, c ->
+            val at = "${p.name} t${c.tier}"
+            assertTrue("$at opener is ${c.opener.length} chars", c.opener.length <= 130)
+            assertTrue("$at opener does not read as an instruction", c.opener.first().isUpperCase())
+            assertNotEquals("$at opener is just the directive again", c.directive, c.opener)
+        }
+    }
+
+    @Test
+    fun `scripts contain the actual words`() {
+        every { p, c ->
+            if (c.script.isNotBlank()) {
+                assertTrue("${p.name} t${c.tier} script has no quoted line", c.script.contains('"'))
+            }
+        }
+    }
+
+    /**
+     * The ladder with the worst version of the old defect should carry the most scripts.
+     * Exposure without the sentence tells someone who cannot say the sentence nothing.
+     */
+    @Test
+    fun `the social ladder ships scripts where the barrier is a missing sentence`() {
+        val scripted = ladder(Pillar.SOCIAL).tiers.count { it.script.isNotBlank() }
+        assertTrue("only $scripted social challenges carry a script", scripted >= 30)
+    }
+
+    // ---------------------------------------------------------------- derived parts
+
+    @Test
+    fun `the easier rung is genuinely below the one being offered`() {
+        Pillar.order.forEach { p ->
+            val l = ladder(p)
+            (3..Engine.MAX_TIER).forEach { t ->
+                assertEquals(
+                    "${p.name} t$t should step back two rungs",
+                    l.at(t - 2).directive,
+                    l.easierThan(t)
+                )
+            }
+            // At the bottom there is nothing below, so the authored alternate stands in.
+            assertEquals(l.at(1).alternate, l.easierThan(1))
+            assertEquals(l.at(2).alternate, l.easierThan(2))
+        }
+    }
+
+    @Test
+    fun `every rung has a celebration and they are not all the same`() {
+        Pillar.order.forEach { p ->
+            val lines = (1..Engine.MAX_TIER).map { Protocol.celebration(p, it) }
+            lines.forEachIndexed { i, line ->
+                assertTrue("${p.name} t${i + 1} has no celebration", line.isNotBlank())
+            }
+            assertTrue("${p.name} celebrations never vary", lines.distinct().size > 1)
+            // Deterministic: the same rung must always produce the same line, or it reads as
+            // a reward schedule rather than a ritual.
+            assertEquals(Protocol.celebration(p, 7), Protocol.celebration(p, 7))
+        }
+        // And the fallback cue has to clear the same bar as the authored ones.
+        Pillar.order.forEach { p ->
+            assertTrue(Cues.isSpecific(Protocol.genericAnchor(p)))
+            assertNull(Cues.critique(Protocol.genericAnchor(p)))
+        }
+    }
+
+    // ---------------------------------------------------------------- end to end
+
+    @Test
+    fun `the engine serves the protocol, and swapping to the alternate does not drop it`() {
+        val curriculum = Curriculum(Pillar.order.associateWith { ladder(it) })
+        val baseline = Baseline(radiusKm = 2, moves = setOf(Mobility.WALK))
+        Pillar.order.forEach { p ->
+            val state = PillarState(tier = 12)
+            val normal = Engine.serve(p, state, curriculum, baseline)
+            val swapped = Engine.serve(p, state, curriculum, baseline, forceAlternate = true)
+
+            assertTrue(normal.hasProtocol)
+            assertTrue("swapping must not strip the protocol", swapped.hasProtocol)
+            assertEquals("the moment does not change with the variant", normal.anchor, swapped.anchor)
+            assertEquals(normal.done, swapped.done)
+            assertEquals(normal.drop, swapped.drop)
+            assertNotEquals("the variant should change the directive", normal.directive, swapped.directive)
+            assertTrue(normal.ease.isNotBlank())
+            assertTrue(normal.celebration.isNotBlank())
+        }
+    }
+
+    /**
+     * The protocol has to survive the mobility rewriter in both directions, because a user who
+     * picked neither walking nor wheels gets "head", which has no usable past tense. The
+     * generator checks the asset text; this checks what the engine actually hands the screen.
+     */
+    @Test
+    fun `the protocol reads as English for a user who does not walk`() {
+        val curriculum = Curriculum(Pillar.order.associateWith { ladder(it) })
+        val broken = Regex("""\bbeen (a|an|the|it|back|for|outside)\b|\bbe been\b|\bstay out\b""")
+        listOf(setOf(Mobility.WHEELS), setOf(Mobility.TRANSIT)).forEach { modes ->
+            val baseline = Baseline(radiusKm = 5, moves = modes)
+            Pillar.order.forEach { p ->
+                (1..Engine.MAX_TIER).forEach { t ->
+                    val s = Engine.serve(p, PillarState(tier = t), curriculum, baseline)
+                    listOf(s.anchor, s.opener, s.done, s.drop, s.test, s.ease).forEach { text ->
+                        val hit = broken.find(text)
+                        // The authored text is allowed to contain these; only a substitution
+                        // that introduces one is the bug.
+                        if (hit != null) {
+                            val source = curriculum.challenge(p, t)
+                            val authored = listOf(
+                                source.anchor, source.opener, source.done,
+                                source.drop, source.test
+                            ).any { broken.containsMatchIn(it) }
+                            assertTrue(
+                                "${p.name} t$t became non-English for $modes: $text",
+                                authored
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }

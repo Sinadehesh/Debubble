@@ -54,7 +54,11 @@ data class CampaignChallenge(
             "Counts for " + goalEnums.joinToString(" and ") { it.display }
         } else {
             goalEnums.firstOrNull()?.display
-        }
+        },
+        // No authored protocol on a campaign step, but the two parts that are never
+        // task-specific still apply: a moment to start from, and marking the finish.
+        anchor = Protocol.genericAnchor(pillarEnum),
+        celebration = Protocol.celebration(pillarEnum, tier)
     )
 }
 

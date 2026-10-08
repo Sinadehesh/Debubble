@@ -199,7 +199,7 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
                         soundOn = state.soundOn,
                         ambientOn = state.ambientOn,
                         plan = state.intentionFor(challengeKey),
-                        onPlan = { vm.goPlan(challengeKey, served.directive) },
+                        onPlan = { vm.goPlan(challengeKey, served) },
                         onCommit = { minutes ->
                             vm.complete(
                                 pillar = r.pillar,
@@ -248,7 +248,7 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
                             soundOn = state.soundOn,
                             ambientOn = state.ambientOn,
                             plan = state.intentionFor(missionKey),
-                            onPlan = { vm.goPlan(missionKey, mission.directive) },
+                            onPlan = { vm.goPlan(missionKey, mission) },
                             onCommit = { minutes ->
                                 vm.completeMission(
                                     minutes = minutes,
@@ -443,7 +443,7 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
                             soundOn = state.soundOn,
                             ambientOn = state.ambientOn,
                             plan = state.intentionFor(id),
-                            onPlan = { vm.goPlan(id, served.directive) },
+                            onPlan = { vm.goPlan(id, served) },
                             onCommit = { minutes ->
                                 vm.completeRouted(
                                     id = id,
@@ -469,6 +469,9 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
                     PlanScreen(
                         challengeId = r.challengeId,
                         title = r.title,
+                        suggestedCue = r.cue,
+                        suggestedResponse = r.response,
+                        suggestedPrediction = r.prediction,
                         onSave = { cue, response, predicted, distress ->
                             vm.savePlan(r.challengeId, r.title, cue, response, predicted, distress)
                         },

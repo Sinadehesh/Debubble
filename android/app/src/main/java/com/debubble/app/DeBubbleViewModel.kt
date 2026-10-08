@@ -33,6 +33,7 @@ import com.debubble.app.engine.GoalTrack
 import com.debubble.app.engine.Goals
 import com.debubble.app.engine.Pillar
 import com.debubble.app.engine.Progress
+import com.debubble.app.engine.Protocol
 import com.debubble.app.engine.Served
 import com.debubble.app.ui.components.RingState
 import com.debubble.app.ui.screens.Tab
@@ -79,7 +80,14 @@ sealed interface Route {
     /** A routed extra — a campaign challenge or a remediation. */
     data class Routed(val remediation: Boolean) : Route
     /** Writing the if-then plan and the prediction, before doing the thing. */
-    data class Plan(val challengeId: String, val title: String) : Route
+    data class Plan(
+        val challengeId: String,
+        val title: String,
+        /** The challenge's own anchor, opener and prediction, carried through to pre-fill. */
+        val cue: String = "",
+        val response: String = "",
+        val prediction: String = ""
+    ) : Route
     /** Checking the prediction against what happened, after doing it. */
     data class Review(val forecastId: Long) : Route
 }
@@ -165,7 +173,9 @@ class DeBubbleViewModel(app: Application) : AndroidViewModel(app) {
             substituted = false,
             kind = "MISSION",
             phase = t.phaseOf(m.step),
-            repTarget = m.repTarget
+            repTarget = m.repTarget,
+            anchor = Protocol.genericAnchor(goal.homePillar),
+            celebration = Protocol.celebration(goal.homePillar, m.step)
         )
     }
 
@@ -682,8 +692,14 @@ class DeBubbleViewModel(app: Application) : AndroidViewModel(app) {
 
     // --------------------------------------------------------- plans and predictions
 
-    fun goPlan(challengeId: String, title: String) {
-        _route.value = Route.Plan(challengeId, title)
+    fun goPlan(challengeId: String, served: Served) {
+        _route.value = Route.Plan(
+            challengeId = challengeId,
+            title = served.directive,
+            cue = served.anchor,
+            response = served.opener,
+            prediction = served.test
+        )
     }
 
     /**

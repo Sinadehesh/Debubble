@@ -68,13 +68,29 @@ import com.debubble.app.ui.theme.Space
 fun PlanScreen(
     challengeId: String,
     title: String,
+    /** The challenge's own anchor, offered first. Blank for campaign steps. */
+    suggestedCue: String = "",
+    /** The challenge's two-minute opener, pre-filled as the response. */
+    suggestedResponse: String = "",
+    /** The challenge's authored prediction, pre-filled so the box is never empty. */
+    suggestedPrediction: String = "",
     onSave: (cue: String, response: String, predicted: String, distress: Int) -> Unit,
     onBack: () -> Unit
 ) {
-    var anchor by remember { mutableStateOf(Cues.anchors.first()) }
+    // The challenge's own anchor goes first in the list and is selected by default. Every
+    // challenge was authored with the moment that fits it, and a user who agrees with that
+    // moment should not have to go and find it among eight generic ones.
+    val anchors = remember(suggestedCue) {
+        (listOf(suggestedCue).filter { it.isNotBlank() } + Cues.anchors).distinct()
+    }
+    var anchor by remember { mutableStateOf(anchors.first()) }
     var detail by remember { mutableStateOf("") }
-    var response by remember { mutableStateOf("") }
-    var predicted by remember { mutableStateOf("") }
+    // Pre-filled rather than empty, and editable. An empty response box at this moment
+    // produces "talk to more people"; the opener is already the smallest true version.
+    var response by remember {
+        mutableStateOf(suggestedResponse.trimEnd('.').replaceFirstChar { it.lowercase() })
+    }
+    var predicted by remember { mutableStateOf(suggestedPrediction) }
     var distress by remember { mutableIntStateOf(6) }
 
     val cue = if (detail.isBlank()) anchor else "$anchor, $detail"
@@ -122,7 +138,7 @@ fun PlanScreen(
                 modifier = Modifier.horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Cues.anchors.forEach { a ->
+                anchors.forEach { a ->
                     val on = a == anchor
                     Box(
                         modifier = Modifier
