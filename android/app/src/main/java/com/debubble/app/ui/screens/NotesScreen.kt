@@ -47,6 +47,7 @@ import com.debubble.app.ui.components.VSpace
 import com.debubble.app.ui.components.panel
 import com.debubble.app.ui.theme.Ink
 import com.debubble.app.ui.theme.Space
+import com.debubble.app.ui.theme.roomGround
 
 /**
  * The Notes tab.
@@ -74,7 +75,7 @@ fun NotesScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Ink.Void)
+            .background(roomGround())
     ) {
         TopBar(
             title = "Notes",
@@ -274,7 +275,7 @@ fun NoteEditorScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Ink.Void)
+            .background(roomGround())
             .imePadding()
     ) {
         TopBar(

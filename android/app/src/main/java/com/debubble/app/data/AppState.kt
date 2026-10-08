@@ -4,13 +4,15 @@ import com.debubble.app.engine.AvatarState
 import com.debubble.app.engine.Baseline
 import com.debubble.app.engine.BudgetTier
 import com.debubble.app.engine.Forecast
-import com.debubble.app.engine.Intention
 import com.debubble.app.engine.Goal
 import com.debubble.app.engine.GoalState
 import com.debubble.app.engine.Goals
+import com.debubble.app.engine.Habitat
+import com.debubble.app.engine.Intention
 import com.debubble.app.engine.Pillar
 import com.debubble.app.engine.PillarState
 import com.debubble.app.engine.Progress
+import com.debubble.app.engine.Stage
 import kotlinx.serialization.Serializable
 
 /** One line in the history. Completions and friction live in the same stream, deliberately. */
@@ -130,6 +132,12 @@ data class AppState(
      * permanent way in for anyone who changes their mind.
      */
     val widgetOffered: Boolean = false,
+    /**
+     * The habitat stage the user has already been shown. Stored so the "the room changed"
+     * banner appears once and then never again, and so it does not fire retrospectively on
+     * an install that upgraded into this feature already past several thresholds.
+     */
+    val habitatSeen: String = "",
 
     val log: List<LogEntry> = emptyList()
 ) {
@@ -171,6 +179,16 @@ data class AppState(
     val openForecasts: List<Forecast> get() = forecasts.filter { !it.isResolved }
 
     /* ---- levels and armour ---- */
+
+    /* ---- the room ---- */
+
+    /** Rungs cleared across all three ladders. Drives the habitat and nothing else. */
+    val clearedRungs: Int get() = Habitat.cleared(Pillar.order.associateWith { state(it) })
+
+    val stage: Stage get() = Habitat.stageFor(clearedRungs)
+
+    /** True when the room has opened since the user last looked at it. */
+    val habitatChanged: Boolean get() = habitatSeen.isNotEmpty() && habitatSeen != stage.name
 
     val level: Int get() = Progress.level(xp)
     val levelProgress: Float get() = Progress.levelProgress(xp)

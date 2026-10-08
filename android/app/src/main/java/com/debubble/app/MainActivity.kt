@@ -14,11 +14,13 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.debubble.app.engine.Pillar
@@ -45,6 +47,7 @@ import com.debubble.app.ui.screens.TabBar
 import com.debubble.app.ui.screens.TranscendenceScreen
 import com.debubble.app.ui.theme.DeBubbleTheme
 import com.debubble.app.ui.theme.Ink
+import com.debubble.app.ui.theme.LocalStage
 import com.debubble.app.widget.DayWidget
 import kotlinx.coroutines.delay
 
@@ -112,448 +115,455 @@ private fun DeBubbleApp(
         }
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Ink.Void)
-            .statusBarsPadding()
-    ) {
-        when (val r = route) {
-            is Route.Loading -> Box(modifier = Modifier.fillMaxSize())
+    // The ground under every screen follows the habitat, so the room is the app rather than
+    // a screen inside it. Screens that paint their own background — the action screen is a
+    // locked focus surface — keep Ink.Void and are unaffected. The stage palette is solved
+    // against the WCAG floors, so no stage can make a sentence unreadable.
+    CompositionLocalProvider(LocalStage provides state.stage) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(state.stage.ground))
+                .statusBarsPadding()
+        ) {
+            when (val r = route) {
+                is Route.Loading -> Box(modifier = Modifier.fillMaxSize())
 
-            is Route.Intro -> IntroScreen(onDone = vm::finishIntro)
+                is Route.Intro -> IntroScreen(onDone = vm::finishIntro)
 
-            is Route.Calibration -> {
-                // Reachable again from the profile, so it has to be cancellable.
-                CalibrationScreen(
-                    initial = state.baseline,
-                    initialTier = state.budget,
-                    isRecalibration = state.onboarded,
-                    onDone = { baseline, tier ->
-                        vm.setBudget(tier)
-                        vm.finishCalibration(baseline)
-                    },
-                    onCancel = if (state.onboarded) vm::goDashboard else null
-                )
-            }
-
-            is Route.Audit -> {
-                if (!r.firstRun) BackHandler { vm.goDashboard() }
-                AuditScreen(
-                    catalogue = vm.audit,
-                    initial = state.debuffs,
-                    firstRun = r.firstRun,
-                    onSave = { vm.saveAudit(it, r.firstRun) },
-                    onBack = if (r.firstRun) null else vm::goDashboard
-                )
-            }
-
-            is Route.Dashboard -> {
-                val goal = state.primaryGoal
-                Column(modifier = Modifier.fillMaxSize()) {
-                    Box(modifier = Modifier.weight(1f)) {
-                        DashboardScreen(
-                            state = state,
-                            dayIndex = vm.dayIndex(state),
-                            served = Pillar.order.associateWith { vm.serve(it, state) },
-                            ring = vm.ring(state),
-                            mission = vm.serveMission(state),
-                            reps = vm.repTypes(state),
-                            principles = goal?.let { vm.track(it).principles } ?: emptyList(),
-                            routed = vm.routed(state),
-                            routedDone = state.routedDoneToday,
-                            openForecasts = state.openForecasts,
-                            livePlans = vm.livePlans(state),
-                            debuffLabel = { id -> vm.audit.debuff(id)?.label ?: "From your audit" },
-                            pulse = pulse,
-                            onOpen = vm::openChallenge,
-                            onOpenMission = vm::openMission,
-                            onLogRep = { rep -> vm.logRep(rep.key, rep.friction, rep.label) },
-                            onUndoRep = { rep -> vm.unlogRep(rep.key, rep.friction) },
-                            onReview = vm::openReview,
-                            onOpenRoutedCampaign = vm::openRoutedCampaign,
-                            onOpenRoutedRemediation = vm::openRoutedRemediation,
-                            onOpenPrinciple = vm::openPrinciple,
-                            onAllPrinciples = vm::goPrinciples,
-                            onPickGoal = vm::goGoalPicker,
-                            onOpenCampaign = vm::goCampaign,
-                            onOpenAvatar = vm::goAvatar,
-                            offerWidget = vm.shouldOfferWidget(state),
-                            onAddWidget = vm::requestWidget,
-                            onDismissWidget = vm::declineWidget
-                        )
-                    }
-                    TabBar(
-                        current = Tab.TODAY,
-                        onSelect = vm::selectTab,
-                        modifier = Modifier.navigationBarsPadding()
-                    )
-                }
-            }
-
-            is Route.Profile -> {
-                BackHandler { vm.goDashboard() }
-                Column(modifier = Modifier.fillMaxSize()) {
-                    Box(modifier = Modifier.weight(1f)) {
-                        ProfileScreen(
-                            state = state,
-                            dayIndex = vm.dayIndex(state),
-                            track = state.goalEnum?.let { vm.track(it) },
-                            onRecalibrate = vm::goRecalibrate,
-                            onChangeGoal = vm::goGoalPicker,
-                            onOpenAvatar = vm::goAvatar,
-                            onOpenAudit = vm::goAudit,
-                            onSetBudget = vm::setBudget,
-                            onToggleSound = vm::toggleSound,
-                            onToggleAmbient = vm::toggleAmbient,
-                            widgetPlaced = vm.widgetPlaced(),
-                            onAddWidget = vm::requestWidget
-                        )
-                    }
-                    TabBar(
-                        current = Tab.PROFILE,
-                        onSelect = vm::selectTab,
-                        modifier = Modifier.navigationBarsPadding()
-                    )
-                }
-            }
-
-            is Route.AvatarStudio -> {
-                BackHandler { vm.goDashboard() }
-                Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
-                    AvatarScreen(
-                        avatar = state.avatar,
-                        xp = state.xp,
-                        friction = state.friction,
-                        onChange = vm::setAvatar,
-                        onBack = vm::goDashboard
-                    )
-                }
-            }
-
-            is Route.Challenge -> {
-                BackHandler { vm.abort() }
-                // No tab bar here on purpose: the action screen is a locked focus.
-                val served = vm.serve(r.pillar, state)
-                // Stable across the day so a plan written this morning is still attached
-                // to the same challenge this evening.
-                val challengeKey = "tier:${r.pillar.name}:${served.tier}"
-                Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
-                    ChallengeScreen(
-                        served = served,
-                        soundOn = state.soundOn,
-                        ambientOn = state.ambientOn,
-                        plan = state.intentionFor(challengeKey),
-                        onPlan = { vm.goPlan(challengeKey, served) },
-                        onCommit = { minutes ->
-                            vm.complete(
-                                pillar = r.pillar,
-                                minutes = minutes,
-                                tier = served.tier,
-                                title = served.directive
-                            )
+                is Route.Calibration -> {
+                    // Reachable again from the profile, so it has to be cancellable.
+                    CalibrationScreen(
+                        initial = state.baseline,
+                        initialTier = state.budget,
+                        isRecalibration = state.onboarded,
+                        onDone = { baseline, tier ->
+                            vm.setBudget(tier)
+                            vm.finishCalibration(baseline)
                         },
-                        onFriction = {
-                            vm.logFriction(
-                                pillar = r.pillar,
-                                tier = served.tier,
-                                title = served.directive
-                            )
-                        },
-                        onSwap = if (r.pillar.name !in state.swappedToday) {
-                            { vm.swap(r.pillar) }
-                        } else null,
-                        onBack = vm::abort
+                        onCancel = if (state.onboarded) vm::goDashboard else null
                     )
                 }
-            }
 
-            is Route.GoalPicker -> {
-                if (!r.firstRun) BackHandler { vm.goDashboard() }
-                GoalPickerScreen(
-                    running = state.running,
-                    firstRun = r.firstRun,
-                    progressOf = { state.goalState(it) },
-                    onToggle = vm::toggleGoal,
-                    onConfirm = vm::confirmGoals,
-                    onCancel = if (r.firstRun) null else vm::goDashboard
-                )
-            }
+                is Route.Audit -> {
+                    if (!r.firstRun) BackHandler { vm.goDashboard() }
+                    AuditScreen(
+                        catalogue = vm.audit,
+                        initial = state.debuffs,
+                        firstRun = r.firstRun,
+                        onSave = { vm.saveAudit(it, r.firstRun) },
+                        onBack = if (r.firstRun) null else vm::goDashboard
+                    )
+                }
 
-            is Route.Mission -> {
-                BackHandler { vm.abort() }
-                val mission = vm.serveMission(state)
-                if (mission == null) {
-                    LaunchedEffect(Unit) { vm.goDashboard() }
-                } else {
-                    val missionKey = "mission:${mission.tier}"
-                    Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
-                        ChallengeScreen(
-                            served = mission,
-                            soundOn = state.soundOn,
-                            ambientOn = state.ambientOn,
-                            plan = state.intentionFor(missionKey),
-                            onPlan = { vm.goPlan(missionKey, mission) },
-                            onCommit = { minutes ->
-                                vm.completeMission(
-                                    minutes = minutes,
-                                    step = mission.tier,
-                                    title = mission.directive
-                                )
-                            },
-                            onFriction = {
-                                vm.missionFriction(
-                                    step = mission.tier,
-                                    title = mission.directive
-                                )
-                            },
-                            onSwap = null,
-                            onBack = vm::abort
+                is Route.Dashboard -> {
+                    val goal = state.primaryGoal
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        Box(modifier = Modifier.weight(1f)) {
+                            DashboardScreen(
+                                state = state,
+                                dayIndex = vm.dayIndex(state),
+                                served = Pillar.order.associateWith { vm.serve(it, state) },
+                                ring = vm.ring(state),
+                                mission = vm.serveMission(state),
+                                reps = vm.repTypes(state),
+                                principles = goal?.let { vm.track(it).principles } ?: emptyList(),
+                                routed = vm.routed(state),
+                                routedDone = state.routedDoneToday,
+                                openForecasts = state.openForecasts,
+                                livePlans = vm.livePlans(state),
+                                debuffLabel = { id -> vm.audit.debuff(id)?.label ?: "From your audit" },
+                                pulse = pulse,
+                                onOpen = vm::openChallenge,
+                                onOpenMission = vm::openMission,
+                                onLogRep = { rep -> vm.logRep(rep.key, rep.friction, rep.label) },
+                                onUndoRep = { rep -> vm.unlogRep(rep.key, rep.friction) },
+                                onReview = vm::openReview,
+                                onOpenRoutedCampaign = vm::openRoutedCampaign,
+                                onOpenRoutedRemediation = vm::openRoutedRemediation,
+                                onOpenPrinciple = vm::openPrinciple,
+                                onAllPrinciples = vm::goPrinciples,
+                                onPickGoal = vm::goGoalPicker,
+                                onOpenCampaign = vm::goCampaign,
+                                onOpenAvatar = vm::goAvatar,
+                                offerWidget = vm.shouldOfferWidget(state),
+                                onAddWidget = vm::requestWidget,
+                                onDismissWidget = vm::declineWidget,
+                                onAcknowledgeHabitat = vm::acknowledgeHabitat
+                            )
+                        }
+                        TabBar(
+                            current = Tab.TODAY,
+                            onSelect = vm::selectTab,
+                            modifier = Modifier.navigationBarsPadding()
                         )
                     }
                 }
-            }
 
-            is Route.Campaign -> {
-                BackHandler { vm.goDashboard() }
-                val goal = state.goalEnum
-                if (goal == null) {
-                    LaunchedEffect(Unit) { vm.goDashboard() }
-                } else {
+                is Route.Profile -> {
+                    BackHandler { vm.goDashboard() }
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        Box(modifier = Modifier.weight(1f)) {
+                            ProfileScreen(
+                                state = state,
+                                dayIndex = vm.dayIndex(state),
+                                track = state.goalEnum?.let { vm.track(it) },
+                                onRecalibrate = vm::goRecalibrate,
+                                onChangeGoal = vm::goGoalPicker,
+                                onOpenAvatar = vm::goAvatar,
+                                onOpenAudit = vm::goAudit,
+                                onSetBudget = vm::setBudget,
+                                onToggleSound = vm::toggleSound,
+                                onToggleAmbient = vm::toggleAmbient,
+                                widgetPlaced = vm.widgetPlaced(),
+                                onAddWidget = vm::requestWidget
+                            )
+                        }
+                        TabBar(
+                            current = Tab.PROFILE,
+                            onSelect = vm::selectTab,
+                            modifier = Modifier.navigationBarsPadding()
+                        )
+                    }
+                }
+
+                is Route.AvatarStudio -> {
+                    BackHandler { vm.goDashboard() }
                     Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
-                        CampaignScreen(
-                            goal = goal,
-                            track = vm.track(goal),
-                            state = state.goalState(goal),
-                            onOpenStep = vm::openMission,
+                        AvatarScreen(
+                            avatar = state.avatar,
+                            xp = state.xp,
+                            friction = state.friction,
+                            onChange = vm::setAvatar,
                             onBack = vm::goDashboard
                         )
                     }
                 }
-            }
 
-            is Route.Principles -> {
-                BackHandler { vm.goDashboard() }
-                val goal = state.goalEnum
-                if (goal == null) {
-                    LaunchedEffect(Unit) { vm.goDashboard() }
-                } else {
-                    Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
-                        PrinciplesScreen(
-                            goal = goal,
-                            track = vm.track(goal),
-                            state = state.goalState(goal),
-                            onOpen = vm::openPrinciple,
-                            onBack = vm::goDashboard
-                        )
-                    }
-                }
-            }
-
-            is Route.ReadPrinciple -> {
-                BackHandler { vm.goDashboard() }
-                val goal = state.goalEnum
-                val principle = goal?.let { vm.track(it).principles.getOrNull(r.index) }
-                if (goal == null || principle == null) {
-                    LaunchedEffect(Unit) { vm.goDashboard() }
-                } else {
-                    LaunchedEffect(r.index) { vm.markRead(r.index) }
-                    Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
-                        PrincipleScreen(
-                            goal = goal,
-                            principle = principle,
-                            onDone = vm::goDashboard
-                        )
-                    }
-                }
-            }
-
-            is Route.Transcendence -> {
-                // No BackHandler: this one is closed deliberately or not at all.
-                Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
-                    TranscendenceScreen(
-                        pillar = r.pillar,
-                        onClose = { vm.closeTranscendence(r.pillar) }
-                    )
-                }
-            }
-
-            is Route.Learn -> {
-                BackHandler { vm.goDashboard() }
-                Column(modifier = Modifier.fillMaxSize()) {
-                    Box(modifier = Modifier.weight(1f)) {
-                        LearnScreen(
-                            curriculum = vm.learn,
-                            catalogue = vm.audit,
-                            dayIndex = vm.dayIndex(state),
-                            debuffs = state.debuffs,
-                            read = state.lessonsRead,
-                            onOpen = vm::openLesson
-                        )
-                    }
-                    TabBar(
-                        current = Tab.LEARN,
-                        onSelect = vm::selectTab,
-                        modifier = Modifier.navigationBarsPadding()
-                    )
-                }
-            }
-
-            is Route.ReadLesson -> {
-                BackHandler { vm.goLearn() }
-                val lesson = vm.learn.byId(r.id)
-                if (lesson == null) {
-                    LaunchedEffect(Unit) { vm.goLearn() }
-                } else {
-                    // Opening it is reading it. A separate "mark as read" that people forget
-                    // to press just makes the counter lie.
-                    LaunchedEffect(r.id) { vm.markLessonRead(r.id) }
-                    Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
-                        LessonScreen(
-                            lesson = lesson,
-                            isRead = r.id in state.lessonsRead,
-                            onAddNote = { vm.newNote(linkLessonId = r.id) },
-                            onBack = vm::goLearn
-                        )
-                    }
-                }
-            }
-
-            is Route.Notes -> {
-                BackHandler { vm.goDashboard() }
-                Column(modifier = Modifier.fillMaxSize()) {
-                    Box(modifier = Modifier.weight(1f)) {
-                        NotesScreen(
-                            notes = state.notes,
-                            dayIndexOf = { note -> vm.dayIndexOfDay(state, note.epochDay) },
-                            onOpen = vm::openNote,
-                            onNew = { vm.newNote() }
-                        )
-                    }
-                    TabBar(
-                        current = Tab.NOTES,
-                        onSelect = vm::selectTab,
-                        modifier = Modifier.navigationBarsPadding()
-                    )
-                }
-            }
-
-            is Route.EditNote -> {
-                BackHandler { vm.goNotes() }
-                val existing = r.id?.let { id -> state.notes.firstOrNull { it.id == id } }
-                val linkedEntry = r.linkLogId?.let { id -> state.log.firstOrNull { it.id == id } }
-                val linkedKind = when {
-                    existing != null -> existing.linkedKind
-                    linkedEntry?.friction == true -> "FRICTION"
-                    linkedEntry != null -> linkedEntry.kind
-                    r.linkLessonId != null -> "LESSON"
-                    else -> ""
-                }
-                val linkedTitle = existing?.linkedTitle
-                    ?: linkedEntry?.title
-                    ?: r.linkLessonId?.let { vm.learn.byId(it)?.title }
-                    ?: ""
-                Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
-                    NoteEditorScreen(
-                        existing = existing,
-                        linkedTitle = linkedTitle,
-                        linkedKind = linkedKind,
-                        onSave = { body, tags ->
-                            vm.saveNote(r.id, body, tags, r.linkLogId, r.linkLessonId)
-                        },
-                        onDelete = r.id?.let { id -> { vm.deleteNote(id) } },
-                        onBack = vm::goNotes
-                    )
-                }
-            }
-
-            is Route.Routed -> {
-                BackHandler { vm.goDashboard() }
-                val today = vm.routed(state)
-                val campaign = today.campaign
-                val fix = today.remediation
-                val served = when {
-                    r.remediation && fix != null ->
-                        fix.toServed(vm.audit.debuff(fix.debuff)?.label ?: "From your audit")
-                    !r.remediation && campaign != null -> campaign.toServed()
-                    else -> null
-                }
-                val id = if (r.remediation) fix?.id else campaign?.id
-                if (served == null || id == null) {
-                    LaunchedEffect(Unit) { vm.goDashboard() }
-                } else {
+                is Route.Challenge -> {
+                    BackHandler { vm.abort() }
+                    // No tab bar here on purpose: the action screen is a locked focus.
+                    val served = vm.serve(r.pillar, state)
+                    // Stable across the day so a plan written this morning is still attached
+                    // to the same challenge this evening.
+                    val challengeKey = "tier:${r.pillar.name}:${served.tier}"
                     Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
                         ChallengeScreen(
                             served = served,
                             soundOn = state.soundOn,
                             ambientOn = state.ambientOn,
-                            plan = state.intentionFor(id),
-                            onPlan = { vm.goPlan(id, served) },
+                            plan = state.intentionFor(challengeKey),
+                            onPlan = { vm.goPlan(challengeKey, served) },
                             onCommit = { minutes ->
-                                vm.completeRouted(
-                                    id = id,
-                                    pillar = served.pillar,
+                                vm.complete(
+                                    pillar = r.pillar,
                                     minutes = minutes,
-                                    title = served.directive,
-                                    remediation = r.remediation
+                                    tier = served.tier,
+                                    title = served.directive
                                 )
                             },
                             onFriction = {
-                                vm.frictionRouted(id, served.pillar, served.directive)
+                                vm.logFriction(
+                                    pillar = r.pillar,
+                                    tier = served.tier,
+                                    title = served.directive
+                                )
                             },
-                            onSwap = null,
-                            onBack = vm::goDashboard
+                            onSwap = if (r.pillar.name !in state.swappedToday) {
+                                { vm.swap(r.pillar) }
+                            } else null,
+                            onBack = vm::abort
                         )
                     }
                 }
-            }
 
-            is Route.Plan -> {
-                BackHandler { vm.goDashboard() }
-                Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
-                    PlanScreen(
-                        challengeId = r.challengeId,
-                        title = r.title,
-                        suggestedCue = r.cue,
-                        suggestedResponse = r.response,
-                        suggestedPrediction = r.prediction,
-                        onSave = { cue, response, predicted, distress ->
-                            vm.savePlan(r.challengeId, r.title, cue, response, predicted, distress)
-                        },
-                        onBack = vm::goDashboard
+                is Route.GoalPicker -> {
+                    if (!r.firstRun) BackHandler { vm.goDashboard() }
+                    GoalPickerScreen(
+                        running = state.running,
+                        firstRun = r.firstRun,
+                        progressOf = { state.goalState(it) },
+                        onToggle = vm::toggleGoal,
+                        onConfirm = vm::confirmGoals,
+                        onCancel = if (r.firstRun) null else vm::goDashboard
                     )
                 }
-            }
 
-            is Route.Review -> {
-                BackHandler { vm.goDashboard() }
-                val forecast = state.forecasts.firstOrNull { it.id == r.forecastId }
-                if (forecast == null) {
-                    LaunchedEffect(Unit) { vm.goDashboard() }
-                } else {
+                is Route.Mission -> {
+                    BackHandler { vm.abort() }
+                    val mission = vm.serveMission(state)
+                    if (mission == null) {
+                        LaunchedEffect(Unit) { vm.goDashboard() }
+                    } else {
+                        val missionKey = "mission:${mission.tier}"
+                        Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
+                            ChallengeScreen(
+                                served = mission,
+                                soundOn = state.soundOn,
+                                ambientOn = state.ambientOn,
+                                plan = state.intentionFor(missionKey),
+                                onPlan = { vm.goPlan(missionKey, mission) },
+                                onCommit = { minutes ->
+                                    vm.completeMission(
+                                        minutes = minutes,
+                                        step = mission.tier,
+                                        title = mission.directive
+                                    )
+                                },
+                                onFriction = {
+                                    vm.missionFriction(
+                                        step = mission.tier,
+                                        title = mission.directive
+                                    )
+                                },
+                                onSwap = null,
+                                onBack = vm::abort
+                            )
+                        }
+                    }
+                }
+
+                is Route.Campaign -> {
+                    BackHandler { vm.goDashboard() }
+                    val goal = state.goalEnum
+                    if (goal == null) {
+                        LaunchedEffect(Unit) { vm.goDashboard() }
+                    } else {
+                        Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
+                            CampaignScreen(
+                                goal = goal,
+                                track = vm.track(goal),
+                                state = state.goalState(goal),
+                                onOpenStep = vm::openMission,
+                                onBack = vm::goDashboard
+                            )
+                        }
+                    }
+                }
+
+                is Route.Principles -> {
+                    BackHandler { vm.goDashboard() }
+                    val goal = state.goalEnum
+                    if (goal == null) {
+                        LaunchedEffect(Unit) { vm.goDashboard() }
+                    } else {
+                        Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
+                            PrinciplesScreen(
+                                goal = goal,
+                                track = vm.track(goal),
+                                state = state.goalState(goal),
+                                onOpen = vm::openPrinciple,
+                                onBack = vm::goDashboard
+                            )
+                        }
+                    }
+                }
+
+                is Route.ReadPrinciple -> {
+                    BackHandler { vm.goDashboard() }
+                    val goal = state.goalEnum
+                    val principle = goal?.let { vm.track(it).principles.getOrNull(r.index) }
+                    if (goal == null || principle == null) {
+                        LaunchedEffect(Unit) { vm.goDashboard() }
+                    } else {
+                        LaunchedEffect(r.index) { vm.markRead(r.index) }
+                        Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
+                            PrincipleScreen(
+                                goal = goal,
+                                principle = principle,
+                                onDone = vm::goDashboard
+                            )
+                        }
+                    }
+                }
+
+                is Route.Transcendence -> {
+                    // No BackHandler: this one is closed deliberately or not at all.
                     Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
-                        ReviewScreen(
-                            forecast = forecast,
-                            onResolve = { actual, distress ->
-                                vm.resolveForecast(r.forecastId, actual, distress)
+                        TranscendenceScreen(
+                            pillar = r.pillar,
+                            onClose = { vm.closeTranscendence(r.pillar) }
+                        )
+                    }
+                }
+
+                is Route.Learn -> {
+                    BackHandler { vm.goDashboard() }
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        Box(modifier = Modifier.weight(1f)) {
+                            LearnScreen(
+                                curriculum = vm.learn,
+                                catalogue = vm.audit,
+                                dayIndex = vm.dayIndex(state),
+                                debuffs = state.debuffs,
+                                read = state.lessonsRead,
+                                onOpen = vm::openLesson
+                            )
+                        }
+                        TabBar(
+                            current = Tab.LEARN,
+                            onSelect = vm::selectTab,
+                            modifier = Modifier.navigationBarsPadding()
+                        )
+                    }
+                }
+
+                is Route.ReadLesson -> {
+                    BackHandler { vm.goLearn() }
+                    val lesson = vm.learn.byId(r.id)
+                    if (lesson == null) {
+                        LaunchedEffect(Unit) { vm.goLearn() }
+                    } else {
+                        // Opening it is reading it. A separate "mark as read" that people forget
+                        // to press just makes the counter lie.
+                        LaunchedEffect(r.id) { vm.markLessonRead(r.id) }
+                        Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
+                            LessonScreen(
+                                lesson = lesson,
+                                isRead = r.id in state.lessonsRead,
+                                onAddNote = { vm.newNote(linkLessonId = r.id) },
+                                onBack = vm::goLearn
+                            )
+                        }
+                    }
+                }
+
+                is Route.Notes -> {
+                    BackHandler { vm.goDashboard() }
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        Box(modifier = Modifier.weight(1f)) {
+                            NotesScreen(
+                                notes = state.notes,
+                                dayIndexOf = { note -> vm.dayIndexOfDay(state, note.epochDay) },
+                                onOpen = vm::openNote,
+                                onNew = { vm.newNote() }
+                            )
+                        }
+                        TabBar(
+                            current = Tab.NOTES,
+                            onSelect = vm::selectTab,
+                            modifier = Modifier.navigationBarsPadding()
+                        )
+                    }
+                }
+
+                is Route.EditNote -> {
+                    BackHandler { vm.goNotes() }
+                    val existing = r.id?.let { id -> state.notes.firstOrNull { it.id == id } }
+                    val linkedEntry = r.linkLogId?.let { id -> state.log.firstOrNull { it.id == id } }
+                    val linkedKind = when {
+                        existing != null -> existing.linkedKind
+                        linkedEntry?.friction == true -> "FRICTION"
+                        linkedEntry != null -> linkedEntry.kind
+                        r.linkLessonId != null -> "LESSON"
+                        else -> ""
+                    }
+                    val linkedTitle = existing?.linkedTitle
+                        ?: linkedEntry?.title
+                        ?: r.linkLessonId?.let { vm.learn.byId(it)?.title }
+                        ?: ""
+                    Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
+                        NoteEditorScreen(
+                            existing = existing,
+                            linkedTitle = linkedTitle,
+                            linkedKind = linkedKind,
+                            onSave = { body, tags ->
+                                vm.saveNote(r.id, body, tags, r.linkLogId, r.linkLessonId)
                             },
-                            onDismiss = { vm.dismissForecast(r.forecastId) },
+                            onDelete = r.id?.let { id -> { vm.deleteNote(id) } },
+                            onBack = vm::goNotes
+                        )
+                    }
+                }
+
+                is Route.Routed -> {
+                    BackHandler { vm.goDashboard() }
+                    val today = vm.routed(state)
+                    val campaign = today.campaign
+                    val fix = today.remediation
+                    val served = when {
+                        r.remediation && fix != null ->
+                            fix.toServed(vm.audit.debuff(fix.debuff)?.label ?: "From your audit")
+                        !r.remediation && campaign != null -> campaign.toServed()
+                        else -> null
+                    }
+                    val id = if (r.remediation) fix?.id else campaign?.id
+                    if (served == null || id == null) {
+                        LaunchedEffect(Unit) { vm.goDashboard() }
+                    } else {
+                        Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
+                            ChallengeScreen(
+                                served = served,
+                                soundOn = state.soundOn,
+                                ambientOn = state.ambientOn,
+                                plan = state.intentionFor(id),
+                                onPlan = { vm.goPlan(id, served) },
+                                onCommit = { minutes ->
+                                    vm.completeRouted(
+                                        id = id,
+                                        pillar = served.pillar,
+                                        minutes = minutes,
+                                        title = served.directive,
+                                        remediation = r.remediation
+                                    )
+                                },
+                                onFriction = {
+                                    vm.frictionRouted(id, served.pillar, served.directive)
+                                },
+                                onSwap = null,
+                                onBack = vm::goDashboard
+                            )
+                        }
+                    }
+                }
+
+                is Route.Plan -> {
+                    BackHandler { vm.goDashboard() }
+                    Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
+                        PlanScreen(
+                            challengeId = r.challengeId,
+                            title = r.title,
+                            suggestedCue = r.cue,
+                            suggestedResponse = r.response,
+                            suggestedPrediction = r.prediction,
+                            onSave = { cue, response, predicted, distress ->
+                                vm.savePlan(r.challengeId, r.title, cue, response, predicted, distress)
+                            },
                             onBack = vm::goDashboard
                         )
                     }
                 }
-            }
 
-            is Route.Completion -> {
-                // Backing out of the note is the same as skipping it.
-                BackHandler { vm.goDashboard() }
-                Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
-                    CompletionScreen(
-                        pillar = r.pillar,
-                        tierCleared = r.tierCleared,
-                        onSave = vm::journal,
-                        onSkip = vm::goDashboard
-                    )
+                is Route.Review -> {
+                    BackHandler { vm.goDashboard() }
+                    val forecast = state.forecasts.firstOrNull { it.id == r.forecastId }
+                    if (forecast == null) {
+                        LaunchedEffect(Unit) { vm.goDashboard() }
+                    } else {
+                        Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
+                            ReviewScreen(
+                                forecast = forecast,
+                                onResolve = { actual, distress ->
+                                    vm.resolveForecast(r.forecastId, actual, distress)
+                                },
+                                onDismiss = { vm.dismissForecast(r.forecastId) },
+                                onBack = vm::goDashboard
+                            )
+                        }
+                    }
+                }
+
+                is Route.Completion -> {
+                    // Backing out of the note is the same as skipping it.
+                    BackHandler { vm.goDashboard() }
+                    Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
+                        CompletionScreen(
+                            pillar = r.pillar,
+                            tierCleared = r.tierCleared,
+                            onSave = vm::journal,
+                            onSkip = vm::goDashboard
+                        )
+                    }
                 }
             }
         }

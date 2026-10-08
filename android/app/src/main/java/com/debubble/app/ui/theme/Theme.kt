@@ -6,6 +6,7 @@ import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.TextStyle
@@ -16,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import com.debubble.app.engine.Pillar
+import com.debubble.app.engine.Stage
 
 /* ------------------------------------------------------------------ palette
 
@@ -194,3 +196,22 @@ fun DeBubbleTheme(content: @Composable () -> Unit) {
 
     MaterialTheme(colorScheme = scheme, typography = Type, content = content)
 }
+
+/**
+ * Which stage of the habitat the app is currently drawn inside.
+ *
+ * A composition local rather than a parameter on every screen, because this is a theme
+ * value: it belongs to the whole tree and nothing decides it locally. Defaults to the
+ * sealed room, which is what a preview or an unprovided subtree should look like.
+ */
+val LocalStage = staticCompositionLocalOf { Stage.SEALED }
+
+/**
+ * The ground for a surface that belongs to the room — the four tabbed screens.
+ *
+ * Task screens deliberately do not use this. The action screen is a locked focus surface and
+ * the completion beat is a moment; neither should shift underfoot because a ladder advanced.
+ * Every value this can return is solved against the WCAG floors in engine/Habitat.kt.
+ */
+@Composable
+fun roomGround(): Color = Color(LocalStage.current.ground)

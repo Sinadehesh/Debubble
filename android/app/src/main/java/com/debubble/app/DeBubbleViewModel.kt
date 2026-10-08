@@ -135,7 +135,13 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
     init {
         viewModelScope.launch {
             // Roll the day over on launch, then decide where the user lands.
-            repo.update { it.rolledTo(today()) }
+            repo.update { rolled ->
+                val s = rolled.rolledTo(today())
+                // Seed the habitat on first sight rather than leaving it empty, so an
+                // install that upgrades into this feature already several stages in does
+                // not open with a banner announcing a room it has always had.
+                if (s.habitatSeen.isEmpty()) s.copy(habitatSeen = s.stage.name) else s
+            }
             val loaded = repo.state.first()
             _route.value = when {
                 !loaded.introSeen -> Route.Intro
@@ -953,6 +959,11 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
 
     /** True once one is actually on a home screen, for the profile's wording. */
     fun widgetPlaced(): Boolean = DayWidget.isInstalled(app)
+
+    /** The user has seen the room open. Shown once; there is no way to lose a stage. */
+    fun acknowledgeHabitat() {
+        viewModelScope.launch { repo.update { it.copy(habitatSeen = it.stage.name) } }
+    }
 
     fun clearPulse() { _pulse.value = null }
 

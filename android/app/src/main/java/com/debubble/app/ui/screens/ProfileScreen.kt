@@ -33,6 +33,7 @@ import com.debubble.app.engine.GoalTrack
 import com.debubble.app.engine.Goals
 import com.debubble.app.engine.Pillar
 import com.debubble.app.engine.Progress
+import com.debubble.app.engine.Stage
 import com.debubble.app.ui.components.Avatar
 import com.debubble.app.ui.components.CheckBox
 import com.debubble.app.ui.components.Divider
@@ -40,19 +41,21 @@ import com.debubble.app.ui.components.Dot
 import com.debubble.app.ui.components.Figure
 import com.debubble.app.ui.components.Glyph
 import com.debubble.app.ui.components.Glyphs
+import com.debubble.app.ui.components.HabitatRow
 import com.debubble.app.ui.components.Label
-import com.debubble.app.ui.components.PillarBar
 import com.debubble.app.ui.components.Pill
+import com.debubble.app.ui.components.PillarBar
 import com.debubble.app.ui.components.ProgressTrack
 import com.debubble.app.ui.components.SecondaryButton
-import com.debubble.app.ui.components.SelectRow
 import com.debubble.app.ui.components.SectionHeader
+import com.debubble.app.ui.components.SelectRow
 import com.debubble.app.ui.components.StatTile
 import com.debubble.app.ui.components.VSpace
 import com.debubble.app.ui.components.panel
 import com.debubble.app.ui.theme.Ink
 import com.debubble.app.ui.theme.Space
 import com.debubble.app.ui.theme.accent
+import com.debubble.app.ui.theme.roomGround
 
 /**
  * You.
@@ -80,7 +83,7 @@ fun ProfileScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Ink.Void)
+            .background(roomGround())
             .verticalScroll(rememberScrollState())
             .padding(horizontal = Space.gutter)
     ) {
@@ -248,6 +251,52 @@ fun ProfileScreen(
                 on = state.ambientOn,
                 onToggle = onToggleAmbient
             )
+        }
+
+        VSpace(24)
+        SectionHeader("The room", trailing = "${state.clearedRungs} rungs cleared")
+        VSpace(10)
+        HabitatRow(stage = state.stage, cleared = state.clearedRungs)
+        VSpace(10)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .panel()
+                .padding(vertical = 4.dp)
+        ) {
+            // The whole ladder, including the stages still ahead. Showing what is coming is
+            // the point: a locked row someone can read is a reason to clear another rung,
+            // and unlike a streak there is no way to lose one of these by missing a week.
+            Stage.all.forEach { st ->
+                val reached = state.clearedRungs >= st.threshold
+                val here = st == state.stage
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(11.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (reached) {
+                        Glyph(Glyphs.Check, colour = if (here) Ink.Gold else Ink.Muted, size = 16)
+                    } else {
+                        Glyph(Glyphs.Lock, colour = Ink.Faint, size = 16)
+                    }
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = st.label,
+                            color = when {
+                                here -> Ink.Primary
+                                reached -> Ink.Secondary
+                                else -> Ink.Muted
+                            },
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                        if (here) Label("You are here", color = Ink.Gold)
+                    }
+                    Label(if (st.threshold == 0) "Start" else "${st.threshold}")
+                }
+            }
         }
 
         VSpace(24)

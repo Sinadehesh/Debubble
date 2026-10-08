@@ -20,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -41,6 +42,9 @@ import com.debubble.app.ui.components.ChallengeCard
 import com.debubble.app.ui.components.Dot
 import com.debubble.app.ui.components.Glyph
 import com.debubble.app.ui.components.Glyphs
+import com.debubble.app.ui.components.HabitatAnnouncement
+import com.debubble.app.ui.components.HabitatBackdrop
+import com.debubble.app.ui.components.HabitatRow
 import com.debubble.app.ui.components.Label
 import com.debubble.app.ui.components.Pill
 import com.debubble.app.ui.components.PrimaryButton
@@ -55,6 +59,7 @@ import com.debubble.app.ui.components.rememberReducedMotion
 import com.debubble.app.ui.theme.Ink
 import com.debubble.app.ui.theme.Space
 import com.debubble.app.ui.theme.accent
+import com.debubble.app.ui.theme.roomGround
 
 /**
  * Home.
@@ -93,31 +98,44 @@ fun DashboardScreen(
     /** Whether to offer the home-screen widget. See [WidgetOffer]. */
     offerWidget: Boolean,
     onAddWidget: () -> Unit,
-    onDismissWidget: () -> Unit
+    onDismissWidget: () -> Unit,
+    onAcknowledgeHabitat: () -> Unit
 ) {
     val tiers = Pillar.order.associateWith { state.state(it).tier }
     val open = Pillar.order.count { !state.isDoneToday(it) }
+    val stage = state.stage
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Ink.Void)
+            .background(roomGround())
             .verticalScroll(rememberScrollState())
     ) {
-        HeroBar(state = state, dayIndex = dayIndex, onOpenAvatar = onOpenAvatar)
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1.05f)
-                .padding(horizontal = 8.dp)
-        ) {
-            BubbleRing(
-                state = ring,
-                pulse = pulse,
-                animate = !rememberReducedMotion(),
-                modifier = Modifier.fillMaxSize()
+        // The backdrop sits behind the hero and the ring, and fades to flat ground before
+        // any text starts. This is the "room" — progress opens the walls rather than buying
+        // furniture for a screen nobody would revisit.
+        Box(modifier = Modifier.fillMaxWidth()) {
+            HabitatBackdrop(
+                stage = stage,
+                modifier = Modifier.matchParentSize()
             )
+            Column {
+                HeroBar(state = state, dayIndex = dayIndex, onOpenAvatar = onOpenAvatar)
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(1.05f)
+                        .padding(horizontal = 8.dp)
+                ) {
+                    BubbleRing(
+                        state = ring,
+                        pulse = pulse,
+                        animate = !rememberReducedMotion(),
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            }
         }
 
         Row(
@@ -152,6 +170,12 @@ fun DashboardScreen(
             modifier = Modifier.padding(horizontal = Space.gutter),
             verticalArrangement = Arrangement.spacedBy(Space.gap)
         ) {
+            if (state.habitatChanged) {
+                VSpace(12)
+                HabitatAnnouncement(stage = stage, onDismiss = onAcknowledgeHabitat)
+                VSpace(6)
+            }
+
             if (openForecasts.isNotEmpty()) {
                 VSpace(12)
                 SectionHeader("Waiting on you", trailing = "${openForecasts.size}")
@@ -181,6 +205,9 @@ fun DashboardScreen(
                 VSpace(12)
                 WidgetOffer(onAdd = onAddWidget, onDismiss = onDismissWidget)
             }
+
+            VSpace(12)
+            HabitatRow(stage = stage, cleared = state.clearedRungs)
 
             VSpace(12)
             SectionHeader(

@@ -21,8 +21,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.debubble.app.engine.AuditCatalogue
@@ -35,13 +35,14 @@ import com.debubble.app.ui.components.Markdown
 import com.debubble.app.ui.components.Pill
 import com.debubble.app.ui.components.PrimaryButton
 import com.debubble.app.ui.components.ProgressTrack
-import com.debubble.app.ui.components.SectionHeader
 import com.debubble.app.ui.components.SecondaryButton
+import com.debubble.app.ui.components.SectionHeader
 import com.debubble.app.ui.components.TopBar
 import com.debubble.app.ui.components.VSpace
 import com.debubble.app.ui.components.panel
 import com.debubble.app.ui.theme.Ink
 import com.debubble.app.ui.theme.Space
+import com.debubble.app.ui.theme.roomGround
 
 /**
  * The Learn tab.
@@ -68,7 +69,7 @@ fun LearnScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Ink.Void)
+            .background(roomGround())
             .verticalScroll(rememberScrollState())
     ) {
         TopBar(title = "Learn", subtitle = "$readCount read")
@@ -262,7 +263,7 @@ fun LessonScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Ink.Void)
+            .background(roomGround())
     ) {
         TopBar(
             title = if (lesson.isTargeted) "For you" else "Day ${lesson.day}",
