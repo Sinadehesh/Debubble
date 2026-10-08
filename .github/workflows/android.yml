@@ -35,8 +35,23 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      # `packages: ''` is load-bearing. The action's default is to install "tools", a
+      # package Google has removed from the SDK repository, so the default now fails the
+      # job during setup with "Failed to find package 'tools'" — before a line of this
+      # project is compiled. Installing nothing here is correct: the Android Gradle plugin
+      # resolves the platform and build-tools it actually needs on first use.
       - name: Set up Android SDK
         uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4.0.1
+        with:
+          packages: ''
+
+      # Fail loudly and early if the SDK is not usable, rather than surfacing it as a
+      # confusing Gradle error several minutes later.
+      - name: Verify SDK is usable
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          test -d "$ANDROID_HOME" || { echo "ANDROID_HOME missing"; exit 1; }
+          ls "$ANDROID_HOME"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
