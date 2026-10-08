@@ -32,9 +32,11 @@ import com.debubble.app.ui.screens.LearnScreen
 import com.debubble.app.ui.screens.LessonScreen
 import com.debubble.app.ui.screens.NoteEditorScreen
 import com.debubble.app.ui.screens.NotesScreen
+import com.debubble.app.ui.screens.PlanScreen
 import com.debubble.app.ui.screens.PrincipleScreen
 import com.debubble.app.ui.screens.PrinciplesScreen
 import com.debubble.app.ui.screens.ProfileScreen
+import com.debubble.app.ui.screens.ReviewScreen
 import com.debubble.app.ui.screens.Tab
 import com.debubble.app.ui.screens.TabBar
 import com.debubble.app.ui.screens.TranscendenceScreen
@@ -120,12 +122,15 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
                             principles = goal?.let { vm.track(it).principles } ?: emptyList(),
                             routed = vm.routed(state),
                             routedDone = state.routedDoneToday,
+                            openForecasts = state.openForecasts,
+                            livePlans = vm.livePlans(state),
                             debuffLabel = { id -> vm.audit.debuff(id)?.label ?: "From your audit" },
                             pulse = pulse,
                             onOpen = vm::openChallenge,
                             onOpenMission = vm::openMission,
                             onLogRep = { rep -> vm.logRep(rep.key, rep.friction, rep.label) },
                             onUndoRep = { rep -> vm.unlogRep(rep.key, rep.friction) },
+                            onReview = vm::openReview,
                             onOpenRoutedCampaign = vm::openRoutedCampaign,
                             onOpenRoutedRemediation = vm::openRoutedRemediation,
                             onOpenPrinciple = vm::openPrinciple,
@@ -185,11 +190,16 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
                 BackHandler { vm.abort() }
                 // No tab bar here on purpose: the action screen is a locked focus.
                 val served = vm.serve(r.pillar, state)
+                // Stable across the day so a plan written this morning is still attached
+                // to the same challenge this evening.
+                val challengeKey = "tier:${r.pillar.name}:${served.tier}"
                 Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
                     ChallengeScreen(
                         served = served,
                         soundOn = state.soundOn,
                         ambientOn = state.ambientOn,
+                        plan = state.intentionFor(challengeKey),
+                        onPlan = { vm.goPlan(challengeKey, served.directive) },
                         onCommit = { minutes ->
                             vm.complete(
                                 pillar = r.pillar,
@@ -231,11 +241,14 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
                 if (mission == null) {
                     LaunchedEffect(Unit) { vm.goDashboard() }
                 } else {
+                    val missionKey = "mission:${mission.tier}"
                     Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
                         ChallengeScreen(
                             served = mission,
                             soundOn = state.soundOn,
                             ambientOn = state.ambientOn,
+                            plan = state.intentionFor(missionKey),
+                            onPlan = { vm.goPlan(missionKey, mission.directive) },
                             onCommit = { minutes ->
                                 vm.completeMission(
                                     minutes = minutes,
@@ -429,6 +442,8 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
                             served = served,
                             soundOn = state.soundOn,
                             ambientOn = state.ambientOn,
+                            plan = state.intentionFor(id),
+                            onPlan = { vm.goPlan(id, served.directive) },
                             onCommit = { minutes ->
                                 vm.completeRouted(
                                     id = id,
@@ -442,6 +457,39 @@ private fun DeBubbleApp(vm: DeBubbleViewModel = viewModel()) {
                                 vm.frictionRouted(id, served.pillar, served.directive)
                             },
                             onSwap = null,
+                            onBack = vm::goDashboard
+                        )
+                    }
+                }
+            }
+
+            is Route.Plan -> {
+                BackHandler { vm.goDashboard() }
+                Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
+                    PlanScreen(
+                        challengeId = r.challengeId,
+                        title = r.title,
+                        onSave = { cue, response, predicted, distress ->
+                            vm.savePlan(r.challengeId, r.title, cue, response, predicted, distress)
+                        },
+                        onBack = vm::goDashboard
+                    )
+                }
+            }
+
+            is Route.Review -> {
+                BackHandler { vm.goDashboard() }
+                val forecast = state.forecasts.firstOrNull { it.id == r.forecastId }
+                if (forecast == null) {
+                    LaunchedEffect(Unit) { vm.goDashboard() }
+                } else {
+                    Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
+                        ReviewScreen(
+                            forecast = forecast,
+                            onResolve = { actual, distress ->
+                                vm.resolveForecast(r.forecastId, actual, distress)
+                            },
+                            onDismiss = { vm.dismissForecast(r.forecastId) },
                             onBack = vm::goDashboard
                         )
                     }

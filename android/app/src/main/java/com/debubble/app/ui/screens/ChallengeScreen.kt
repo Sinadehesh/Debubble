@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.debubble.app.audio.rememberSound
 import com.debubble.app.engine.Engine
+import com.debubble.app.engine.Intention
 import com.debubble.app.engine.Served
 import com.debubble.app.ui.components.Divider
 import com.debubble.app.ui.components.Glyph
@@ -58,6 +59,8 @@ fun ChallengeScreen(
     served: Served,
     soundOn: Boolean,
     ambientOn: Boolean,
+    plan: Intention?,
+    onPlan: () -> Unit,
     onCommit: (Int) -> Unit,
     onFriction: () -> Unit,
     onSwap: (() -> Unit)?,
@@ -200,7 +203,10 @@ fun ChallengeScreen(
                     }
                 }
 
-                VSpace(30)
+                VSpace(22)
+                PlanBlock(plan = plan, accent = pillar.accent, onPlan = onPlan)
+
+                VSpace(26)
 
                 HoldToCommit(
                     accent = pillar.accent,
@@ -236,6 +242,77 @@ fun ChallengeScreen(
         }
         if (glitching) {
             GlitchBurst(modifier = Modifier.fillMaxSize())
+        }
+    }
+}
+
+/**
+ * The if-then plan, or the offer to make one.
+ *
+ * Sits directly above the commit button because that is the decision point. Writing the plan
+ * is optional, and saying so matters — made compulsory it becomes a toll booth in front of
+ * the thing someone was already reluctant to do, and they will stop opening the challenge at
+ * all. Offered, it roughly doubles the chance the challenge actually happens.
+ */
+@Composable
+private fun PlanBlock(plan: Intention?, accent: androidx.compose.ui.graphics.Color, onPlan: () -> Unit) {
+    if (plan != null) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .panel(border = Ink.Activity.copy(alpha = 0.65f))
+                .clickable(role = Role.Button, onClick = onPlan)
+                .padding(15.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(9.dp)
+            ) {
+                Glyph(Glyphs.Check, colour = Ink.Activity, size = 18)
+                Label("Your plan", color = Ink.Activity, strong = true)
+            }
+            Text(
+                text = plan.sentence,
+                color = Ink.Primary,
+                style = MaterialTheme.typography.titleMedium
+            )
+            Label("Tap to change it")
+        }
+        return
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .panel(fill = Ink.SurfaceHigh, border = accent.copy(alpha = 0.55f))
+            .clickable(role = Role.Button, onClick = onPlan)
+            .padding(15.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(9.dp)
+        ) {
+            Glyph(Glyphs.Spark, colour = accent, size = 18)
+            Text(
+                text = "Decide when, before you close this",
+                color = Ink.Primary,
+                style = MaterialTheme.typography.titleMedium
+            )
+        }
+        Text(
+            text = "Naming the exact moment roughly doubles the odds this actually happens. " +
+                "Takes about a minute, and you write down what you think will go wrong.",
+            color = Ink.Secondary,
+            style = MaterialTheme.typography.bodyMedium
+        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(7.dp)
+        ) {
+            Label("Plan it", color = accent, strong = true)
+            Glyph(Glyphs.ArrowRight, colour = accent, size = 15)
         }
     }
 }

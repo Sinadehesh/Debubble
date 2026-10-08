@@ -27,6 +27,7 @@ import com.debubble.app.data.AppState
 import com.debubble.app.data.LogEntry
 import com.debubble.app.engine.BudgetTier
 import com.debubble.app.engine.Engine
+import com.debubble.app.engine.Forecasts
 import com.debubble.app.engine.Goal
 import com.debubble.app.engine.GoalTrack
 import com.debubble.app.engine.Goals
@@ -144,6 +145,9 @@ fun ProfileScreen(
             VSpace(24)
             CampaignBlock(state.goalEnum!!, track, state)
         }
+
+        VSpace(24)
+        ForecastBlock(state)
 
         VSpace(24)
         EvidenceBlock(state)
@@ -348,6 +352,81 @@ private fun CampaignBlock(goal: Goal, track: GoalTrack, state: AppState) {
         ) {
             StatTile("Attempts", "${state.repsOnGoal(goal)}", Modifier.weight(1f), accent)
             StatTile("Steps done", "${gs.completed}", Modifier.weight(1f), accent)
+        }
+    }
+}
+
+/**
+ * The record of predictions against outcomes.
+ *
+ * This is the only number in the app that measures its actual claim. Levels measure
+ * attendance and Friction measures nerve, but neither shows whether the thing that kept
+ * someone inside — a forecast that is reliably catastrophic — has moved. This does, and it
+ * does it with their own sentences rather than a score the app made up.
+ */
+@Composable
+private fun ForecastBlock(state: AppState) {
+    val done = Forecasts.resolved(state.forecasts)
+    val mean = Forecasts.meanViolation(state.forecasts)
+    val shift = Forecasts.calibrationShift(state.forecasts)
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .panel(
+                shape = RoundedCornerShape(Space.radiusLarge),
+                border = if (done.isEmpty()) Ink.Border else Ink.Access.copy(alpha = 0.6f)
+            )
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(9.dp)
+        ) {
+            Glyph(Glyphs.Spark, colour = Ink.Access, size = 19)
+            Label("Expected against actual", color = Ink.Access, strong = true)
+        }
+
+        if (done.isEmpty()) {
+            Text(
+                text = Forecasts.summary(state.forecasts),
+                color = Ink.Secondary,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        } else {
+            Row(horizontalArrangement = Arrangement.spacedBy(Space.gap)) {
+                StatTile(
+                    "Checked", "${done.size}", Modifier.weight(1f)
+                )
+                StatTile(
+                    "Easier than feared",
+                    "${(Forecasts.overestimateRate(state.forecasts) * 100).toInt()}%",
+                    Modifier.weight(1f),
+                    accent = Ink.Activity
+                )
+                StatTile(
+                    "Average gap",
+                    if (mean >= 0) "−%.1f".format(mean) else "+%.1f".format(-mean),
+                    Modifier.weight(1f),
+                    accent = if (mean >= 0) Ink.Activity else Ink.Ember
+                )
+            }
+            Text(
+                text = Forecasts.summary(state.forecasts),
+                color = Ink.Secondary,
+                style = MaterialTheme.typography.bodyMedium
+            )
+            if (shift != null && shift > 0.5f) {
+                Divider()
+                Text(
+                    text = "Your predictions have got more accurate over time. That is the " +
+                        "thing actually changing — not that it stopped being frightening, " +
+                        "but that you stopped being wrong about it.",
+                    color = Ink.Muted,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
         }
     }
 }

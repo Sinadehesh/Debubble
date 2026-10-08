@@ -28,6 +28,8 @@ import androidx.compose.ui.unit.dp
 import com.debubble.app.data.AppState
 import com.debubble.app.engine.Goal
 import com.debubble.app.engine.Pillar
+import com.debubble.app.engine.Forecast
+import com.debubble.app.engine.Intention
 import com.debubble.app.engine.Principle
 import com.debubble.app.engine.Routed
 import com.debubble.app.engine.Progress
@@ -70,12 +72,15 @@ fun DashboardScreen(
     principles: List<Principle>,
     routed: Routed,
     routedDone: Set<String>,
+    openForecasts: List<Forecast>,
+    livePlans: List<Intention>,
     debuffLabel: (String) -> String,
     pulse: Pillar?,
     onOpen: (Pillar) -> Unit,
     onOpenMission: () -> Unit,
     onLogRep: (RepType) -> Unit,
     onUndoRep: (RepType) -> Unit,
+    onReview: (Long) -> Unit,
     onOpenRoutedCampaign: () -> Unit,
     onOpenRoutedRemediation: () -> Unit,
     onOpenPrinciple: (Int) -> Unit,
@@ -141,6 +146,28 @@ fun DashboardScreen(
             modifier = Modifier.padding(horizontal = Space.gutter),
             verticalArrangement = Arrangement.spacedBy(Space.gap)
         ) {
+            if (openForecasts.isNotEmpty()) {
+                VSpace(12)
+                SectionHeader("Waiting on you", trailing = "${openForecasts.size}")
+                VSpace(4)
+                Column(verticalArrangement = Arrangement.spacedBy(Space.gap)) {
+                    openForecasts.take(2).forEach { f ->
+                        ForecastPrompt(f) { onReview(f.id) }
+                    }
+                }
+                VSpace(6)
+            }
+
+            if (livePlans.isNotEmpty()) {
+                VSpace(12)
+                SectionHeader("Your plans")
+                VSpace(4)
+                Column(verticalArrangement = Arrangement.spacedBy(Space.gap)) {
+                    livePlans.take(3).forEach { PlanRow(it) }
+                }
+                VSpace(6)
+            }
+
             VSpace(12)
             SectionHeader(
                 title = "Today",
@@ -259,6 +286,72 @@ fun DashboardScreen(
 
             VSpace(24)
         }
+    }
+}
+
+/**
+ * A prediction that was made and never checked.
+ *
+ * Deliberately the first thing on the screen. An unresolved forecast is the one piece of state
+ * in this app with a deadline on its usefulness — the memory of what you expected decays fast,
+ * and once it has gone the challenge is remembered as "it was fine" with the catastrophic
+ * prediction quietly edited out. Which is exactly the edit this whole mechanic exists to stop.
+ */
+@Composable
+private fun ForecastPrompt(forecast: Forecast, onReview: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .panel(fill = Ink.SurfaceHigh, border = Ink.Ember)
+            .clickable(role = Role.Button, onClick = onReview)
+            .padding(15.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(9.dp)
+        ) {
+            Glyph(Glyphs.Spark, colour = Ink.Ember, size = 18)
+            Text(
+                text = "How did it actually go?",
+                modifier = Modifier.weight(1f),
+                color = Ink.Primary,
+                style = MaterialTheme.typography.titleMedium
+            )
+            Pill("${forecast.predictedDistress}/10 expected", Ink.Ember)
+        }
+        Text(
+            text = forecast.challengeTitle,
+            color = Ink.Secondary,
+            style = MaterialTheme.typography.bodyMedium
+        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(7.dp)
+        ) {
+            Label("Check your prediction", color = Ink.Ember, strong = true)
+            Glyph(Glyphs.ArrowRight, colour = Ink.Ember, size = 15)
+        }
+    }
+}
+
+/** A live if-then plan, shown as the sentence it is. */
+@Composable
+private fun PlanRow(plan: Intention) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .panel(border = Ink.Activity.copy(alpha = 0.55f))
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.Top
+    ) {
+        Glyph(Glyphs.Check, colour = Ink.Activity, size = 17)
+        Text(
+            text = plan.sentence,
+            color = Ink.Primary,
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium)
+        )
     }
 }
 

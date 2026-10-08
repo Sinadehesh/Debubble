@@ -3,6 +3,8 @@ package com.debubble.app.data
 import com.debubble.app.engine.AvatarState
 import com.debubble.app.engine.Baseline
 import com.debubble.app.engine.BudgetTier
+import com.debubble.app.engine.Forecast
+import com.debubble.app.engine.Intention
 import com.debubble.app.engine.Goal
 import com.debubble.app.engine.GoalState
 import com.debubble.app.engine.Goals
@@ -110,6 +112,13 @@ data class AppState(
     val lessonsRead: Set<String> = emptySet(),
     val notes: List<Note> = emptyList(),
 
+    /* ---- plans and predictions ---- */
+
+    /** Live if-then plans. Pruned on the day roll once their window has passed. */
+    val intentions: List<Intention> = emptyList(),
+    /** Every prediction ever made, resolved or not. This is the evidence file. */
+    val forecasts: List<Forecast> = emptyList(),
+
     /** One-shot feedback on deliberate actions. Expected, so it is on. */
     val soundOn: Boolean = true,
     /** The continuous bed. An intrusion if it starts by itself, so it is opt-in. */
@@ -140,6 +149,19 @@ data class AppState(
         if (lastActiveDay == 0L) 0L else (today - lastActiveDay).coerceAtLeast(0L)
 
     fun evidence(p: Pillar): Int = log.count { !it.friction && it.pillar == p.name }
+
+    /* ---- plans and predictions ---- */
+
+    fun intentionFor(challengeId: String): Intention? =
+        intentions.firstOrNull { it.challengeId == challengeId && !it.resolved }
+
+    fun forecastFor(challengeId: String): Forecast? =
+        forecasts.firstOrNull { it.challengeId == challengeId && !it.isResolved }
+
+    fun liveIntentions(today: Long): List<Intention> = intentions.filter { it.isLive(today) }
+
+    /** Predictions made but never checked. The app nags for these and nothing else. */
+    val openForecasts: List<Forecast> get() = forecasts.filter { !it.isResolved }
 
     /* ---- levels and armour ---- */
 
@@ -205,6 +227,9 @@ data class AppState(
             swappedToday = emptySet(),
             missionDoneToday = false,
             repsToday = emptyMap(),
-            routedDoneToday = emptySet()
+            routedDoneToday = emptySet(),
+            // A plan whose moment has passed is no longer a plan, it is a reproach. Drop it
+            // rather than leaving it on the home screen going stale.
+            intentions = intentions.filterNot { it.isStale(today) }
         )
 }

@@ -12,6 +12,10 @@ import com.debubble.app.engine.AuditCatalogue
 import com.debubble.app.engine.Baseline
 import com.debubble.app.engine.BudgetTier
 import com.debubble.app.engine.CampaignPool
+import com.debubble.app.engine.Cues
+import com.debubble.app.engine.Forecast
+import com.debubble.app.engine.Forecasts
+import com.debubble.app.engine.Intention
 import com.debubble.app.engine.LearnCurriculum
 import com.debubble.app.engine.Remediation
 import com.debubble.app.engine.RemediationPool
@@ -74,6 +78,10 @@ sealed interface Route {
     data class EditNote(val id: Long?, val linkLogId: Long?, val linkLessonId: String?) : Route
     /** A routed extra — a campaign challenge or a remediation. */
     data class Routed(val remediation: Boolean) : Route
+    /** Writing the if-then plan and the prediction, before doing the thing. */
+    data class Plan(val challengeId: String, val title: String) : Route
+    /** Checking the prediction against what happened, after doing it. */
+    data class Review(val forecastId: Long) : Route
 }
 
 class DeBubbleViewModel(app: Application) : AndroidViewModel(app) {
@@ -215,6 +223,9 @@ class DeBubbleViewModel(app: Application) : AndroidViewModel(app) {
             Tab.PROFILE -> Route.Profile
         }
     }
+
+    /** If-then plans whose moment has not yet passed. */
+    fun livePlans(s: AppState): List<Intention> = s.liveIntentions(today())
 
     /** Which day of the user's run a given epoch day was. Used by the Notes list. */
     fun dayIndexOfDay(s: AppState, epochDay: Long): Long =
@@ -665,6 +676,99 @@ class DeBubbleViewModel(app: Application) : AndroidViewModel(app) {
                     ) + rolled.log
                 )
             }
+            goDashboard()
+        }
+    }
+
+    // --------------------------------------------------------- plans and predictions
+
+    fun goPlan(challengeId: String, title: String) {
+        _route.value = Route.Plan(challengeId, title)
+    }
+
+    /**
+     * Save the plan and the prediction together.
+     *
+     * One screen, because they belong to the same moment and splitting them would mean two
+     * interruptions before a challenge someone is already reluctant to start. The plan is
+     * what gets it done; the prediction is what makes the doing teach something.
+     */
+    fun savePlan(
+        challengeId: String,
+        title: String,
+        cue: String,
+        response: String,
+        predicted: String,
+        predictedDistress: Int
+    ) {
+        viewModelScope.launch {
+            repo.update { s ->
+                val now = System.currentTimeMillis()
+                val plan = Intention(
+                    id = now,
+                    challengeId = challengeId,
+                    challengeTitle = title,
+                    cue = cue.trim(),
+                    response = response.trim(),
+                    createdDay = today(),
+                    dueDay = today() + Cues.WINDOW_DAYS
+                )
+                val forecast = Forecast(
+                    id = now + 1,
+                    challengeId = challengeId,
+                    challengeTitle = title,
+                    predicted = predicted.trim(),
+                    predictedDistress = predictedDistress.coerceIn(0, Forecasts.SCALE),
+                    createdDay = today()
+                )
+                s.copy(
+                    // Replacing rather than appending: re-planning the same challenge is an
+                    // edit, not a second commitment to the same act.
+                    intentions = s.intentions.filterNot {
+                        it.challengeId == challengeId && !it.resolved
+                    } + plan,
+                    forecasts = s.forecasts.filterNot {
+                        it.challengeId == challengeId && !it.isResolved
+                    } + forecast
+                )
+            }
+            goDashboard()
+        }
+    }
+
+    fun openReview(forecastId: Long) { _route.value = Route.Review(forecastId) }
+
+    /**
+     * Close the loop: what actually happened, and how bad it actually was.
+     *
+     * This writes the only number in the app that measures the product's actual claim — the
+     * gap between what someone was sure would happen and what did.
+     */
+    fun resolveForecast(forecastId: Long, actual: String, actualDistress: Int) {
+        viewModelScope.launch {
+            repo.update { s ->
+                val f = s.forecasts.firstOrNull { it.id == forecastId } ?: return@update s
+                val resolved = f.copy(
+                    actual = actual.trim(),
+                    actualDistress = actualDistress.coerceIn(0, Forecasts.SCALE),
+                    resolvedDay = today()
+                )
+                s.copy(
+                    forecasts = s.forecasts.map { if (it.id == forecastId) resolved else it },
+                    intentions = s.intentions.map {
+                        if (it.challengeId == f.challengeId && !it.resolved) it.copy(resolved = true)
+                        else it
+                    }
+                )
+            }
+            goDashboard()
+        }
+    }
+
+    /** Drop a prediction without answering it. Never nag twice about the same thing. */
+    fun dismissForecast(forecastId: Long) {
+        viewModelScope.launch {
+            repo.update { s -> s.copy(forecasts = s.forecasts.filterNot { it.id == forecastId }) }
             goDashboard()
         }
     }
