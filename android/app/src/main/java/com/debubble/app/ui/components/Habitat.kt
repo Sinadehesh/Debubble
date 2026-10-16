@@ -1,9 +1,13 @@
 package com.debubble.app.ui.components
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -17,7 +21,10 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.debubble.app.R
 import com.debubble.app.engine.Habitat
 import com.debubble.app.engine.Stage
 import com.debubble.app.ui.theme.Ink
@@ -184,6 +191,80 @@ fun HabitatBackdrop(stage: Stage, modifier: Modifier = Modifier) {
 }
 
 private fun pow(x: Float, e: Float): Float = Math.pow(x.toDouble(), e.toDouble()).toFloat()
+
+/**
+ * The room as artwork, which is what it should have been the first time.
+ *
+ * The previous version of this was a procedural Canvas drawing whose brightness was solved
+ * against the WCAG floors, and the honest result of that solve was a ground that moves about
+ * 2% across seven stages. It was defensible and it was invisible, and the whole complaint
+ * about this app was that there is nothing in it to look at. Seven rendered images move the
+ * change out of the palette, where contrast rations it, and into the picture, where nothing
+ * does.
+ *
+ * Nothing is drawn on top of these. That is not a stylistic preference — the asset pipeline
+ * measured text over the art and found Muted at 1.01:1 against the light wedge in "Door
+ * open", which is text the exact colour of its background. The stage name sits underneath,
+ * on solid ground. The only overlay is the scrim that blends the bottom edge into the page,
+ * and its stops have to match SCRIM_TOP and SCRIM_END in prepare_habitat_art.py or the hero
+ * ends on a visible hairline.
+ */
+@Composable
+fun HabitatHero(stage: Stage, modifier: Modifier = Modifier) {
+    val art = artFor(stage)
+    val ground = Color(stage.ground)
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .aspectRatio(1.5f)
+    ) {
+        if (art != null) {
+            Image(
+                painter = painterResource(art),
+                contentDescription = "${stage.label}. ${stage.note}",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.matchParentSize()
+            )
+        } else {
+            // No render for this stage yet. The procedural backdrop is kept precisely so a
+            // missing asset degrades to something drawn rather than to a grey box.
+            HabitatBackdrop(stage = stage, modifier = Modifier.matchParentSize())
+        }
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .background(
+                    Brush.verticalGradient(
+                        colorStops = arrayOf(
+                            0f to Color.Transparent,
+                            0.70f to Color.Transparent,
+                            0.96f to ground,
+                            1f to ground
+                        )
+                    )
+                )
+        )
+    }
+}
+
+/**
+ * The render for a stage, or null when there is not one.
+ *
+ * Nullable on purpose rather than falling back to a placeholder image: the Canva account hit
+ * its credit quota partway through the series, and three of these are currently composited
+ * from the two renders either side of them rather than generated. When real ones arrive they
+ * drop straight in here. See docs/habitat-prompts.md.
+ */
+@DrawableRes
+private fun artFor(stage: Stage): Int? = when (stage) {
+    Stage.SEALED -> R.drawable.habitat_sealed
+    Stage.WINDOW -> R.drawable.habitat_window
+    Stage.DOOR -> R.drawable.habitat_door
+    Stage.STREET -> R.drawable.habitat_street
+    Stage.OPEN -> R.drawable.habitat_open
+    Stage.HORIZON -> R.drawable.habitat_horizon
+    Stage.UNWALLED -> R.drawable.habitat_unwalled
+}
 
 /**
  * The room's name, and how far off the next one is.

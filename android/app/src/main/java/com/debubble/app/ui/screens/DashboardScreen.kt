@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import com.debubble.app.data.AppState
 import com.debubble.app.engine.Forecast
 import com.debubble.app.engine.Goal
+import com.debubble.app.engine.Habitat
 import com.debubble.app.engine.Intention
 import com.debubble.app.engine.Pillar
 import com.debubble.app.engine.Principle
@@ -43,7 +44,7 @@ import com.debubble.app.ui.components.Dot
 import com.debubble.app.ui.components.Glyph
 import com.debubble.app.ui.components.Glyphs
 import com.debubble.app.ui.components.HabitatAnnouncement
-import com.debubble.app.ui.components.HabitatBackdrop
+import com.debubble.app.ui.components.HabitatHero
 import com.debubble.app.ui.components.HabitatRow
 import com.debubble.app.ui.components.Label
 import com.debubble.app.ui.components.Pill
@@ -111,31 +112,50 @@ fun DashboardScreen(
             .background(roomGround())
             .verticalScroll(rememberScrollState())
     ) {
-        // The backdrop sits behind the hero and the ring, and fades to flat ground before
-        // any text starts. This is the "room" — progress opens the walls rather than buying
-        // furniture for a screen nobody would revisit.
-        Box(modifier = Modifier.fillMaxWidth()) {
-            HabitatBackdrop(
-                stage = stage,
-                modifier = Modifier.matchParentSize()
-            )
-            Column {
-                HeroBar(state = state, dayIndex = dayIndex, onOpenAvatar = onOpenAvatar)
+        HeroBar(state = state, dayIndex = dayIndex, onOpenAvatar = onOpenAvatar)
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(1.05f)
-                        .padding(horizontal = 8.dp)
-                ) {
-                    BubbleRing(
-                        state = ring,
-                        pulse = pulse,
-                        animate = !rememberReducedMotion(),
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
+        // The room, full bleed and unobscured, as the first thing on the screen. It used to
+        // be a 2%-brightness shift behind the ring, which is a change nobody could see; it is
+        // now the largest thing on the dashboard and it is different at every stage.
+        HabitatHero(stage = stage)
+
+        // Name and progress underneath, on solid ground. Nothing goes on top of the art —
+        // the asset pipeline measured that and it does not survive the bright frames.
+        Column(modifier = Modifier.padding(horizontal = Space.gutter)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Bottom
+            ) {
+                Text(
+                    text = stage.label,
+                    color = Ink.Primary,
+                    style = MaterialTheme.typography.headlineLarge
+                )
+                Label("${state.clearedRungs} cleared")
             }
+            VSpace(8)
+            ProgressTrack(Habitat.progress(state.clearedRungs), Ink.Gold, height = 5)
+            VSpace(7)
+            Label(Habitat.caption(state.clearedRungs))
+        }
+
+        VSpace(18)
+
+        // The ring keeps its place but not its dominance: it is a readout, and the artwork
+        // above it is the thing worth opening the app for.
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(1.7f)
+                .padding(horizontal = 8.dp)
+        ) {
+            BubbleRing(
+                state = ring,
+                pulse = pulse,
+                animate = !rememberReducedMotion(),
+                modifier = Modifier.fillMaxSize()
+            )
         }
 
         Row(
@@ -206,8 +226,6 @@ fun DashboardScreen(
                 WidgetOffer(onAdd = onAddWidget, onDismiss = onDismissWidget)
             }
 
-            VSpace(12)
-            HabitatRow(stage = stage, cleared = state.clearedRungs)
 
             VSpace(12)
             SectionHeader(

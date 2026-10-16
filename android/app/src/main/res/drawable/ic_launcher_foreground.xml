@@ -1,24 +1,73 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Three overlapping perimeters: Access, Activity, Social. -->
+<!--
+    Three overlapping perimeters: Access, Activity, Social.
+
+    The colours here were stale — they were the pre-chiaroscuro palette (#5E82CC, #A8BA5C,
+    #CC4E62) and never got updated when the theme was rebuilt, so the icon on the home screen
+    belonged to a different app than the one it opened. They are now the measured Ink accents.
+
+    Each ring is a radial glow plus a solid edge rather than a hairline stroke. A 3.2dp stroke
+    on a 108dp canvas is about one pixel at the smallest launcher size, which is a ring that
+    disappears; the glow is what survives being 48dp on someone's home screen, and it is also
+    what the BubbleRing on the dashboard actually looks like.
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
 
+    <!-- Access. Largest and furthest back: geography is the widest perimeter. -->
+    <path android:pathData="M 45,60 m -19,0 a 19,19 0 1,0 38,0 a 19,19 0 1,0 -38,0">
+        <aapt:attr xmlns:aapt="http://schemas.android.com/aapt" name="android:fillColor">
+            <gradient
+                android:type="radial"
+                android:centerX="45" android:centerY="60" android:gradientRadius="19">
+                <item android:offset="0.0" android:color="#004DA3FF" />
+                <item android:offset="0.62" android:color="#1F4DA3FF" />
+                <item android:offset="1.0" android:color="#664DA3FF" />
+            </gradient>
+        </aapt:attr>
+    </path>
     <path
-        android:strokeColor="#5E82CC"
-        android:strokeWidth="3.2"
+        android:strokeColor="#4DA3FF"
+        android:strokeWidth="4"
         android:fillColor="#00000000"
-        android:pathData="M 47,58 m -17,0 a 17,17 0 1,0 34,0 a 17,17 0 1,0 -34,0" />
+        android:pathData="M 45,60 m -19,0 a 19,19 0 1,0 38,0 a 19,19 0 1,0 -38,0" />
+
+    <!-- Activity. -->
+    <path android:pathData="M 64,47 m -15,0 a 15,15 0 1,0 30,0 a 15,15 0 1,0 -30,0">
+        <aapt:attr xmlns:aapt="http://schemas.android.com/aapt" name="android:fillColor">
+            <gradient
+                android:type="radial"
+                android:centerX="64" android:centerY="47" android:gradientRadius="15">
+                <item android:offset="0.0" android:color="#003DDC97" />
+                <item android:offset="0.62" android:color="#1F3DDC97" />
+                <item android:offset="1.0" android:color="#663DDC97" />
+            </gradient>
+        </aapt:attr>
+    </path>
     <path
-        android:strokeColor="#A8BA5C"
-        android:strokeWidth="3.2"
+        android:strokeColor="#3DDC97"
+        android:strokeWidth="4"
         android:fillColor="#00000000"
-        android:pathData="M 62,48 m -14,0 a 14,14 0 1,0 28,0 a 14,14 0 1,0 -28,0" />
+        android:pathData="M 64,47 m -15,0 a 15,15 0 1,0 30,0 a 15,15 0 1,0 -30,0" />
+
+    <!-- Social. Smallest and in front: the closest perimeter, and the hardest one. -->
+    <path android:pathData="M 66,67 m -13,0 a 13,13 0 1,0 26,0 a 13,13 0 1,0 -26,0">
+        <aapt:attr xmlns:aapt="http://schemas.android.com/aapt" name="android:fillColor">
+            <gradient
+                android:type="radial"
+                android:centerX="66" android:centerY="67" android:gradientRadius="13">
+                <item android:offset="0.0" android:color="#00FF6B81" />
+                <item android:offset="0.62" android:color="#1FFF6B81" />
+                <item android:offset="1.0" android:color="#66FF6B81" />
+            </gradient>
+        </aapt:attr>
+    </path>
     <path
-        android:strokeColor="#CC4E62"
-        android:strokeWidth="3.2"
+        android:strokeColor="#FF6B81"
+        android:strokeWidth="4"
         android:fillColor="#00000000"
-        android:pathData="M 63,64 m -12,0 a 12,12 0 1,0 24,0 a 12,12 0 1,0 -24,0" />
+        android:pathData="M 66,67 m -13,0 a 13,13 0 1,0 26,0 a 13,13 0 1,0 -26,0" />
 </vector>
