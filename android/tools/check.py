@@ -186,6 +186,51 @@ EXTENSIONS = [
 # ordinary named arguments. Only flag them when the file uses semantics at all.
 SEMANTICS_ONLY = {"role", "stateDescription", "contentDescription", "selected", "liveRegion"}
 
+# Compose symbols that have to be imported to be used at all.
+#
+# This exists because of a build that failed on `Unresolved reference 'Box'` — a file gained a
+# Box when nothing in it had needed one before, and the import never came with it. The three
+# follow-on errors were all `matchParentSize` failing to resolve, which is not a separate bug:
+# it is a BoxScope member, so an unresolved Box takes the scope down with it. One missing
+# import, nine compiler errors, and a full CI round trip to find out.
+#
+# Only unambiguous call shapes are listed. `Modifier.weight` and `matchParentSize` are scope
+# members rather than imports and are deliberately absent, and anything that doubles as an
+# ordinary named argument belongs in EXTENSIONS with its own narrower pattern, not here.
+COMPOSABLES = [
+    ("Box", "androidx.compose.foundation.layout.Box"),
+    ("Column", "androidx.compose.foundation.layout.Column"),
+    ("Row", "androidx.compose.foundation.layout.Row"),
+    ("Spacer", "androidx.compose.foundation.layout.Spacer"),
+    ("Image", "androidx.compose.foundation.Image"),
+    ("Canvas", "androidx.compose.foundation.Canvas"),
+    ("Text", "androidx.compose.material3.Text"),
+    ("painterResource", "androidx.compose.ui.res.painterResource"),
+    ("LaunchedEffect", "androidx.compose.runtime.LaunchedEffect"),
+    ("DisposableEffect", "androidx.compose.runtime.DisposableEffect"),
+    ("CompositionLocalProvider", "androidx.compose.runtime.CompositionLocalProvider"),
+]
+
+
+def check_composables(files):
+    """A Compose call with no import for it. See the comment on COMPOSABLES."""
+    problems = []
+    for path in files:
+        src = open(path).read()
+        imports = {l.strip().removeprefix("import ") for l in src.splitlines()
+                   if l.strip().startswith("import ")}
+        body = "\n".join(l for l in src.splitlines() if not l.strip().startswith("import "))
+        code = strip_code(body)
+        for symbol, imp in COMPOSABLES:
+            if imp in imports:
+                continue
+            # A file that declares its own is using that one, not the library's.
+            if re.search(rf"\bfun\s+{symbol}\s*\(", code):
+                continue
+            if re.search(rf"(?<![\w.]){symbol}\s*\(", code):
+                problems.append(f"{path}: calls '{symbol}' without 'import {imp}'")
+    return problems
+
 
 def check_extensions(files):
     problems = []
@@ -237,6 +282,7 @@ def main() -> int:
         ("imports", check_imports),
         ("padding", check_padding),
         ("extensions", check_extensions),
+        ("composables", check_composables),
         ("delegates", check_delegates),
     )
     failed = 0
