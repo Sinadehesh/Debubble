@@ -2,14 +2,15 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=Nunito:wght@400;600;700;800&display=swap">
 <style>
-/* Layout: a dark console around a sunny room. Room on the left, today's care on the right,
-   time controls under the room, the routine library below. One committed dark look, the
+/* Layout: a dark console around a sunny room. Room on the left, today's four on the right,
+   the home-screen widget under them, the routine library below. One committed dark look, the
    same plum the pixel outlines are drawn in, so the room's frame and the page are one thing. */
 :root{
-  --night:#1A1420; --panel:#251C2D; --panel-2:#2F2439; --line:#4C3D59;
-  --cream:#FFF3DC; --dim:#C6B6CB; --faint:#7E6C88;
-  --body:#9BD7D1; --room:#E8B476; --heart:#F3B8C8; --world:#86CCF2; --glow:#FFBF4D;
-  --ink-on:#1A1420;
+  --night:#140E16; --panel:#231927; --panel-2:#332538; --line:#4C3D59;
+  --cream:#FCF6F1; --dim:#CAB8C8; --faint:#8C7A96;
+  --body:#9BD7D1; --room:#E8B476; --heart:#F3B8C8; --world:#86CCF2; --glow:#FFC94D;
+  --access:#4DA3FF; --activity:#3DDC97; --social:#FF6B81;
+  --ink-on:#140E16;
   --display:"Pixelify Sans",ui-monospace,"SFMono-Regular",Menlo,monospace;
   --text:"Nunito",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
   color-scheme:dark;
@@ -23,28 +24,22 @@ h1{font-size:30px;line-height:1.1;color:var(--glow);letter-spacing:.01em}
 h2{font-size:21px;line-height:1.2}
 h3{font-size:17px}
 p{margin:0}
-.lede{color:var(--dim);max-width:64ch;margin-top:8px}
+.lede{color:var(--dim);max-width:66ch;margin-top:8px}
 header{display:flex;flex-direction:column;gap:2px;margin-bottom:18px}
 
 .grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:20px;align-items:start}
 @media (max-width:820px){.grid{grid-template-columns:minmax(0,1fr)}}
 
 .stagecard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:12px;min-width:0}
-.roombox{display:flex;justify-content:center;background:#140F19;border-radius:10px;padding:10px 0;min-width:0}
+.roombox{display:flex;justify-content:center;background:#100B12;border-radius:10px;padding:10px 0;min-width:0}
 canvas#room{display:block;border-radius:6px;outline:2px solid #33243A;touch-action:none;cursor:default;max-width:100%}
+canvas#room.target{cursor:pointer}
 canvas#room.edit{cursor:grab}
 canvas#room.dragging{cursor:grabbing}
 .meta{display:flex;flex-wrap:wrap;gap:8px;align-items:baseline;justify-content:space-between}
 .stage-name{font-family:var(--display);font-size:17px}
 .small{font-size:13px;color:var(--dim)}
-.chips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.chip{background:var(--panel-2);border:1px solid color-mix(in srgb,var(--c) 55%,transparent);border-radius:12px;padding:9px 10px;display:flex;flex-direction:column;gap:4px;cursor:pointer;color:inherit;font:inherit;text-align:left}
-.chip:hover{border-color:var(--c)}
-.chip .k{font-family:var(--display);color:var(--c);font-size:14px}
-.chip .v{font-weight:700;font-size:14px}
-.pips{display:flex;gap:3px}
-.pips i{flex:1;height:5px;border-radius:9px;background:#4A3B57}
-.pips i.on{background:var(--c)}
+.hint{font-size:13px;color:var(--faint);text-align:center}
 .bar{display:flex;flex-wrap:wrap;gap:8px}
 button{font:inherit}
 .btn{background:var(--panel-2);color:var(--cream);border:1px solid var(--line);border-radius:10px;padding:9px 13px;cursor:pointer;font-weight:700;font-size:14px;min-height:42px}
@@ -52,24 +47,37 @@ button{font:inherit}
 .btn.primary{background:var(--a,var(--glow));color:var(--ink-on);border-color:transparent}
 .btn.ghost{background:transparent}
 .btn[aria-pressed="true"]{background:var(--glow);color:var(--ink-on);border-color:transparent}
-.btn:focus-visible,.chip:focus-visible,.card:focus-visible,.opt:focus-visible,summary:focus-visible{outline:2px solid var(--glow);outline-offset:2px}
+.btn:focus-visible,.quest:focus-visible,.opt:focus-visible,.sw:focus-visible,.wrow:focus-visible,summary:focus-visible{outline:2px solid var(--glow);outline-offset:2px}
 .daybar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;border-top:1px dashed var(--line);padding-top:10px}
 .daytag{font-family:var(--display);font-size:16px;color:var(--glow)}
 .notice{background:var(--panel-2);border:1px solid var(--heart);border-radius:12px;padding:11px 13px;font-size:14px}
 .notice.gold{border-color:var(--glow)}
+.track{height:8px;border-radius:9px;background:#3A2E45;overflow:hidden}
+.track i{display:block;height:100%;background:var(--c,var(--glow))}
 
-.side{display:flex;flex-direction:column;gap:12px;min-width:0}
+.side{display:flex;flex-direction:column;gap:10px;min-width:0}
 .section-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
-.card{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;text-align:left;color:inherit;padding:0;width:100%}
-.card:hover{border-color:var(--dim)}
-.card .edge{width:6px;background:var(--c);flex:none}
-.card.done .edge{background:#4A3B57}
-.card .in{padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0;flex:1}
+.segs{display:flex;gap:6px}
+.segs i{flex:1;height:8px;border-radius:9px;background:#2A1F30;border:1px solid #5E4D63}
+.segs i.on{background:var(--c);border-color:var(--c)}
+.quest{display:flex;gap:12px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;cursor:pointer;text-align:left;color:inherit;width:100%}
+.quest:hover{border-color:var(--dim)}
+.quest.next{background:var(--panel-2);border:2px solid var(--c);padding:11px}
+.quest.done{background:#1A121C;border-color:#5E4D63}
+.qicon{width:52px;height:52px;border-radius:12px;display:grid;place-items:center;flex:none;background:color-mix(in srgb,var(--c) 16%,transparent)}
+.quest.done .qicon{background:#1A121C}
+.qin{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
+.qname{font-weight:800;font-size:14px;color:var(--c)}
+.quest.done .qname{color:var(--faint)}
+.qt{font-weight:800;font-size:16px;line-height:1.35}
+.quest.done .qt{color:var(--dim)}
+.qline{font-size:14px;color:var(--dim)}
+.qfoot{display:flex;gap:10px;font-size:13px}
+.qfoot b{color:var(--c)}
 .pill{display:inline-block;font-size:12px;font-weight:800;border-radius:99px;padding:2px 9px;color:var(--c);background:color-mix(in srgb,var(--c) 16%,transparent);border:1px solid color-mix(in srgb,var(--c) 45%,transparent)}
 .row{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.t{font-weight:800;font-size:16px}
-.cta{color:var(--c);font-weight:800;font-size:14px}
-.card.done .t{color:var(--dim)}
+.link{background:none;border:none;color:var(--dim);font-weight:700;cursor:pointer;text-align:left;padding:6px 0;min-height:42px}
+.link:hover{color:var(--cream)}
 
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:12px}
 .opt{display:flex;gap:10px;align-items:flex-start;background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer;text-align:left;color:inherit;width:100%}
@@ -81,14 +89,38 @@ button{font:inherit}
 .why{font-size:14px;color:var(--dim)}
 .src{font-size:12.5px;color:var(--faint)}
 .ease{border-left:3px solid var(--c);padding:6px 10px;background:var(--panel-2);border-radius:6px;font-size:14px}
-.track{height:8px;border-radius:9px;background:#3A2E45;overflow:hidden}
-.track i{display:block;height:100%;background:var(--c)}
 .big{font-family:var(--display);font-size:24px;line-height:1.15;text-wrap:balance}
 .arrive{display:flex;gap:14px;align-items:center;border:1px solid var(--glow);border-radius:12px;padding:12px;background:var(--panel-2)}
 .arrive canvas{flex:none}
 .feel{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.back{align-self:flex-start}
-.lv{font-weight:800}
+.back,.panel>.pill{align-self:flex-start}
+.kv{display:grid;gap:8px}
+.kv div{background:var(--panel-2);border-radius:10px;padding:9px 11px;font-size:14px}
+.kv b{display:block;color:var(--c);font-size:12.5px}
+
+.lookprev{display:grid;place-items:center;background:color-mix(in srgb,var(--room) 14%,transparent);border:1px solid color-mix(in srgb,var(--room) 50%,transparent);border-radius:14px;padding:14px}
+.swrow{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+.sw{aspect-ratio:1;min-height:40px;border-radius:12px;background:var(--panel);border:1px solid var(--line);display:grid;place-items:center;cursor:pointer;padding:0}
+.sw[aria-checked="true"]{background:var(--panel-2);border:2px solid var(--cream)}
+.sw i{width:24px;height:24px;border-radius:50%;display:block;border:2px solid var(--b)}
+
+.widgets{margin-top:30px;display:flex;flex-direction:column;gap:14px}
+.homescreen{background:linear-gradient(160deg,#4B6CB7 0%,#8E54A6 55%,#F09A7A 100%);border-radius:22px;padding:18px;display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start;justify-content:center}
+.widget{background:#231927;border:1px solid #866E8D;border-radius:20px;padding:10px;display:flex;flex-direction:column;gap:6px;width:min(320px,100%);box-shadow:0 10px 30px #0006}
+.widget.compact{width:min(250px,100%);padding:8px}
+.widget canvas.wroom{width:100%;height:auto;image-rendering:pixelated;border-radius:6px;display:block;cursor:pointer}
+.whead{display:flex;justify-content:space-between;align-items:center;padding:2px 4px}
+.whead b{font-size:16px}
+.whead span{color:var(--glow);font-weight:800;font-size:13px}
+.wrow{display:flex;align-items:center;gap:9px;background:#332538;border:1px solid #866E8D;border-radius:12px;padding:6px 8px;min-height:46px;cursor:pointer;color:inherit;text-align:left;width:100%}
+.wico{width:28px;flex:none;display:grid;place-items:center}
+.wrow .wt{display:flex;flex-direction:column;min-width:0;flex:1}
+.wrow .wn{font-size:12px;font-weight:800;color:var(--c);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wrow .wx{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wrow.done .wx{color:var(--faint)}
+.wstrip{display:flex;gap:5px;align-items:center}
+.wcell{flex:1;height:44px;background:#332538;border:1px solid #866E8D;border-radius:12px;display:grid;place-items:center;position:relative;cursor:pointer;padding:0}
+.wcell canvas.chk{position:absolute;right:3px;bottom:3px}
 
 .lib{margin-top:36px;display:flex;flex-direction:column;gap:14px}
 .libgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
@@ -107,30 +139,33 @@ details .body{display:flex;flex-direction:column;gap:8px;margin-top:8px}
 .rule{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 14px;display:flex;flex-direction:column;gap:6px}
 .rule h3{color:var(--glow)}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--glow);color:var(--ink-on);font-weight:800;border-radius:12px;padding:10px 16px;max-width:calc(100% - 32px);box-shadow:0 6px 24px #0008;z-index:5}
+canvas.px{image-rendering:pixelated}
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 </style>
 
 <div class="wrap">
   <header>
     <h1>Debubble Room</h1>
-    <p class="lede">Your room mirrors your real body, room and heart. When they need care it gets messy; doing the real task cleans it, and earns something for the room. You start with nothing. This is the app's engine running in the browser: tap a task, skip ahead a few days, drag things around.</p>
+    <p class="lede">Your room mirrors your real body, room and heart, and today's one mission outside is the letter in your hand. Tap yourself, your heart, the mess or the letter to start that task. Doing the real thing cleans the room and earns something for it. You start with nothing. This is the app's engine running in the browser.</p>
   </header>
 
   <div class="grid">
     <section class="stagecard" aria-label="Your room">
-      <div class="roombox" id="roombox"><canvas id="room" role="img" aria-label="Your room"></canvas></div>
+      <div class="roombox" id="roombox"><canvas id="room" class="px" role="img" aria-label="Your room"></canvas></div>
+      <p class="hint" id="roomHint"></p>
       <div class="meta">
         <span class="stage-name" id="stageName">Sealed room</span>
         <span class="small" id="stageCaption"></span>
       </div>
-      <div class="chips" id="chips"></div>
+      <div class="track" style="--c:var(--glow)"><i id="stageTrack" style="width:0"></i></div>
       <div id="notices" style="display:flex;flex-direction:column;gap:8px"></div>
       <div class="bar">
         <button class="btn" id="editBtn" aria-pressed="false">Arrange room</button>
         <button class="btn" id="putAway" hidden>Put away</button>
+        <button class="btn ghost" id="lookBtn">Change how you look</button>
         <button class="btn ghost" id="checkinBtn">Honest check-in</button>
       </div>
-      <p class="small" id="editHint" hidden>Drag anything, including yourself. Floor things stay on the floor, wall things on the wall. Tap to select.</p>
+      <p class="small" id="editHint" hidden>Drag anything, including yourself; your heart and the letter come with you. Floor things stay on the floor, wall things on the wall. Tap to select.</p>
       <div class="bar" id="stash" hidden></div>
       <div class="daybar">
         <span class="daytag" id="dayTag">Day 1</span>
@@ -141,17 +176,25 @@ details .body{display:flex;flex-direction:column;gap:8px;margin-top:8px}
           <button class="btn ghost" id="reset">Start over</button>
         </div>
       </div>
-      <p class="small">"Do a month" plays thirty days of the three care tasks at tiny or standard size and one mission a day, so you can see the room fill up and the walls open.</p>
+      <p class="small">"Do a month" plays thirty days of the three care tasks at tiny or standard size and today's one mission outside, so you can see the room fill up and the walls open.</p>
     </section>
 
     <aside class="side" id="side"></aside>
   </div>
 
+  <section class="widgets" aria-label="The home-screen widget">
+    <div class="section-h"><h2>On your home screen</h2><span class="small">the widget, from the same state</span></div>
+    <p class="why" style="max-width:70ch">The widget is the room and today's four. Each row leads with its moment, because a plan works when it is in front of you at the moment it names. Tapping a task opens it in the app; there is no tick-box that skips the app. Shorter, it becomes a strip of icons under the room.</p>
+    <div class="homescreen" id="homescreen"></div>
+  </section>
+
   <section class="rules" aria-label="Why it is built this way">
-    <div class="rule"><h3>Habits need sameness</h3><p class="why">Automaticity comes from repeating the same act at the same moment (Lally et al., 2010; Wood &amp; Rünger, 2016). So each care area has one routine you keep, at one cue. What changes day to day is its size, never the act.</p></div>
-    <div class="rule"><h3>Tiny counts in full</h3><p class="why">A two-minute version earns the day as fully as a long one, because repetition is what builds the habit (Fogg; Clear). Size only changes how clean the room gets. On a bad day the step gets smaller, it doesn't get skipped.</p></div>
+    <div class="rule"><h3>One day, one list</h3><p class="why">Body, room, heart, and one mission outside: the same four every day. A short fixed list removes the "what should I do?" that stops people on a low day, and four boxes filling in pull you toward the end of the set (the goal-gradient effect; Kivetz, Urminsky &amp; Zheng, 2006).</p></div>
     <div class="rule"><h3>The room is a mirror</h3><p class="why">Seeing your own progress is one of the best-supported ways to change behaviour, especially when the record is physical and visible (Harkin et al., 2016, 138 studies). The mess is capped, cute, and never takes away anything you earned.</p></div>
-    <div class="rule"><h3>Missing a day is not a reset</h3><p class="why">In Lally's study one missed day did not set habits back, so there is no streak to break. After a gap the app says welcome back and suggests the smallest version (Breines &amp; Chen, 2012: self-compassion after a lapse raises motivation to try again).</p></div>
+    <div class="rule"><h3>Habits need sameness</h3><p class="why">Automaticity comes from repeating the same act at the same moment (Lally et al., 2010; Wood &amp; Rünger, 2016). So each care area has one routine you keep, at one cue. What changes day to day is its size, never the act. A tiny version counts in full.</p></div>
+    <div class="rule"><h3>Exposure needs one thing, done properly</h3><p class="why">One mission a day, from ladders that climb slowly, with the moment, the first two minutes and the safety behaviour to drop. The other two ladders are there as extras. Missions open the walls and bring things from the world.</p></div>
+    <div class="rule"><h3>Make it yours</h3><p class="why">You pick how you look when you move in. People keep going longer with a character they made to look like them (Birk et al., 2016), and value what they built over what they were handed (Norton et al., 2012).</p></div>
+    <div class="rule"><h3>Missing a day is not a reset</h3><p class="why">In Lally's study one missed day did not set habits back, so there is no streak to break. After a gap the app says welcome back and suggests the smallest version (Breines &amp; Chen, 2012).</p></div>
   </section>
 
   <section class="lib" aria-label="The routines">
@@ -164,11 +207,12 @@ details .body{display:flex;flex-direction:column;gap:8px;margin-top:8px}
 
 <script>
 const D = __DATA__;
-const CAT = D.manifest, R = CAT.room, LIB = D.lib, RULES = LIB.rules;
+const CAT = D.manifest, R = CAT.room, LIB = D.lib, RULES = LIB.rules, ME = CAT.me, LOOKS = CAT.looks;
 const DOMS = ["BODY", "ROOM", "HEART"], PILLARS = ["ACCESS", "ACTIVITY", "SOCIAL"];
 const PILLAR_NAME = {ACCESS: "Access", ACTIVITY: "Activity", SOCIAL: "Social"};
-const COLOR = {BODY: "var(--body)", ROOM: "var(--room)", HEART: "var(--heart)", WORLD: "var(--world)"};
-const ME_W = 20, ME_H = 19, MAX = RULES.maxDirt, START_DIRT = 1;
+const COLOR = {BODY: "var(--body)", ROOM: "var(--room)", HEART: "var(--heart)", WORLD: "var(--world)",
+               ACCESS: "var(--access)", ACTIVITY: "var(--activity)", SOCIAL: "var(--social)"};
+const MAX = RULES.maxDirt, START_DIRT = 1;
 const TINY_FIRST = 7, COMING_BACK = 3;
 const SIZES = ["TINY", "STANDARD", "DEEP"], SIZE_LABEL = {TINY: "Tiny", STANDARD: "Standard", DEEP: "Deep"};
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -248,10 +292,18 @@ function clamp(w, h, onWall, x, b) {
   return {x: Math.max(0, Math.min(Math.max(0, R.w - w), x)), b: Math.max(minB, Math.min(Math.max(maxB, minB), b))};
 }
 const stageFor = rungs => [...D.stages].reverse().find(s => rungs >= s.threshold);
-const weather = h => h === 0 ? "heart_sun" : h === 1 ? null : h === 2 ? "heart_cloud" : "heart_storm";
+const buddy = h => "buddy" + Math.max(0, Math.min(MAX, h));
 const BURST = [[14,18],[40,30],[66,12],[92,26],[118,16],[146,30],[24,50],[58,46],[104,52],[136,48],[30,76],[80,70],[128,74],[150,88]];
 
-function draws(stageKey, home, lv, frame, moving, burst) {
+/* Your heart takes your right unless that leaves the room; the letter takes the other hand. */
+function sides(me) {
+  const bw = fxDef("buddy0").w, lw = fxDef("letter").w;
+  const right = me.x + ME.buddyDx + bw <= R.w;
+  const bx = right ? me.x + ME.buddyDx : me.x + ME.w - ME.buddyDx - bw;
+  const lx = right ? me.x + ME.letterDx : me.x + ME.w - ME.letterDx - lw;
+  return [bx, Math.max(0, Math.min(Math.max(0, R.w - lw), lx))];
+}
+function draws(stageKey, home, lv, frame, moving, burst, letter) {
   const [body, room, heart] = [lv.BODY, lv.ROOM, lv.HEART];
   const walls = stageKey !== "unwalled";
   const spotOf = (id, def) => moving && moving.id === id ? moving.spot : def;
@@ -265,27 +317,69 @@ function draws(stageKey, home, lv, frame, moving, burst) {
   const standing = [];
   placed.filter(([d]) => d.anchor !== "wall" && !d.flat).forEach(([d, s]) => standing.push([s.b, 0, [d.id, s.x, s.b]]));
   CAT.mess.filter(m => m.fx !== "cobweb" && room >= m.level).forEach(m => standing.push([m.b, 1, [m.fx, m.x, m.b]]));
-  const me = spotOf("me", home.me || {x: CAT.me.x, b: CAT.me.b});
+  const me = spotOf("me", home.me || {x: ME.x, b: ME.b});
   const bob = frame % 2 === 1 ? 1 : 0;
   standing.push([me.b, 2, ["me" + body, me.x, me.b - bob]]);
   standing.sort((a, b) => a[0] - b[0] || a[1] - b[1]).forEach(t => out.push(t[2]));
-  const w = weather(heart);
-  if (w) { const f = fxDef(w); out.push([w, me.x + Math.trunc((ME_W - f.w) / 2), me.b - ME_H + CAT.me.weatherDrop - bob]); }
+  const [bx, lx] = sides(me);
+  if (letter) {
+    const l = fxDef("letter"), g = fxDef("bang"), lb = me.b - ME.letterDy - bob;
+    out.push(["letter", lx, lb]);
+    out.push(["bang", lx + Math.trunc((l.w - g.w) / 2), lb - l.h - ME.bangGap]);
+  }
+  out.push([buddy(heart), bx, me.b - ME.buddyDy - (1 - bob)]);
   if (room === 0) CAT.sparkles.forEach((p, i) => { if ((i + frame) % 2 === 0) out.push(["sparkle", p.x, p.y]); });
-  if (body === 0) out.push(["sparkle", me.x + ME_W - 4, me.b - ME_H + 6 - bob]);
+  if (body === 0) out.push(["sparkle", me.x + 2, me.b - ME.h + 6 - bob]);
   if (burst) BURST.forEach(([x, y], i) => { if ((i + frame) % 3 !== 0) out.push(["sparkle", x, y]); });
   return out;
 }
+const sizeOf = id => { const r = itemDef(id) || fxDef(id); return r ? [r.w, r.h] : null; };
+const under = ([id, dx, db], x, y) => { const s = sizeOf(id); return !!s && x >= dx && x < dx + s[0] && y >= db - s[1] && y < db; };
+const isMe = id => /^me\d$/.test(id);
 function hit(stageKey, home, lv, x, y) {
-  const list = draws(stageKey, home, lv, 0, null, false);
+  const list = draws(stageKey, home, lv, 0, null, false, false);
   for (let i = list.length - 1; i >= 0; i--) {
-    const [id, dx, db] = list[i];
-    const isMe = /^me\d$/.test(id), def = itemDef(id);
-    if (!isMe && !def) continue;
-    const w = isMe ? ME_W : def.w, h = isMe ? ME_H : def.h;
-    if (x >= dx && x < dx + w && y >= db - h && y < db) return isMe ? "me" : id;
+    if (!isMe(list[i][0]) && !itemDef(list[i][0])) continue;
+    if (under(list[i], x, y)) return isMe(list[i][0]) ? "me" : list[i][0];
   }
   return null;
+}
+/* Which task a tap in the room asks for: you, your heart, the letter, the mess. */
+function tap(stageKey, home, lv, letter, x, y) {
+  const mess = new Set(CAT.mess.map(m => m.fx));
+  const list = draws(stageKey, home, lv, 0, null, false, letter);
+  for (let i = list.length - 1; i >= 0; i--) {
+    const id = list[i][0];
+    const kind = id.startsWith("buddy") ? "HEART" : (id === "letter" || id === "bang") ? "OUTSIDE" : isMe(id) ? "BODY" : mess.has(id) ? "ROOM" : null;
+    if (kind && under(list[i], x, y)) return kind;
+  }
+  return null;
+}
+
+/* ---------------- engine: a transcription of engine/Today.kt ---------------- */
+const mission = (p, tier) => D.missions[p][Math.min(tier, D.missions[p].length) - 1];
+const outsidePillar = () => PILLARS.find(p => S.missionDay[p] === S.day) || PILLARS[(S.day - 1) % 3];
+const lower = s => s.charAt(0).toLowerCase() + s.slice(1);
+const line = q => `When ${q.cue.replace(/\.$/, "")}: ${lower(q.first)}`;
+function quests() {
+  const lv = levels();
+  const list = DOMS.map(d => {
+    const s = S.care[d], r = chosen(d, s);
+    return {kind: "CARE", d, icon: "icon_" + d.toLowerCase(), name: info(d).name, title: r.title, cue: s.anchor || r.anchors[0],
+            first: r.tiny, minutes: r.tinyMin, status: info(d).levels[lv[d]], done: careDone(d), c: COLOR[d]};
+  });
+  const p = outsidePillar(), done = S.missionDay[p] === S.day;
+  const tier = done ? S.missionTier[p] : S.tiers[p], m = mission(p, tier);
+  list.push({kind: "OUTSIDE", p, icon: "icon_out", name: "Outside", title: m.do, cue: m.when, first: m.open || m.do,
+             minutes: m.min, status: `${PILLAR_NAME[p]} · level ${tier}`, done, c: COLOR[p]});
+  return list;
+}
+const letterOpen = q => q.some(x => x.kind === "OUTSIDE" && !x.done);
+function headline(q) {
+  const done = q.filter(x => x.done).length;
+  if (done === q.length) return `All ${q.length} done. That is a whole day of looking after yourself.`;
+  if (done === 0) return "Start with whichever is nearest. Tiny counts.";
+  return `${done} of ${q.length} done.`;
 }
 
 /* ---------------- the simulated person ---------------- */
@@ -294,16 +388,16 @@ function fresh() {
   const day = 1, care = {};
   const start = {BODY: 2, ROOM: 3, HEART: 2};
   DOMS.forEach(d => care[d] = {dirt: start[d], setDay: day, reps: 0, lastDoneDay: 0, routine: "", routineFrom: 0, anchor: "", better: 0, same: 0, worse: 0});
-  return {day, seed: 20261028, care, home: {owned: [], placed: {}, me: null}, rungs: 0,
-          tiers: {ACCESS: 1, ACTIVITY: 1, SOCIAL: 1}, missionDay: {}, stageSeen: "sealed"};
+  return {day, seed: 20261028, care, home: {owned: [], placed: {}, me: null}, rungs: 0, look: {skin: 0, hair: 0, top: 0}, movedIn: false,
+          tiers: {ACCESS: 1, ACTIVITY: 1, SOCIAL: 1}, missionDay: {}, missionTier: {}, stageSeen: "sealed"};
 }
+const KEY = "debubble-room-v3";
 let S;
-try { S = JSON.parse(localStorage.getItem("debubble-room-v2")) || fresh(); } catch (e) { S = fresh(); }
-function save() { try { localStorage.setItem("debubble-room-v2", JSON.stringify(S)); } catch (e) {} }
+try { S = JSON.parse(localStorage.getItem(KEY)) || fresh(); } catch (e) { S = fresh(); }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
 const levels = () => Object.fromEntries(DOMS.map(d => [d, dirt(d, S.care[d], S.day)]));
 const careDone = d => S.care[d].lastDoneDay === S.day;
 const daysSinceCare = () => { const last = Math.max(...DOMS.map(d => S.care[d].lastDoneDay)); return last === 0 ? 0 : S.day - last; };
-const leadPillar = () => { for (let i = 0; i < 3; i++) { const p = PILLARS[(i + S.day) % 3]; if (S.missionDay[p] !== S.day) return p; } return null; };
 
 function doCare(d, size) {
   const before = dirt(d, S.care[d], S.day);
@@ -313,6 +407,7 @@ function doCare(d, size) {
 }
 function doMission(p) {
   S.missionDay[p] = S.day;
+  S.missionTier[p] = S.tiers[p];
   S.tiers[p] = Math.min(100, S.tiers[p] + 1);
   S.rungs += 1;
   return settle(S.home, "WORLD", S.rungs, S.seed);
@@ -324,6 +419,33 @@ const shells = {}; D.stages.forEach(s => { const im = new Image(); im.src = s.im
 const cv = document.getElementById("room"), cx = cv.getContext("2d");
 let px = 3, frame = 0, view = {lv: null, burst: false}, edit = false, selected = null, moving = null;
 
+/* The atlas with you in your look: swapped by exact colour inside your own frames only. */
+let sheet = null, sheetKey = "";
+function sheetFor(look) {
+  const key = `${look.skin},${look.hair},${look.top}`;
+  if (sheet && sheetKey === key) return sheet;
+  const c = document.createElement("canvas"); c.width = atlas.width; c.height = atlas.height;
+  const g = c.getContext("2d"); g.drawImage(atlas, 0, 0);
+  const swaps = new Map();
+  [["skin", look.skin], ["hair", look.hair], ["top", look.top]].forEach(([k, i]) => {
+    const ramps = LOOKS[k], to = ramps[Math.max(0, Math.min(ramps.length - 1, i))];
+    ramps[0].forEach((h, j) => { if (h.toLowerCase() !== to[j].toLowerCase()) swaps.set(parseInt(h.slice(1), 16), parseInt(to[j].slice(1), 16)); });
+  });
+  if (swaps.size) {
+    try {
+      for (let n = 0; n <= MAX; n++) {
+        const r = fxDef("me" + n), img = g.getImageData(r.x, r.y, r.w, r.h), a = img.data;
+        for (let p = 0; p < a.length; p += 4) {
+          if (a[p + 3] !== 255) continue;
+          const t = swaps.get((a[p] << 16) | (a[p + 1] << 8) | a[p + 2]);
+          if (t !== undefined) { a[p] = (t >> 16) & 255; a[p + 1] = (t >> 8) & 255; a[p + 2] = t & 255; }
+        }
+        g.putImageData(img, r.x, r.y);
+      }
+    } catch (e) {}
+  }
+  sheet = c; sheetKey = key; return c;
+}
 function fit() {
   const box = document.getElementById("roombox");
   const dpr = window.devicePixelRatio || 1;
@@ -333,57 +455,66 @@ function fit() {
   cv.style.width = (R.w * px / dpr) + "px"; cv.style.height = (R.h * px / dpr) + "px";
   paint();
 }
-function sprite(id, x, b) {
-  const r = itemDef(id) || fxDef(id);
-  if (!r) return;
-  cx.drawImage(atlas, r.x, r.y, r.w, r.h, x * px, (b - r.h) * px, r.w * px, r.h * px);
+function paintRoom(g, k, lv, fr, burst, mv) {
+  const st = stageFor(S.rungs), sh = sheetFor(S.look);
+  g.imageSmoothingEnabled = false;
+  g.clearRect(0, 0, R.w * k, R.h * k);
+  g.drawImage(shells[st.key], 0, 0, R.w, R.h, 0, 0, R.w * k, R.h * k);
+  draws(st.key, S.home, lv, fr, mv, burst, letterOpen(quests())).forEach(([id, x, b]) => {
+    const r = itemDef(id) || fxDef(id);
+    if (r) g.drawImage(sh, r.x, r.y, r.w, r.h, x * k, (b - r.h) * k, r.w * k, r.h * k);
+  });
 }
 function paint() {
   if (!atlas.complete) return;
-  const st = stageFor(S.rungs);
-  cx.imageSmoothingEnabled = false;
-  cx.clearRect(0, 0, cv.width, cv.height);
-  cx.drawImage(shells[st.key], 0, 0, R.w, R.h, 0, 0, R.w * px, R.h * px);
-  draws(st.key, S.home, view.lv || levels(), frame, moving, view.burst).forEach(([id, x, b]) => sprite(id, x, b));
+  paintRoom(cx, px, view.lv || levels(), frame, view.burst, moving);
   const sel = moving ? moving.id : selected;
   if (edit && sel) {
-    const spot = moving && moving.id === sel ? moving.spot : (sel === "me" ? (S.home.me || {x: CAT.me.x, b: CAT.me.b}) : S.home.placed[sel]);
-    const def = sel === "me" ? {w: ME_W, h: ME_H} : itemDef(sel);
+    const spot = moving && moving.id === sel ? moving.spot : (sel === "me" ? (S.home.me || {x: ME.x, b: ME.b}) : S.home.placed[sel]);
+    const def = sel === "me" ? {w: ME.w, h: ME.h} : itemDef(sel);
     if (spot && def) {
-      cx.strokeStyle = "#FFBF4D"; cx.lineWidth = Math.min(4, px);
+      cx.strokeStyle = "#FFC94D"; cx.lineWidth = Math.min(4, px);
       cx.strokeRect((spot.x - 1) * px, (spot.b - def.h - 1) * px, (def.w + 2) * px, (def.h + 2) * px);
     }
   }
   cv.setAttribute("aria-label", "Your room. " + DOMS.map(d => info(d).name + ": " + info(d).levels[(view.lv || levels())[d]]).join(". "));
 }
-atlas.onload = () => { fit(); };
+atlas.onload = () => { fit(); renderAll(); };
 addEventListener("resize", fit);
 if (!reduced) setInterval(() => { frame++; paint(); }, 560);
 
-/* ---------------- dragging ---------------- */
+/* ---------------- tapping and dragging ---------------- */
 function roomPoint(e) { const r = cv.getBoundingClientRect(); return {x: Math.floor((e.clientX - r.left) * R.w / r.width), y: Math.floor((e.clientY - r.top) * R.h / r.height)}; }
 let drag = null;
 cv.addEventListener("pointerdown", e => {
-  if (!edit) return;
   const p = roomPoint(e), st = stageFor(S.rungs).key;
+  if (!edit) {
+    const t = tap(st, S.home, levels(), letterOpen(quests()), p.x, p.y);
+    if (t === "OUTSIDE") openMission(outsidePillar());
+    else if (t) openTask(t);
+    else toast("Tap yourself, your heart, the mess, or the letter in your hand.");
+    return;
+  }
   const id = hit(st, S.home, levels(), p.x, p.y);
   selected = id; refreshEdit();
   if (!id) { paint(); return; }
-  const origin = id === "me" ? (S.home.me || {x: CAT.me.x, b: CAT.me.b}) : S.home.placed[id];
+  const origin = id === "me" ? (S.home.me || {x: ME.x, b: ME.b}) : S.home.placed[id];
   drag = {id, origin, start: p};
   moving = {id, spot: origin};
   cv.setPointerCapture(e.pointerId); cv.classList.add("dragging"); paint();
 });
 cv.addEventListener("pointermove", e => {
+  const p = roomPoint(e);
+  if (!edit) { cv.classList.toggle("target", !!tap(stageFor(S.rungs).key, S.home, levels(), letterOpen(quests()), p.x, p.y)); return; }
   if (!drag) return;
-  const p = roomPoint(e), def = drag.id === "me" ? {w: ME_W, h: ME_H, anchor: "floor"} : itemDef(drag.id);
+  const def = drag.id === "me" ? {w: ME.w, h: ME.h, anchor: "floor"} : itemDef(drag.id);
   moving = {id: drag.id, spot: clamp(def.w, def.h, def.anchor === "wall", drag.origin.x + p.x - drag.start.x, drag.origin.b + p.y - drag.start.y)};
   paint();
 });
 function endDrag() {
   if (!drag) return;
   if (moving) { if (drag.id === "me") S.home.me = moving.spot; else S.home.placed[drag.id] = moving.spot; save(); }
-  drag = null; moving = null; cv.classList.remove("dragging"); paint();
+  drag = null; moving = null; cv.classList.remove("dragging"); paint(); renderWidgets();
 }
 cv.addEventListener("pointerup", endDrag);
 cv.addEventListener("pointercancel", endDrag);
@@ -391,66 +522,66 @@ cv.addEventListener("pointercancel", endDrag);
 /* ---------------- UI ---------------- */
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"})[c]);
-const pips = (lv, c) => `<div class="pips" style="--c:${c}">${[0,1,2,3].map(i => `<i class="${i < 4 - lv ? "on" : ""}"></i>`).join("")}</div>`;
 function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => t.hidden = true, 2600); }
+const icon = (id, dp) => `<canvas class="px" data-icon="${id}" data-dp="${dp}"></canvas>`;
 
 function renderStatus() {
-  const lv = levels(), st = stageFor(S.rungs);
-  const next = D.stages[D.stages.indexOf(st) + 1];
+  const st = stageFor(S.rungs), i = D.stages.indexOf(st), next = D.stages[i + 1];
   $("stageName").textContent = st.label;
-  $("stageCaption").textContent = next ? `${S.rungs} missions done · ${next.threshold - S.rungs} more to ${next.label.toLowerCase()}` : `${S.rungs} missions done · fully open`;
+  $("stageCaption").textContent = next ? `${next.threshold - S.rungs} more missions outside to ${next.label.toLowerCase()} · ${S.home.owned.length} of ${CAT.items.length} things` : `Fully open · ${S.home.owned.length} of ${CAT.items.length} things`;
+  $("stageTrack").style.width = next ? `${Math.round(100 * (S.rungs - st.threshold) / (next.threshold - st.threshold))}%` : "100%";
   $("dayTag").textContent = "Day " + S.day;
-  $("chips").innerHTML = DOMS.map(d => `<button class="chip" data-care="${d}" style="--c:${COLOR[d]}">
-      <span class="k">${info(d).name}</span><span class="v">${info(d).levels[lv[d]]}</span>${pips(lv[d], COLOR[d])}</button>`).join("");
+  $("roomHint").textContent = letterOpen(quests()) ? "Tap you, your heart, the mess, or the letter in your hand." : "Tap you, your heart or the mess.";
   const notes = [];
   const away = daysSinceCare();
   if (away >= COMING_BACK) notes.push(`<div class="notice">${away < 14 ? "Welcome back. Things got a bit messy, which is what they do. Pick the smallest thing in one corner and start there." : "Welcome back. It has been a while, and that is fine. Nothing you earned has gone anywhere. One tiny thing today is plenty."}</div>`);
   if (S.stageSeen !== st.key) notes.push(`<div class="notice gold"><b>The room changed: ${esc(st.label)}.</b> ${esc(st.note)} <button class="btn" data-seen style="margin-top:8px">Got it</button></div>`);
-  if (!S.home.owned.length) notes.push(`<div class="notice">Empty for now. Everything in here gets earned: your first care task brings the first thing.</div>`);
+  if (!S.home.owned.length) notes.push(`<div class="notice">Empty for now. Everything in here gets earned: your first task brings the first thing.</div>`);
   $("notices").innerHTML = notes.join("");
   document.querySelectorAll("[data-seen]").forEach(b => b.onclick = () => { S.stageSeen = st.key; save(); renderStatus(); });
-  document.querySelectorAll("[data-care]").forEach(b => b.onclick = () => openTask(b.dataset.care));
 }
 
-let side = {view: "today"};
+let side = {view: S.movedIn ? "today" : "look"}, extras = false;
 function renderSide() {
   const el = $("side");
   if (side.view === "today") el.innerHTML = todayView();
   else if (side.view === "task") el.innerHTML = taskView(side.d);
+  else if (side.view === "mission") el.innerHTML = missionView(side.p);
   else if (side.view === "done") el.innerHTML = doneView();
   else if (side.view === "checkin") el.innerHTML = checkinView();
+  else if (side.view === "look") el.innerHTML = lookView();
   wireSide();
 }
+function questRow(q, next) {
+  return `<button class="quest ${q.done ? "done" : next ? "next" : ""}" data-quest="${q.kind === "CARE" ? q.d : "OUT:" + q.p}" style="--c:${q.c}">
+    <span class="qicon">${icon(q.icon, 2.6)}</span>
+    <span class="qin"><span class="row" style="justify-content:flex-start"><span class="qname">${esc(q.name)}</span><span class="small">${esc(q.status)}</span></span>
+      <span class="qt">${esc(q.title)}</span>
+      ${q.done ? `<span class="qfoot"><b>Done today</b></span>` : `<span class="qline">${esc(line(q))}</span>
+      <span class="qfoot">${next ? "<b>Up next</b>" : ""}<span class="small">Smallest: ${q.minutes} min</span></span>`}</span>
+    ${icon(q.done ? "icon_done" : "icon_todo", 2.6)}</button>`;
+}
 function todayView() {
-  const lv = levels(), open = DOMS.filter(d => !careDone(d)).length;
-  const cards = DOMS.map(d => {
-    const s = S.care[d], r = chosen(d, s), cue = s.anchor || r.anchors[0], done = careDone(d);
-    return `<button class="card ${done ? "done" : ""}" data-open="${d}" style="--c:${COLOR[d]}"><span class="edge"></span><span class="in">
-      <span class="row"><span class="pill">${info(d).name}</span><span class="small">${info(d).levels[lv[d]]}</span></span>
-      <span class="t">${esc(r.title)}</span>
-      <span class="small">When ${esc(cue)}: ${esc(r.tiny.charAt(0).toLowerCase() + r.tiny.slice(1))}</span>
-      <span class="cta">${done ? "Done today ✓" : "Start →"}</span></span></button>`;
-  }).join("");
-  const p = leadPillar();
-  let mission = `<div class="panel"><p class="small">All three missions done today. The bubble got bigger in every direction.</p></div>`;
-  if (p) {
-    const m = D.missions[p][Math.min(S.tiers[p], D.missions[p].length) - 1];
-    mission = `<button class="card" data-mission="${p}" style="--c:var(--world)"><span class="edge"></span><span class="in">
-      <span class="row"><span class="pill">${PILLAR_NAME[p]}</span><span class="small">Level ${S.tiers[p]}</span></span>
-      <span class="t">${esc(m.do)}</span><span class="small">${esc(m.why)}</span>
-      <span class="cta">I did it →</span></span></button>`;
-  }
-  return `<div class="section-h"><h2>Look after yourself</h2><span class="small">${open ? open + " left" : "All done"}</span></div>
-    <p class="small">Same three every day, any size. Tiny counts.</p>${cards}
-    <div class="section-h" style="margin-top:8px"><h2>Step outside</h2><span class="small">opens the walls</span></div>
-    <p class="small">One new thing a day, from the exposure ladders. Missions earn things from the world.</p>${mission}`;
+  const q = quests(), done = q.filter(x => x.done).length, next = q.find(x => !x.done);
+  const out = q[q.length - 1];
+  const more = PILLARS.filter(p => p !== out.p && S.missionDay[p] !== S.day);
+  const extra = !more.length ? "" : extras
+    ? `<p class="small">Extra missions. Optional — today's one is the one that counts.</p>` + more.map(p => {
+        const m = mission(p, S.tiers[p]);
+        return questRow({kind: "OUTSIDE", p, icon: "icon_out", name: PILLAR_NAME[p], title: m.do, cue: m.when, first: m.open || m.do, minutes: m.min, status: `level ${S.tiers[p]}`, done: false, c: COLOR[p]}, false);
+      }).join("")
+    : `<button class="link" data-extras>${out.done ? "Want more? " : ""}${more.length} more missions outside${out.done ? "" : ", if you want them"}</button>`;
+  return `<div class="section-h"><h2>Today</h2><span class="small" style="color:${done === q.length ? "var(--glow)" : "var(--dim)"};font-weight:800">${done} of ${q.length}</span></div>
+    <div class="segs">${q.map(x => `<i class="${x.done ? "on" : ""}" style="--c:${x.c}"></i>`).join("")}</div>
+    <p class="small">${esc(headline(q))}</p>
+    ${q.map(x => questRow(x, x === next)).join("")}${extra}`;
 }
 function taskView(d) {
   const s = S.care[d], r = chosen(d, s), cue = s.anchor || r.anchors[0], c = COLOR[d];
   if (!side.size) side.size = suggested(s, S.day);
   const note = sizeNote(s, S.day), days = Math.max(0, s.reps - s.routineFrom), auto = automaticity(days);
   return `<div class="panel" style="--c:${c}">
-    <button class="btn ghost back" data-back>← Back</button>
+    <button class="btn ghost back" data-back>← Today</button>
     <span class="pill">${info(d).name} · ${info(d).levels[levels()[d]]}</span>
     <div class="big">${esc(r.title)}</div>
     <h3>When</h3>
@@ -468,6 +599,23 @@ function taskView(d) {
     <button class="btn primary" style="--a:${c};margin-top:4px" data-do="${d}">${careDone(d) ? "I did it again" : "I did it"}</button>
   </div>`;
 }
+function missionView(p) {
+  const tier = S.tiers[p], m = mission(p, tier), c = COLOR[p];
+  return `<div class="panel" style="--c:${c}">
+    <button class="btn ghost back" data-back>← Today</button>
+    <span class="pill">Outside · ${PILLAR_NAME[p]} · level ${tier}</span>
+    <div class="big">${esc(m.do)}</div>
+    <div class="kv">
+      <div><b>When</b>When ${esc(m.when)}.</div>
+      <div><b>The first two minutes</b>${esc(m.open)}</div>
+      <div><b>Done when</b>${esc(m.done.charAt(0).toUpperCase() + m.done.slice(1))}</div>
+      <div><b>Leave this behind</b>${esc(m.stop)}</div>
+    </div>
+    <h3>Why this one</h3><p class="why">${esc(m.why)}</p>
+    <p class="src">In the app this is the full mission screen: a prediction to write down first and check afterwards, an easier rung if this one is too big today, and a way to say it got hard without losing anything.</p>
+    <button class="btn primary" style="--a:${c}" data-mdo="${p}">I did it</button>
+  </div>`;
+}
 function doneView() {
   const r = side.result, d = r.d, c = COLOR[d], n = info(d);
   const next = nextRewardIn(S.care[d].reps);
@@ -476,7 +624,7 @@ function doneView() {
     <span class="pill">${n.name}</span>
     <div class="big">${r.before === r.after ? n.levels[r.after] : `${n.levels[r.before]} to ${n.levels[r.after]}`}</div>
     <p>${esc(r.celebrate)}</p>
-    ${r.granted.map(g => `<div class="arrive"><canvas data-sprite="${g.id}"></canvas><div><b style="color:var(--glow)">New for your room</b><div class="t">${esc(g.label)}</div><span class="small">It is already in there. Move it wherever you like.</span></div></div>`).join("")}
+    ${r.granted.map(g => `<div class="arrive"><canvas class="px" data-sprite="${g.id}"></canvas><div><b style="color:var(--glow)">New for your room</b><div class="qt">${esc(g.label)}</div><span class="small">It is already in there. Move it wherever you like.</span></div></div>`).join("")}
     <p class="small">${next === null ? `Everything for your ${n.name.toLowerCase()} is earned.` : next === 1 ? "One more day of this and something new arrives." : `${next} more days of this and something new arrives.`}</p>
     <h3>How do you feel now, compared with before?</h3>
     <div class="feel">${[["better","Better"],["same","Same"],["worse","Worse"]].map(([k, l]) => `<button class="btn" data-feel="${k}">${l}</button>`).join("")}</div>
@@ -486,46 +634,73 @@ function doneView() {
 }
 function checkinView() {
   const lv = side.lv;
-  return `<div class="panel"><button class="btn ghost back" data-back>← Back</button>
+  return `<div class="panel"><button class="btn ghost back" data-back>← Today</button>
     <div class="big">How is it, really?</div>
     <p class="why">The room guesses from how long it has been. You know better. Nobody sees this but you.</p>
     ${DOMS.map(d => `<h3 style="color:${COLOR[d]}">${info(d).name}</h3>` + info(d).checkin.map((a, i) =>
       `<button class="opt ${lv[d] === i ? "sel" : ""}" style="--c:${COLOR[d]}" data-ci="${d}:${i}"><span class="dot"></span><span><b>${esc(a)}</b><span>${info(d).levels[i]}</span></span></button>`).join("")).join("")}
     <button class="btn primary" data-cisave>Save</button></div>`;
 }
+function lookView() {
+  const first = !S.movedIn;
+  const sw = (k, label) => `<div style="display:flex;flex-direction:column;gap:6px"><span class="small">${label}</span><div class="swrow" role="radiogroup" aria-label="${label}">` +
+    LOOKS[k].map((r, i) => `<button class="sw" role="radio" aria-checked="${S.look[k] === i}" aria-label="${label} ${i + 1} of ${LOOKS[k].length}" data-look="${k}:${i}"><i style="background:${r[1]};--b:${r[0]}"></i></button>`).join("") + `</div></div>`;
+  return `<div class="panel">
+    ${first ? `<span class="pill" style="--c:var(--room)">Moving in</span><div class="big">This is you</div>
+      <p class="why">Pick what looks like you. The room starts empty and a bit messy, because everything in it gets earned by looking after yourself.</p>`
+      : `<button class="btn ghost back" data-back>← Today</button><div class="big">How you look</div>`}
+    <div class="lookprev"><canvas class="px" data-me="1"></canvas></div>
+    ${sw("skin", "Skin")}${sw("hair", "Hair")}${sw("top", "Top")}
+    <button class="btn primary" style="--a:var(--room)" data-lookdone>${first ? "Move in" : "Done"}</button></div>`;
+}
 function drawSprites() {
-  document.querySelectorAll("canvas[data-sprite]").forEach(c => {
-    const r = itemDef(c.dataset.sprite), z = r.w > 24 ? 3 : 5, dpr = devicePixelRatio || 1, k = Math.max(1, Math.round(z * dpr));
+  const dpr = devicePixelRatio || 1;
+  const put = (c, id, z, src) => {
+    const r = itemDef(id) || fxDef(id); if (!r) return;
+    const k = Math.max(1, Math.round(z * dpr));
     c.width = r.w * k; c.height = r.h * k; c.style.width = (r.w * k / dpr) + "px"; c.style.height = (r.h * k / dpr) + "px";
-    const g = c.getContext("2d"); g.imageSmoothingEnabled = false; g.drawImage(atlas, r.x, r.y, r.w, r.h, 0, 0, r.w * k, r.h * k);
-  });
+    const g = c.getContext("2d"); g.imageSmoothingEnabled = false; g.drawImage(src, r.x, r.y, r.w, r.h, 0, 0, r.w * k, r.h * k);
+  };
+  if (!atlas.complete) return;
+  document.querySelectorAll("canvas[data-sprite]").forEach(c => put(c, c.dataset.sprite, itemDef(c.dataset.sprite).w > 24 ? 3 : 5, atlas));
+  document.querySelectorAll("canvas[data-icon]").forEach(c => put(c, c.dataset.icon, +c.dataset.dp, atlas));
+  document.querySelectorAll("canvas[data-me]").forEach(c => put(c, "me0", 5, sheetFor(S.look)));
 }
 function wireSide() {
   const q = s => document.querySelectorAll(s);
-  q("[data-open]").forEach(b => b.onclick = () => openTask(b.dataset.open));
+  q("[data-quest]").forEach(b => b.onclick = () => { const v = b.dataset.quest; if (v.startsWith("OUT:")) openMission(v.slice(4)); else openTask(v); });
+  q("[data-extras]").forEach(b => b.onclick = () => { extras = true; renderSide(); });
   q("[data-back]").forEach(b => b.onclick = () => { side = {view: "today"}; view.lv = null; renderAll(); });
   q("[data-size]").forEach(b => b.onclick = () => { side.size = b.dataset.size; renderSide(); });
-  q("[data-anchor]").forEach(b => b.onclick = () => { S.care[side.d].anchor = b.dataset.anchor; save(); renderSide(); });
+  q("[data-anchor]").forEach(b => b.onclick = () => { S.care[side.d].anchor = b.dataset.anchor; save(); renderSide(); renderWidgets(); });
   q("[data-routine]").forEach(b => b.onclick = () => {
     const d = side.d, s = S.care[d];
     if (chosen(d, s).id !== b.dataset.routine) S.care[d] = {...s, routine: b.dataset.routine, anchor: "", routineFrom: s.reps};
     side.size = null; save(); renderAll();
   });
   q("[data-do]").forEach(b => b.onclick = () => finish(b.dataset.do));
+  q("[data-mdo]").forEach(b => b.onclick = () => {
+    const granted = doMission(b.dataset.mdo); save(); side = {view: "today"}; view.burst = true; renderAll();
+    setTimeout(() => { view.burst = false; paint(); }, reduced ? 0 : 2200);
+    toast(granted.length ? `Mission done. New from out there: ${granted.map(g => g.label).join(", ")}.` : "Mission done. The walls are a little further out.");
+  });
   q("[data-feel]").forEach(b => b.onclick = () => {
     const k = b.dataset.feel, d = side.result.d;
     if (k) S.care[d] = {...S.care[d], [k]: S.care[d][k] + 1};
     save(); side = {view: "today"}; renderAll();
   });
-  q("[data-mission]").forEach(b => b.onclick = () => {
-    const granted = doMission(b.dataset.mission); save(); renderAll();
-    toast(granted.length ? `Mission done. New from out there: ${granted.map(g => g.label).join(", ")}.` : "Mission done. The walls are a little further out.");
-  });
   q("[data-ci]").forEach(b => b.onclick = () => { const [d, i] = b.dataset.ci.split(":"); side.lv = {...side.lv, [d]: +i}; view.lv = side.lv; renderSide(); paint(); });
   q("[data-cisave]").forEach(b => b.onclick = () => { DOMS.forEach(d => S.care[d] = checkIn(S.care[d], side.lv[d], S.day)); view.lv = null; save(); side = {view: "today"}; renderAll(); });
+  q("[data-look]").forEach(b => b.onclick = () => { const [k, i] = b.dataset.look.split(":"); S.look = {...S.look, [k]: +i}; save(); renderSide(); paint(); renderWidgets(); });
+  q("[data-lookdone]").forEach(b => b.onclick = () => { S.movedIn = true; save(); side = {view: "today"}; renderAll(); });
   drawSprites();
 }
-function openTask(d) { side = {view: "task", d, size: null}; view.lv = null; renderSide(); if (innerWidth <= 820) $("side").scrollIntoView({behavior: reduced ? "auto" : "smooth"}); }
+function scrollSide() { if (innerWidth <= 820) $("side").scrollIntoView({behavior: reduced ? "auto" : "smooth"}); }
+function openTask(d) { side = {view: "task", d, size: null}; view.lv = null; renderSide(); scrollSide(); }
+function openMission(p) {
+  if (S.missionDay[p] === S.day) { toast("That one is done today. More tomorrow."); return; }
+  side = {view: "mission", p}; view.lv = null; renderSide(); scrollSide();
+}
 function finish(d) {
   const r = chosen(d, S.care[d]);
   const lvBefore = levels();
@@ -534,7 +709,7 @@ function finish(d) {
   side = {view: "done", result: {d, ...res, celebrate: r.celebrate}};
   // Before, then after: the change is the reward, so it has to be seen happening.
   view.lv = lvBefore; view.burst = false;
-  renderStatus(); renderSide();
+  renderStatus(); renderSide(); renderWidgets();
   if (innerWidth <= 820) $("roombox").scrollIntoView({behavior: reduced ? "auto" : "smooth", block: "center"});
   paint();
   setTimeout(() => { view.lv = null; view.burst = true; paint(); renderStatus(); }, reduced ? 0 : 750);
@@ -550,27 +725,60 @@ function refreshEdit() {
   $("stash").hidden = !(edit && stored.length);
   $("stash").innerHTML = stored.map(id => `<button class="btn" data-putback="${id}">Put back: ${esc(itemDef(id).label)}</button>`).join("");
   document.querySelectorAll("[data-putback]").forEach(b => b.onclick = () => {
-    const def = itemDef(b.dataset.putback); S.home.placed[def.id] = {x: def.spot.x, b: def.spot.b}; save(); refreshEdit(); paint();
+    const def = itemDef(b.dataset.putback); S.home.placed[def.id] = {x: def.spot.x, b: def.spot.b}; save(); refreshEdit(); paint(); renderWidgets();
   });
 }
-function renderAll() { renderStatus(); renderSide(); paint(); }
+
+/* ---------------- the widget, from the same state ---------------- */
+function renderWidgets() {
+  const q = quests(), done = q.filter(x => x.done).length;
+  const name = x => `${x.name} · ${x.status}`;
+  const target = x => x.kind === "CARE" ? x.d : "OUT:" + x.p;
+  $("homescreen").innerHTML = `
+    <div class="widget" aria-label="The widget, tall">
+      <canvas class="wroom px" data-wroom="1" role="img" aria-label="Your room"></canvas>
+      <div class="whead"><b>${done === q.length ? "All done today" : "Today"}</b><span>${done} of ${q.length}</span></div>
+      ${q.map(x => `<button class="wrow ${x.done ? "done" : ""}" data-w="${target(x)}" style="--c:${x.c}"><span class="wico">${icon(x.icon, 1.6)}</span>
+        <span class="wt"><span class="wn">${esc(name(x))}</span><span class="wx">${esc(x.done ? "Done today" : line(x))}</span></span>
+        ${icon(x.done ? "icon_done" : "icon_todo", 1.3)}</button>`).join("")}
+    </div>
+    <div class="widget compact" aria-label="The widget, short">
+      <canvas class="wroom px" data-wroom="1" role="img" aria-label="Your room"></canvas>
+      <div class="wstrip">${q.map(x => `<button class="wcell" data-w="${target(x)}" aria-label="${esc(name(x))}">${icon(x.icon, 1.6)}<canvas class="px chk" data-icon="${x.done ? "icon_done" : "icon_todo"}" data-dp="0.9"></canvas></button>`).join("")}
+        <span style="color:var(--glow);font-weight:800;font-size:13px">${done} of ${q.length}</span></div>
+    </div>`;
+  if (atlas.complete) {
+    document.querySelectorAll("canvas[data-wroom]").forEach(c => { c.width = R.w * 3; c.height = R.h * 3; paintRoom(c.getContext("2d"), 3, levels(), 0, false, null); });
+  }
+  document.querySelectorAll("[data-w]").forEach(b => b.onclick = () => {
+    const v = b.dataset.w;
+    if (v.startsWith("OUT:")) openMission(v.slice(4)); else openTask(v);
+    $("side").scrollIntoView({behavior: reduced ? "auto" : "smooth"});
+  });
+  document.querySelectorAll("canvas[data-wroom]").forEach(c => c.onclick = () => $("roombox").scrollIntoView({behavior: reduced ? "auto" : "smooth"}));
+  drawSprites();
+}
+
+function renderAll() { renderStatus(); renderSide(); paint(); renderWidgets(); }
 
 $("editBtn").onclick = () => { edit = !edit; selected = null; refreshEdit(); paint(); };
-$("putAway").onclick = () => { if (selected && selected !== "me") { delete S.home.placed[selected]; toast("Put away. It is still yours, waiting below."); selected = null; save(); refreshEdit(); paint(); } };
+$("putAway").onclick = () => { if (selected && selected !== "me") { delete S.home.placed[selected]; toast("Put away. It is still yours, waiting below."); selected = null; save(); refreshEdit(); paint(); renderWidgets(); } };
+$("lookBtn").onclick = () => { side = {view: "look"}; renderSide(); scrollSide(); };
 $("checkinBtn").onclick = () => { side = {view: "checkin", lv: levels()}; view.lv = side.lv; renderSide(); };
-$("nextDay").onclick = () => { S.day += 1; side = {view: "today"}; view.lv = null; save(); renderAll(); };
-$("skip3").onclick = () => { S.day += 3; side = {view: "today"}; view.lv = null; save(); renderAll(); toast("Three days with nothing done. Notice what did not happen: nothing you earned went anywhere."); };
+$("nextDay").onclick = () => { S.day += 1; extras = false; side = {view: "today"}; view.lv = null; save(); renderAll(); };
+$("skip3").onclick = () => { S.day += 3; extras = false; side = {view: "today"}; view.lv = null; save(); renderAll(); toast("Three days with nothing done. Notice what did not happen: nothing you earned went anywhere."); };
 $("month").onclick = () => {
   let got = 0;
+  S.movedIn = true;
   for (let i = 0; i < 30; i++) {
     S.day += 1;
     DOMS.forEach((d, k) => { got += doCare(d, (i + k) % 3 === 0 ? "STANDARD" : "TINY").granted.length; });
-    const p = leadPillar(); if (p) got += doMission(p).length;
+    got += doMission(outsidePillar()).length;
   }
-  side = {view: "today"}; view.lv = null; save(); renderAll();
+  extras = false; side = {view: "today"}; view.lv = null; save(); renderAll();
   toast(`A month of small things: ${got} new for the room.`);
 };
-$("reset").onclick = () => { S = fresh(); edit = false; selected = null; side = {view: "today"}; view.lv = null; save(); refreshEdit(); renderAll(); };
+$("reset").onclick = () => { S = fresh(); sheet = null; edit = false; selected = null; extras = false; side = {view: "look"}; view.lv = null; save(); refreshEdit(); renderAll(); };
 
 /* ---------------- the library ---------------- */
 $("libCount").textContent = `${LIB.routines.length} routines`;

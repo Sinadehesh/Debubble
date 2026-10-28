@@ -1006,8 +1006,6 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
             DayWidget.canRequestPin(app) &&
             !DayWidget.isInstalled(app)
 
-    fun widgetPlaced(): Boolean = DayWidget.isInstalled(app)
-
     fun canPinWidget(): Boolean = DayWidget.canRequestPin(app)
 
     /** Hand it to the launcher, which shows its own dialog. We are told nothing either way. */

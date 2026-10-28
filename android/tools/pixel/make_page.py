@@ -4,8 +4,9 @@
 Reads exactly what the app reads — the seven room shells, the sprite atlas and its index,
 the care routines, the stage thresholds in Habitat.kt and the first rungs of each mission
 ladder — and inlines them, so the page cannot drift from what Android draws. Its script is a
-transcription of engine/Care.kt and engine/Home.kt (same rules, same draw order, same
-SplitMix seed hashing), which tools/check_care.py also transcribes and tests.
+transcription of engine/Care.kt, engine/Home.kt and engine/Today.kt (same rules, same draw
+order, same SplitMix seed hashing, same look swap), which tools/check_care.py also
+transcribes and tests. It also mocks the home-screen widget from the same state.
 
 Run:  python3 android/tools/pixel/make_page.py
 """
@@ -46,7 +47,7 @@ def main():
     missions = {}
     for key, name in PILLARS.items():
         ladder = json.loads((ASSETS / "curriculum" / f"{name}.json").read_text())
-        missions[key] = [{"t": t["t"], "do": t["do"], "why": t["why"]}
+        missions[key] = [{k: t.get(k, "") for k in ("t", "do", "why", "when", "open", "done", "stop", "min")}
                          for t in ladder["tiers"][:MISSION_SAMPLE]]
 
     data = {

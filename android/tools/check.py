@@ -311,6 +311,34 @@ def check_delegates(files):
     return problems
 
 
+def check_duplicates(files):
+    """The same member declared twice in one class — "Conflicting overloads" in CI.
+
+    Easy to do in a thousand-line view model: add a helper, and miss that one with the same
+    name and parameters already exists further down. Compared by name and parameter types,
+    for functions at class-member indentation.
+    """
+    problems = []
+    decl = re.compile(r"^ {4}(?:(?:private|internal|override|public)\s+)*fun\s+([A-Za-z_]\w*)\(([^)]*)\)")
+    top = re.compile(r"^(?:(?:private|internal|data|enum|sealed|abstract|open)\s+)*(?:class|object|interface)\b")
+    for path in files:
+        seen = {}
+        for line in open(path).read().splitlines():
+            if top.match(line):
+                seen = {}                    # a new top-level class has its own members
+                continue
+            m = decl.match(line)
+            if not m:
+                continue
+            types = tuple(t.split(":", 1)[1].split("=")[0].strip()
+                          for t in m.group(2).split(",") if ":" in t)
+            key = (m.group(1), types)
+            if key in seen:
+                problems.append(f"{path}: '{m.group(1)}({', '.join(types)})' is declared twice")
+            seen[key] = True
+    return problems
+
+
 def main() -> int:
     files = list(kotlin_files())
     checks = (
@@ -321,6 +349,7 @@ def main() -> int:
         ("composables", check_composables),
         ("filter quality", check_filter_quality),
         ("delegates", check_delegates),
+        ("duplicates", check_duplicates),
     )
     failed = 0
     for name, fn in checks:
