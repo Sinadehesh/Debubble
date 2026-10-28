@@ -37,7 +37,7 @@ fun AppState.outsidePillar(today: Long): Pillar =
 /** Body, room, heart, outside. */
 fun AppState.quests(today: Long, library: CareLibrary, curriculum: Curriculum): List<Quest> {
     val levels = dirt(today)
-    val care = Domain.order.map { d -> Today.care(d, library, care(d), levels.getValue(d), today) }
+    val inside = Domain.order.map { d -> Today.care(d, library, care(d), levels.getValue(d), today) }
     val p = outsidePillar(today)
     val outside = if (isDoneToday(p)) {
         val did = log.lastOrNull {
@@ -48,5 +48,5 @@ fun AppState.quests(today: Long, library: CareLibrary, curriculum: Curriculum): 
         val served = serve(p, curriculum)
         Today.outside(served, intentionFor("${Today.TIER}${p.name}:${served.tier}"))
     }
-    return care + outside
+    return inside + outside
 }
