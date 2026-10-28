@@ -15,8 +15,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.unit.dp
 import com.debubble.app.R
 import com.debubble.app.engine.Habitat
@@ -48,7 +49,10 @@ import com.debubble.app.ui.theme.Ink
 @Composable
 fun HabitatHero(stage: Stage, modifier: Modifier = Modifier) {
     Image(
-        painter = painterResource(artFor(stage)),
+        // An ImageBitmap, not a Painter. filterQuality only exists on this overload of
+        // Image — the painterResource one silently has no such parameter, so a pixel-art
+        // image loaded that way is always drawn with the default bilinear filter.
+        bitmap = ImageBitmap.imageResource(artFor(stage)),
         contentDescription = "${stage.label}. ${stage.note}",
         contentScale = ContentScale.FillWidth,
         // The one line that decides whether this is pixel art or a smear.

@@ -255,6 +255,38 @@ def check_extensions(files):
     return problems
 
 
+def check_filter_quality(files):
+    """`filterQuality` passed to the Painter overload of Image, which has no such parameter.
+
+    CI found this one: `Image(painter = painterResource(...), filterQuality = ...)` reports
+    "None of the following candidates is applicable", which does not name the offending
+    argument. Only the ImageBitmap overload takes filterQuality, so a pixel-art image loaded
+    through painterResource is always drawn with the default bilinear filter — and the
+    failure mode when it compiles anyway is silent: the art just looks blurry.
+    """
+    problems = []
+    for path in files:
+        src = strip_code(open(path).read())
+        for m in re.finditer(r"\bImage\s*\(", src):
+            depth, i = 0, m.end() - 1
+            while i < len(src):
+                if src[i] == "(":
+                    depth += 1
+                elif src[i] == ")":
+                    depth -= 1
+                    if depth == 0:
+                        break
+                i += 1
+            call = src[m.end():i]
+            if "filterQuality" in call and "painter" in call and "bitmap" not in call:
+                line = src[:m.start()].count("\n") + 1
+                problems.append(
+                    f"{path}:{line}: Image(painter = ...) has no filterQuality parameter — "
+                    f"use ImageBitmap.imageResource(...) with bitmap = instead"
+                )
+    return problems
+
+
 def check_delegates(files):
     """`by remember { mutableStateOf(...) }` needs the getValue/setValue operators in scope."""
     problems = []
@@ -283,6 +315,7 @@ def main() -> int:
         ("padding", check_padding),
         ("extensions", check_extensions),
         ("composables", check_composables),
+        ("filter quality", check_filter_quality),
         ("delegates", check_delegates),
     )
     failed = 0
