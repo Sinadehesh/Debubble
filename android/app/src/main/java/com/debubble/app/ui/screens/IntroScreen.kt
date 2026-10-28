@@ -105,9 +105,12 @@ fun IntroScreen(onDone: () -> Unit) {
 
                 1 -> IntroCard(
                     kicker = "Step 2 of 3",
-                    title = "Three directions out",
-                    body = "Your bubble has three edges, and you push on all of them " +
-                        "separately. You get one small challenge in each, every day.",
+                    title = "Look after yourself, then go out",
+                    body = "Every day there are three small things that look after you — " +
+                        "your body, your room, your heart — and a mission past each of the " +
+                        "bubble's three edges.\n\n" +
+                        "You start in an empty room. Everything in it, you earn by doing " +
+                        "those things for real.",
                     art = { VectorArt() },
                     extra = { VectorList() }
                 )

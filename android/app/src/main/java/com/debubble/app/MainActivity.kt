@@ -23,9 +23,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.debubble.app.engine.Domain
 import com.debubble.app.engine.Pillar
+import com.debubble.app.engine.Scene
 import com.debubble.app.ui.screens.AuditScreen
 import com.debubble.app.ui.screens.AvatarScreen
+import com.debubble.app.ui.screens.CareDoneScreen
+import com.debubble.app.ui.screens.CareScreen
+import com.debubble.app.ui.screens.CheckInScreen
 import com.debubble.app.ui.screens.CalibrationScreen
 import com.debubble.app.ui.screens.CampaignScreen
 import com.debubble.app.ui.screens.ChallengeScreen
@@ -42,12 +47,14 @@ import com.debubble.app.ui.screens.PrincipleScreen
 import com.debubble.app.ui.screens.PrinciplesScreen
 import com.debubble.app.ui.screens.ProfileScreen
 import com.debubble.app.ui.screens.ReviewScreen
+import com.debubble.app.ui.screens.RoomScreen
 import com.debubble.app.ui.screens.Tab
 import com.debubble.app.ui.screens.TabBar
 import com.debubble.app.ui.screens.TranscendenceScreen
 import com.debubble.app.ui.theme.DeBubbleTheme
 import com.debubble.app.ui.theme.Ink
 import com.debubble.app.ui.theme.LocalStage
+import com.debubble.app.ui.components.rememberRoomArt
 import com.debubble.app.widget.DayWidget
 import kotlinx.coroutines.delay
 
@@ -96,6 +103,8 @@ private fun DeBubbleApp(
     val state by vm.state.collectAsStateWithLifecycle()
     val route by vm.route.collectAsStateWithLifecycle()
     val pulse by vm.pulse.collectAsStateWithLifecycle()
+    // The room's sprites, decoded once for the whole app.
+    val art = rememberRoomArt(vm.items)
 
     // Deliberately gated on the dashboard. The widget must not be able to skip the intro or
     // the calibration, and it must not fire while the state is still loading, which is when
@@ -189,7 +198,15 @@ private fun DeBubbleApp(
                                 offerWidget = vm.shouldOfferWidget(state),
                                 onAddWidget = vm::requestWidget,
                                 onDismissWidget = vm::declineWidget,
-                                onAcknowledgeHabitat = vm::acknowledgeHabitat
+                                onAcknowledgeHabitat = vm::acknowledgeHabitat,
+                                art = art,
+                                library = vm.care,
+                                dirt = vm.dirt(state),
+                                careDone = Domain.order.filter { vm.careDoneToday(state, it) }.toSet(),
+                                welcomeBack = vm.welcomeBack(state),
+                                onOpenCare = vm::openCare,
+                                onOpenRoom = vm::openRoom,
+                                onCheckIn = vm::openCheckIn
                             )
                         }
                         TabBar(
@@ -553,6 +570,84 @@ private fun DeBubbleApp(
                     }
                 }
 
+                is Route.CheckIn -> {
+                    if (!r.firstRun) BackHandler { vm.goDashboard() }
+                    Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
+                        CheckInScreen(
+                            firstRun = r.firstRun,
+                            art = art,
+                            library = vm.care,
+                            stage = state.stage,
+                            home = state.home,
+                            // A first move-in starts from the middle rather than from a guess.
+                            initial = if (r.firstRun) Domain.order.associateWith { 1 } else vm.dirt(state),
+                            onSave = { levels -> vm.saveCheckIn(levels, r.firstRun) },
+                            onBack = if (r.firstRun) null else vm::goDashboard
+                        )
+                    }
+                }
+
+                is Route.Care -> {
+                    BackHandler { vm.goDashboard() }
+                    val d = r.domain
+                    Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
+                        CareScreen(
+                            domain = d,
+                            library = vm.care,
+                            care = state.care(d),
+                            level = vm.dirt(state).getValue(d),
+                            doneToday = vm.careDoneToday(state, d),
+                            suggested = vm.suggestedSize(state, d),
+                            sizeNote = vm.sizeNote(state, d),
+                            onChooseRoutine = { id -> vm.chooseRoutine(d, id) },
+                            onSetAnchor = { a -> vm.setAnchor(d, a) },
+                            onDone = { size -> vm.completeCare(d, size) },
+                            onBack = vm::goDashboard
+                        )
+                    }
+                }
+
+                is Route.CareDone -> {
+                    BackHandler { vm.recordFeeling(r.domain, null) }
+                    val after = vm.dirt(state)
+                    Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
+                        CareDoneScreen(
+                            art = art,
+                            library = vm.care,
+                            stage = state.stage,
+                            home = state.home,
+                            domain = r.domain,
+                            care = state.care(r.domain),
+                            dirtBefore = after + (r.domain to r.before),
+                            dirtAfter = after,
+                            granted = r.granted,
+                            celebrate = r.celebrate,
+                            onFeel = { feel -> vm.recordFeeling(r.domain, feel) }
+                        )
+                    }
+                }
+
+                is Route.Room -> {
+                    BackHandler { vm.goDashboard() }
+                    Box(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
+                        RoomScreen(
+                            art = art,
+                            stage = state.stage,
+                            home = state.home,
+                            dirt = vm.dirt(state),
+                            rungs = state.clearedRungs,
+                            careReps = Domain.order.associateWith { state.care(it).reps },
+                            onMove = { id, x, b ->
+                                if (id == Scene.ME) vm.moveMe(x, b) else vm.moveItem(id, x, b)
+                            },
+                            onPutAway = vm::putAway,
+                            onPutBack = vm::putBack,
+                            onSeen = vm::markRoomSeen,
+                            onBack = vm::goDashboard
+                        )
+                    }
+                }
+
                 is Route.Completion -> {
                     // Backing out of the note is the same as skipping it.
                     BackHandler { vm.goDashboard() }
@@ -561,7 +656,8 @@ private fun DeBubbleApp(
                             pillar = r.pillar,
                             tierCleared = r.tierCleared,
                             onSave = vm::journal,
-                            onSkip = vm::goDashboard
+                            onSkip = vm::goDashboard,
+                            reward = r.reward
                         )
                     }
                 }

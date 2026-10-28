@@ -12,6 +12,15 @@ import com.debubble.app.engine.AuditCatalogue
 import com.debubble.app.engine.Baseline
 import com.debubble.app.engine.BudgetTier
 import com.debubble.app.engine.CampaignPool
+import com.debubble.app.engine.Care
+import com.debubble.app.engine.CareLibrary
+import com.debubble.app.engine.Domain
+import com.debubble.app.engine.Family
+import com.debubble.app.engine.Feel
+import com.debubble.app.engine.Home
+import com.debubble.app.engine.ItemCatalogue
+import com.debubble.app.engine.Size
+import com.debubble.app.engine.Spot
 import com.debubble.app.engine.Cues
 import com.debubble.app.engine.Forecast
 import com.debubble.app.engine.Forecasts
@@ -54,7 +63,8 @@ sealed interface Route {
     data object Calibration : Route
     data object Dashboard : Route
     data class Challenge(val pillar: Pillar) : Route
-    data class Completion(val pillar: Pillar, val tierCleared: Int) : Route
+    /** [reward] names the WORLD item a mission just earned, if one arrived. */
+    data class Completion(val pillar: Pillar, val tierCleared: Int, val reward: String? = null) : Route
     data object Profile : Route
 
     /** Choosing or changing the campaign. */
@@ -91,6 +101,23 @@ sealed interface Route {
     ) : Route
     /** Checking the prediction against what happened, after doing it. */
     data class Review(val forecastId: Long) : Route
+
+    /* ---- the room as a mirror ---- */
+
+    /** The honest check-in. First run is "moving in"; after that it is reachable any time. */
+    data class CheckIn(val firstRun: Boolean) : Route
+    /** One care routine: pick the size, read why, do it, say so. */
+    data class Care(val domain: Domain) : Route
+    /** The moment after: the room cleans, anything new arrives, and how did it feel? */
+    data class CareDone(
+        val domain: Domain,
+        val before: Int,
+        val after: Int,
+        val granted: List<String>,
+        val celebrate: String
+    ) : Route
+    /** The room, full screen, for moving things around. */
+    data object Room : Route
 }
 
 /** The widget's "check your prediction" link. Matched, not parsed. */
@@ -114,6 +141,10 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
     val remediation: RemediationPool = repo.loadRemediation(audit)
     val campaignPool: CampaignPool = repo.loadCampaignPool()
     val learn: LearnCurriculum = repo.loadLearn()
+
+    /** The care routines and the room's item catalogue. */
+    val care: CareLibrary = repo.loadCare()
+    val items: ItemCatalogue = repo.loadItems()
 
     fun track(goal: Goal): GoalTrack = goals.getValue(goal)
 
@@ -140,7 +171,11 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
                 // Seed the habitat on first sight rather than leaving it empty, so an
                 // install that upgrades into this feature already several stages in does
                 // not open with a banner announcing a room it has always had.
-                if (s.habitatSeen.isEmpty()) s.copy(habitatSeen = s.stage.name) else s
+                val seen = if (s.habitatSeen.isEmpty()) s.copy(habitatSeen = s.stage.name) else s
+                // Missions already cleared have earned their WORLD items. Settling is derived
+                // from the count, so this grants an upgrader what they are owed and is a
+                // no-op every launch after.
+                settleWorld(seen).first
             }
             val loaded = repo.state.first()
             _route.value = when {
@@ -148,6 +183,7 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
                 !loaded.onboarded -> Route.Calibration
                 !loaded.auditDone -> Route.Audit(firstRun = true)
                 loaded.running.isEmpty() -> Route.GoalPicker(firstRun = true)
+                !loaded.movedIn -> Route.CheckIn(firstRun = true)
                 else -> Route.Dashboard
             }
         }
@@ -338,11 +374,13 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
 
     fun complete(pillar: Pillar, minutes: Int, tier: Int, title: String) {
         viewModelScope.launch {
+            // Missions earn WORLD things for the room, settled in the same write as the rung.
+            var arrived: String? = null
             repo.update { s ->
                 val rolled = s.rolledTo(today())
                 val advanced = Engine.onCompleted(rolled.state(pillar), minutes)
                 val streak = Engine.updateStreak(rolled.streak, rolled.lastActiveDay, today())
-                rolled
+                val updated = rolled
                     .withPillar(pillar, advanced)
                     .copy(
                         doneToday = rolled.doneToday + pillar.name,
@@ -362,6 +400,9 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
                             )
                         ) + rolled.log
                     )
+                val (settled, granted) = settleWorld(updated)
+                arrived = granted.lastOrNull()?.label
+                settled
             }
             _pulse.value = pillar
             // Reaching the summit outranks the ordinary completion beat.
@@ -372,7 +413,7 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
                 ) {
                     Route.Transcendence(pillar)
                 } else {
-                    Route.Completion(pillar, tier)
+                    Route.Completion(pillar, tier, arrived)
                 }
         }
     }
@@ -641,8 +682,9 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
     /** Leave the picker. Only reachable once at least one campaign is running. */
     fun confirmGoals() {
         viewModelScope.launch {
-            if (repo.state.first().running.isEmpty()) return@launch
-            _route.value = Route.Dashboard
+            val s = repo.state.first()
+            if (s.running.isEmpty()) return@launch
+            _route.value = if (s.movedIn) Route.Dashboard else Route.CheckIn(firstRun = true)
         }
     }
 
@@ -963,6 +1005,176 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
     /** The user has seen the room open. Shown once; there is no way to lose a stage. */
     fun acknowledgeHabitat() {
         viewModelScope.launch { repo.update { it.copy(habitatSeen = it.stage.name) } }
+    }
+
+
+    // ------------------------------------------------------------------ the room
+
+    /** Grant whatever WORLD items cleared rungs have earned. Pure; returns what arrived. */
+    private fun settleWorld(s: AppState) =
+        Home.settle(s.home, items, Family.WORLD, s.clearedRungs, s.rewardSeed).let { (home, granted) ->
+            s.copy(home = home) to granted
+        }
+
+    fun openCheckIn() { _route.value = Route.CheckIn(firstRun = false) }
+    fun openCare(domain: Domain) { _route.value = Route.Care(domain) }
+    fun openRoom() { _route.value = Route.Room }
+
+    /** Today's level for each domain. What the room draws and what the cards say. */
+    fun dirt(s: AppState): Map<Domain, Int> =
+        Domain.order.associateWith { Care.dirt(it, s.care(it), today()) }
+
+    fun careDoneToday(s: AppState, d: Domain): Boolean = Care.doneToday(s.care(d), today())
+
+    fun suggestedSize(s: AppState, d: Domain): Size = Care.suggestedSize(s.care(d), today())
+
+    fun sizeNote(s: AppState, d: Domain): String? = Care.sizeNote(s.care(d), today())
+
+    fun welcomeBack(s: AppState): String? = Care.welcomeBack(s.daysSinceCare(today()))
+
+    /**
+     * Save the honest check-in.
+     *
+     * Moving in for the first time also fixes the surprise seed, so the order things arrive
+     * in is this person's own rather than everyone's.
+     */
+    fun saveCheckIn(levels: Map<Domain, Int>, firstRun: Boolean) {
+        viewModelScope.launch {
+            repo.update { s ->
+                var next = s
+                levels.forEach { (d, level) -> next = next.withCare(d, Care.checkIn(next.care(d), level, today())) }
+                next.copy(
+                    movedIn = true,
+                    homeSeed = if (s.homeSeed != 0L) s.homeSeed else System.currentTimeMillis()
+                )
+            }
+            goDashboard()
+        }
+    }
+
+    fun chooseRoutine(domain: Domain, id: String) {
+        val r = care.byId(id)?.takeIf { it.domain == domain.name } ?: return
+        viewModelScope.launch {
+            repo.update { s ->
+                val cs = s.care(domain)
+                if (care.chosen(domain, cs).id == r.id) return@update s
+                // A new routine means a new cue, because the old one belonged to a different
+                // act, and a new automaticity count, because so did the habit.
+                s.withCare(domain, cs.copy(routine = r.id, anchor = "", routineFrom = cs.reps))
+            }
+        }
+    }
+
+    fun setAnchor(domain: Domain, anchor: String) {
+        viewModelScope.launch {
+            repo.update { s -> s.withCare(domain, s.care(domain).copy(anchor = anchor.trim())) }
+        }
+    }
+
+    /**
+     * The routine was done.
+     *
+     * Cleans the domain (one level for tiny, fully otherwise), counts the day's rep once,
+     * settles whatever the family is now owed, and pays XP and the streak like any other
+     * real act. Then the done screen, where the room visibly changes.
+     */
+    fun completeCare(domain: Domain, size: Size) {
+        viewModelScope.launch {
+            var before = 0
+            var after = 0
+            var granted: List<String> = emptyList()
+            var celebrate = ""
+            repo.update { s ->
+                val rolled = s.rolledTo(today())
+                val cs = rolled.care(domain)
+                val routine = care.chosen(domain, cs)
+                before = Care.dirt(domain, cs, today())
+                val done = Care.afterCare(domain, cs, size, today())
+                after = Care.dirt(domain, done, today())
+                celebrate = routine.celebrate
+                val (home, arrived) = Home.settle(
+                    rolled.home, items, domain.family, done.reps, rolled.rewardSeed
+                )
+                granted = arrived.map { it.id }
+                val streak = Engine.updateStreak(rolled.streak, rolled.lastActiveDay, today())
+                rolled.withCare(domain, done).copy(
+                    home = home,
+                    // Only the first of the day pays, matching the rep. A second session is
+                    // welcome and cleans the room, but it is not a way to farm levels.
+                    xp = rolled.xp + if (cs.lastDoneDay != today()) Progress.XP_CARE else 0,
+                    streak = streak,
+                    bestStreak = maxOf(rolled.bestStreak, streak),
+                    lastActiveDay = today(),
+                    log = listOf(
+                        LogEntry(
+                            id = System.currentTimeMillis(),
+                            pillar = domain.name,
+                            tier = done.reps,
+                            title = routine.title,
+                            note = size.label,
+                            epochDay = today(),
+                            minutes = routine.minutes(size),
+                            kind = "CARE"
+                        )
+                    ) + rolled.log
+                )
+            }
+            _route.value = Route.CareDone(domain, before, after, granted, celebrate)
+        }
+    }
+
+    /** The one optional question afterwards. Skipping it records nothing. */
+    fun recordFeeling(domain: Domain, feel: Feel?) {
+        viewModelScope.launch {
+            if (feel != null) {
+                repo.update { s -> s.withCare(domain, Care.afterFeeling(s.care(domain), feel)) }
+            }
+            goDashboard()
+        }
+    }
+
+    /** Move an item. The spot is clamped to the floor or the wall, whichever it belongs to. */
+    fun moveItem(id: String, x: Int, b: Int) {
+        val def = items.item(id) ?: return
+        val spot = Home.clamp(items.room, def.w, def.h, def.onWall, x, b)
+        viewModelScope.launch {
+            repo.update { s ->
+                if (id !in s.home.owned) s
+                else s.copy(home = s.home.copy(placed = s.home.placed + (id to spot)))
+            }
+        }
+    }
+
+    fun moveMe(x: Int, b: Int) {
+        val spot = Home.clamp(items.room, Home.ME_W, Home.ME_H, false, x, b)
+        viewModelScope.launch { repo.update { s -> s.copy(home = s.home.copy(me = spot)) } }
+    }
+
+    /** Take an item out of the room. Still owned; it waits in the tray. */
+    fun putAway(id: String) {
+        viewModelScope.launch {
+            repo.update { s -> s.copy(home = s.home.copy(placed = s.home.placed - id)) }
+        }
+    }
+
+    /** Put an item back, at the spot it first arrived in. */
+    fun putBack(id: String) {
+        val def = items.item(id) ?: return
+        viewModelScope.launch {
+            repo.update { s ->
+                if (id !in s.home.owned) s
+                else s.copy(home = s.home.copy(placed = s.home.placed + (id to def.spot)))
+            }
+        }
+    }
+
+    /** New arrivals have been seen in the room. */
+    fun markRoomSeen() {
+        viewModelScope.launch {
+            repo.update { s ->
+                if (s.home.unseen.isEmpty()) s else s.copy(home = s.home.copy(unseen = emptySet()))
+            }
+        }
     }
 
     fun clearPulse() { _pulse.value = null }

@@ -7,6 +7,11 @@ import androidx.datastore.preferences.preferencesDataStore
 import com.debubble.app.engine.AuditCatalogue
 import com.debubble.app.engine.BudgetTier
 import com.debubble.app.engine.CampaignPool
+import com.debubble.app.engine.Care
+import com.debubble.app.engine.CareLibrary
+import com.debubble.app.engine.Domain
+import com.debubble.app.engine.Family
+import com.debubble.app.engine.ItemCatalogue
 import com.debubble.app.engine.Curriculum
 import com.debubble.app.engine.LearnCurriculum
 import com.debubble.app.engine.RemediationPool
@@ -110,6 +115,31 @@ class Repository(private val context: Context) {
         val days = c.course.map { it.day }.toSet()
         require(days == (1..30).toSet()) { "the Learn course has gaps: ${(1..30).toSet() - days}" }
         c
+    }
+
+    /**
+     * The care routines. Same contract as the curriculum: an empty domain would leave a card
+     * on the dashboard with nothing behind it, so it fails loudly instead.
+     */
+    fun loadCare(): CareLibrary = readAsset("care/routines.json") { raw ->
+        val lib = json.decodeFromString<CareLibrary>(raw)
+        Domain.order.forEach { d ->
+            require(lib.routines(d).isNotEmpty()) { "no ${d.name} routines" }
+            require(lib.routines(d).count { it.starter } == 1) { "${d.name} needs one starter" }
+            require(lib.info(d).levels.size == Care.MAX_DIRT + 1) { "${d.name} level names" }
+        }
+        lib
+    }
+
+    /** The item atlas index: every item, its family and spot, and where the mess goes. */
+    fun loadItems(): ItemCatalogue = readAsset("pixel/items.json") { raw ->
+        val cat = json.decodeFromString<ItemCatalogue>(raw)
+        Family.entries.forEach { f ->
+            require(cat.family(f).isNotEmpty()) { "no ${f.name} items" }
+        }
+        listOf("me0", "me1", "me2", "me3", "heart_sun", "heart_cloud", "heart_storm", "sparkle")
+            .forEach { require(cat.fx(it) != null) { "missing sprite $it" } }
+        cat
     }
 
     private fun <T> readAsset(path: String, parse: (String) -> T): T {

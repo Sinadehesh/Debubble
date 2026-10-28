@@ -11,7 +11,7 @@ generated rather than drawn:
   - Every hue family is a ramp of three (light / mid / dark) with a hue shift along it —
     shadows go cooler and more saturated, highlights go warmer. Three values is enough to
     read as volume at this size and few enough to stay crisp.
-  - Limited count. 26 colours total. A big palette at 16x16 just reads as mush.
+  - Limited count. 29 colours total. A big palette at 16x16 just reads as mush.
   - One light direction for everything: upper left.
 """
 
@@ -64,6 +64,12 @@ PALETTE = {
 
     # Near-white, used sparingly for specular pops and paper.
     "i": ("#FFFDF5", "paper"),
+
+    # Weather indoors: the Heart cloud. Lilac-grey rather than grey, so even a storm cloud
+    # sits in the warm family and reads as a mood rather than a warning.
+    "q": ("#E4DDF0", "cloud light"),
+    "Q": ("#B3A8C9", "cloud"),
+    "x": ("#82769C", "cloud dark"),
 }
 
 ORDER = list(PALETTE.keys())

@@ -43,6 +43,12 @@ object Progress {
     const val XP_MISSION = 30
     const val XP_REP = 5
 
+    /**
+     * Looking after your body, room or heart. Less than a challenge, because it is smaller
+     * and daily, but never nothing: the routines are the foundation the rest stands on.
+     */
+    const val XP_CARE = 10
+
     /** Friction pays XP too — it is output, not failure, and the app never scores it lower. */
     const val XP_FRICTION = 15
 

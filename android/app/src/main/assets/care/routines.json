@@ -1,0 +1,518 @@
+{
+ "rules": {
+  "daysPerLevel": {
+   "BODY": 1,
+   "ROOM": 2,
+   "HEART": 2
+  },
+  "maxDirt": 3,
+  "rewardAt": [
+   1,
+   3,
+   6,
+   10,
+   15,
+   21,
+   30,
+   45,
+   66
+  ],
+  "automaticityDays": 66
+ },
+ "domains": [
+  {
+   "id": "BODY",
+   "name": "Body",
+   "blurb": "Washing, water, light, movement, sleep, food. The basics are the first thing to go when life gets heavy, and the first thing that helps.",
+   "levels": [
+    "Fresh",
+    "Fine",
+    "Running low",
+    "Needs care"
+   ],
+   "checkin": [
+    "Washed, fed and rested",
+    "Mostly looked after",
+    "Skipped a few basics",
+    "It has been a while"
+   ]
+  },
+  {
+   "id": "ROOM",
+   "name": "Room",
+   "blurb": "The space you live in. Clutter quietly costs attention and calm, and a reset takes minutes, not a weekend.",
+   "levels": [
+    "Sparkling",
+    "Lived-in",
+    "Cluttered",
+    "Messy"
+   ],
+   "checkin": [
+    "Clear and calm",
+    "A few things out",
+    "Piles building up",
+    "Hard to see the floor"
+   ]
+  },
+  {
+   "id": "HEART",
+   "name": "Heart",
+   "blurb": "What you are carrying. Feelings need tending the way rooms do: named, aired, and shared.",
+   "levels": [
+    "Sunny",
+    "Okay",
+    "Cloudy",
+    "Stormy"
+   ],
+   "checkin": [
+    "Light and clear",
+    "A bit on my mind",
+    "Heavy, carrying stuff",
+    "A lot going on"
+   ]
+  }
+ ],
+ "routines": [
+  {
+   "id": "wash",
+   "domain": "BODY",
+   "title": "Wash up",
+   "tiny": "Brush your teeth and splash your face with cold water.",
+   "standard": "Have a shower. Getting in is the whole battle, and quick counts.",
+   "deep": "Shower, put on clean clothes, and change your pillowcase.",
+   "tinyMin": 2,
+   "standardMin": 10,
+   "deepMin": 25,
+   "why": "When energy is low, looking after the body is usually the first thing to go, and going without quietly feeds the low feeling. Behavioural activation rebuilds these routine activities first, because action tends to come before motivation, not after.",
+   "source": "Martell, Dimidjian & Herman-Dunn, 2010, Behavioral Activation for Depression; Cuijpers et al., 2007, Clinical Psychology Review (meta-analysis)",
+   "ease": "Put your towel and tomorrow's clothes out tonight, so the first step is already done.",
+   "anchors": [
+    "I get out of bed in the morning",
+    "I get home in the evening",
+    "I put my phone on charge for the night"
+   ],
+   "celebrate": "Look in the mirror and say \"better\". You are.",
+   "starter": true
+  },
+  {
+   "id": "water",
+   "domain": "BODY",
+   "title": "Water first",
+   "tiny": "Drink one full glass of water.",
+   "standard": "A glass now, and a filled bottle that comes with you for the day.",
+   "deep": "Water now, a bottle with you, and a real meal eaten sitting down.",
+   "tinyMin": 1,
+   "standardMin": 3,
+   "deepMin": 20,
+   "why": "Even mild dehydration, around 1.5% of body weight, lowered mood and made tasks feel harder in controlled studies. It is the cheapest fix in this whole app.",
+   "source": "Armstrong et al., 2012, Journal of Nutrition",
+   "ease": "Leave a full glass where you will see it first: by the bed, or by the kettle.",
+   "anchors": [
+    "I get out of bed in the morning",
+    "I switch the kettle on in the morning",
+    "I sit down where I work"
+   ],
+   "celebrate": "Put the glass down with a clink. One done.",
+   "starter": false
+  },
+  {
+   "id": "light",
+   "domain": "BODY",
+   "title": "Morning light",
+   "tiny": "Open the curtains and stand in the window light for two minutes.",
+   "standard": "Ten minutes outside in daylight within an hour of waking.",
+   "deep": "A twenty-minute walk outside in the morning, phone in your pocket.",
+   "tinyMin": 2,
+   "standardMin": 10,
+   "deepMin": 20,
+   "why": "Morning light is the strongest signal your body clock gets: it sets when you feel alert and when you get sleepy that night. Bright light treatment helps depression, not only the seasonal kind.",
+   "source": "Golden et al., 2005, American Journal of Psychiatry (meta-analysis)",
+   "ease": "Open the curtains before you pick up your phone. Leave your shoes by the door.",
+   "anchors": [
+    "I get out of bed in the morning",
+    "I put my coat on to go out",
+    "I finish my first drink of the day"
+   ],
+   "celebrate": "Face the light, eyes closed, one slow breath. That is the reward.",
+   "starter": false
+  },
+  {
+   "id": "move",
+   "domain": "BODY",
+   "title": "Move a little",
+   "tiny": "Move for two minutes: dance, stretch, march on the spot. Anything.",
+   "standard": "A fifteen-minute walk at a pace that warms you up.",
+   "deep": "Thirty minutes: a brisk walk, a jog, yoga, or some strength work.",
+   "tinyMin": 2,
+   "standardMin": 15,
+   "deepMin": 30,
+   "why": "Exercise works as a treatment for depression. A 2024 analysis of 218 trials found walking or jogging, yoga and strength training all helped. Harder helped more, but every kind counted.",
+   "source": "Noetel et al., 2024, BMJ (network meta-analysis)",
+   "ease": "Choose a song now for it. Put your trainers where you will trip over them.",
+   "anchors": [
+    "I get home in the evening",
+    "I close my laptop at the end of the day",
+    "I finish eating lunch"
+   ],
+   "celebrate": "Shake your hands out and say \"that counts\". It does.",
+   "starter": false
+  },
+  {
+   "id": "sleep",
+   "domain": "BODY",
+   "title": "Wind down",
+   "tiny": "Plug your phone in across the room before bed.",
+   "standard": "Lights out within half an hour of the same time as last night.",
+   "deep": "Screens off an hour before, lights low, same bedtime and same wake time.",
+   "tinyMin": 1,
+   "standardMin": 5,
+   "deepMin": 60,
+   "why": "How regular your sleep is matters as much as how long it is. In a study of over 60,000 people, a steady sleep schedule predicted long-term health more strongly than sleep length did.",
+   "source": "Windred et al., 2024, Sleep",
+   "ease": "Set a bedtime alarm, not only a wake-up one.",
+   "anchors": [
+    "I put my phone on charge for the night",
+    "I put my toothbrush down at night",
+    "I turn the living room lights off"
+   ],
+   "celebrate": "Pull the covers up and say \"good night, me\".",
+   "starter": false
+  },
+  {
+   "id": "fuel",
+   "domain": "BODY",
+   "title": "Eat something real",
+   "tiny": "Eat one piece of fruit or a handful of vegetables.",
+   "standard": "A proper meal, sitting down, not in front of a screen.",
+   "deep": "Cook something simple from scratch and keep a portion for tomorrow.",
+   "tinyMin": 2,
+   "standardMin": 20,
+   "deepMin": 45,
+   "why": "In a randomised trial, people with depression who improved their diet recovered more often than those given social support alone. In daily diaries, days with more fruit and vegetables came before days of better mood.",
+   "source": "Jacka et al., 2017, BMC Medicine (SMILES trial); White, Horwath & Conner, 2013, British Journal of Health Psychology",
+   "ease": "Put a fruit bowl where your keys go.",
+   "anchors": [
+    "I finish my first drink of the day",
+    "I get home in the evening",
+    "I sit down for lunch"
+   ],
+   "celebrate": "Say \"fed\" out loud. Bodies like being listened to.",
+   "starter": false
+  },
+  {
+   "id": "reset",
+   "domain": "ROOM",
+   "title": "The five-pile reset",
+   "tiny": "Pick up five things and put them where they live.",
+   "standard": "Ten minutes, one room, in five piles: rubbish, dishes, laundry, things with a home, things without one.",
+   "deep": "The whole room in the five piles, then wipe every surface.",
+   "tinyMin": 2,
+   "standardMin": 10,
+   "deepMin": 40,
+   "why": "Clutter competes for attention: brain imaging shows objects in a crowded scene fighting for representation in visual cortex. People who described their homes as cluttered and unfinished also had flatter daily stress-hormone curves, a pattern linked to poorer health.",
+   "source": "Method: KC Davis, 2022, How to Keep House While Drowning. Evidence: McMains & Kastner, 2011, Journal of Neuroscience; Saxbe & Repetti, 2010, Personality and Social Psychology Bulletin",
+   "ease": "Start with rubbish, the easiest decision there is. Set a timer and stop when it rings.",
+   "anchors": [
+    "I get home in the evening",
+    "I put my plate in the sink this evening",
+    "I close my laptop at the end of the day"
+   ],
+   "celebrate": "Stand in the doorway and look for three seconds. You did that.",
+   "starter": true
+  },
+  {
+   "id": "bed",
+   "domain": "ROOM",
+   "title": "Make the bed",
+   "tiny": "Pull the duvet up and straighten the pillow.",
+   "standard": "Make the bed properly and clear everything off it.",
+   "deep": "Strip it and put clean sheets on.",
+   "tinyMin": 1,
+   "standardMin": 3,
+   "deepMin": 15,
+   "why": "Nobody has trialled bed-making itself; the case for it is that it is the smallest finished thing in a day. In 12,000 diary entries, the days people felt best were the days they made progress, even small progress.",
+   "source": "Amabile & Kramer, 2011, The Progress Principle",
+   "ease": "Do it before you leave the bedroom, while you are still standing next to it.",
+   "anchors": [
+    "I get out of bed in the morning",
+    "I turn my alarm off in the morning",
+    "I get dressed in the morning"
+   ],
+   "celebrate": "Pat the pillow twice. Done is done.",
+   "starter": false
+  },
+  {
+   "id": "dishes",
+   "domain": "ROOM",
+   "title": "Dishes home",
+   "tiny": "Carry every cup and plate in your room to the kitchen.",
+   "standard": "Wash or load everything in the sink.",
+   "deep": "Clear the sink, wipe the counters, and take the bin out.",
+   "tinyMin": 2,
+   "standardMin": 10,
+   "deepMin": 25,
+   "why": "Clutter at home was linked to a weaker sense of home as a refuge, and through that to lower wellbeing. Cups and plates are the clutter that comes back every day, so they are the best place to start.",
+   "source": "Roster, Ferrari & Jurkat, 2016, Journal of Environmental Psychology",
+   "ease": "Keep one tray by your bed so every cup goes back in a single trip.",
+   "anchors": [
+    "I put my plate in the sink this evening",
+    "I switch the kettle on in the morning",
+    "I finish eating lunch"
+   ],
+   "celebrate": "Dry your hands with a flourish. The sink is yours again.",
+   "starter": false
+  },
+  {
+   "id": "surface",
+   "domain": "ROOM",
+   "title": "One clear surface",
+   "tiny": "Clear one small surface: the bedside table, or one shelf.",
+   "standard": "Clear and wipe your desk or table completely.",
+   "deep": "Every flat surface in the room, clear and wiped.",
+   "tinyMin": 2,
+   "standardMin": 10,
+   "deepMin": 30,
+   "why": "A clear surface gives your eyes somewhere to rest. When a scene is crowded, objects compete for the brain's limited attention, so clearing the place you work or eat reduces that competition where you spend the most time.",
+   "source": "McMains & Kastner, 2011, Journal of Neuroscience",
+   "ease": "Pick the surface you look at most. Things without a home go in one box, sorted later.",
+   "anchors": [
+    "I sit down where I work",
+    "I close my laptop at the end of the day",
+    "I get home in the evening"
+   ],
+   "celebrate": "Run your hand across the clear bit. Smooth.",
+   "starter": false
+  },
+  {
+   "id": "laundry",
+   "domain": "ROOM",
+   "title": "Laundry loop",
+   "tiny": "Put every piece of dirty clothing into one basket.",
+   "standard": "Start one wash.",
+   "deep": "Wash, dry, fold and put away one full load.",
+   "tinyMin": 2,
+   "standardMin": 5,
+   "deepMin": 45,
+   "why": "Chores get put off when they feel huge and vague. Across hundreds of procrastination studies, the more aversive and unclear a task, the longer it waits; one concrete next step is what lowers the bar to starting.",
+   "source": "Steel, 2007, Psychological Bulletin (meta-analysis)",
+   "ease": "Put the basket exactly where clothes land now. Move the basket, not the habit.",
+   "anchors": [
+    "I get undressed at night",
+    "I get home in the evening",
+    "I turn the shower off"
+   ],
+   "celebrate": "Throw the last sock in like a basketball. Swish.",
+   "starter": false
+  },
+  {
+   "id": "air",
+   "domain": "ROOM",
+   "title": "Air it out",
+   "tiny": "Open a window wide for two minutes.",
+   "standard": "Window open for ten minutes while you take the rubbish out.",
+   "deep": "Window open, rubbish out, and a quick sweep or hoover of the floor.",
+   "tinyMin": 2,
+   "standardMin": 10,
+   "deepMin": 25,
+   "why": "Stale air is not only unpleasant. In controlled experiments, people scored lower on decision-making tests when indoor CO2 was higher, and better when ventilation improved.",
+   "source": "Satish et al., 2012, Environmental Health Perspectives; Allen et al., 2016, Environmental Health Perspectives",
+   "ease": "Open it the moment you walk into the room, before anything else.",
+   "anchors": [
+    "I get out of bed in the morning",
+    "I get home in the evening",
+    "I walk into my room after work"
+   ],
+   "celebrate": "One big breath of the new air. Ahh.",
+   "starter": false
+  },
+  {
+   "id": "closing",
+   "domain": "ROOM",
+   "title": "Closing shift",
+   "tiny": "Put tomorrow's first thing by the door: keys, bag, or bottle.",
+   "standard": "Ten minutes of closing duties: kitchen reset, tomorrow's clothes laid out.",
+   "deep": "Closing duties, plus a five-minute plan for tomorrow.",
+   "tinyMin": 1,
+   "standardMin": 10,
+   "deepMin": 20,
+   "why": "Habits are cued by your surroundings. Setting tomorrow's space up tonight makes the right action the easy one in the morning, and changing the context is one of the most reliable ways to change what people do.",
+   "source": "Wood & Rünger, 2016, Annual Review of Psychology",
+   "ease": "Same point every night, like a shop closing up.",
+   "anchors": [
+    "I put my toothbrush down at night",
+    "I turn the living room lights off",
+    "I put my phone on charge for the night"
+   ],
+   "celebrate": "Flick the light off and say \"closed\". Like a shopkeeper.",
+   "starter": false
+  },
+  {
+   "id": "name",
+   "domain": "HEART",
+   "title": "Name it",
+   "tiny": "Finish the sentence \"Right now I feel ___\". One word is enough.",
+   "standard": "Three lines: what you feel, where you feel it in your body, and what it is asking for.",
+   "deep": "Fifteen minutes of writing about what is really on your mind, without editing.",
+   "tinyMin": 1,
+   "standardMin": 5,
+   "deepMin": 15,
+   "why": "Putting a feeling into words calms it. In brain scans, naming an emotion lowered activity in the amygdala, the brain's alarm system. Writing about what troubles you has smaller but real benefits over time.",
+   "source": "Lieberman et al., 2007, Psychological Science; Frattaroli, 2006, Psychological Bulletin (meta-analysis)",
+   "ease": "Keep one note open for this. Typing a single word counts.",
+   "anchors": [
+    "I put my phone on charge for the night",
+    "I sit down after getting home",
+    "I finish eating lunch"
+   ],
+   "celebrate": "Hand on your chest: \"got it\".",
+   "starter": true
+  },
+  {
+   "id": "sigh",
+   "domain": "HEART",
+   "title": "Slow breathing",
+   "tiny": "Three cyclic sighs: two breaths in through the nose, one long breath out.",
+   "standard": "Five minutes of cyclic sighing, eyes closed if you like.",
+   "deep": "Five minutes of cyclic sighing, then a ten-minute walk without your phone.",
+   "tinyMin": 1,
+   "standardMin": 5,
+   "deepMin": 15,
+   "why": "In a month-long randomised trial, five minutes a day of cyclic sighing improved mood and slowed resting breathing more than mindfulness meditation did. The long exhale is the part that settles you.",
+   "source": "Balban et al., 2023, Cell Reports Medicine",
+   "ease": "Do it sitting exactly where you are. No app, no mat.",
+   "anchors": [
+    "I sit down after getting home",
+    "I switch the kettle on in the morning",
+    "I lie down in bed at night"
+   ],
+   "celebrate": "Let your shoulders drop one more centimetre. There.",
+   "starter": false
+  },
+  {
+   "id": "dump",
+   "domain": "HEART",
+   "title": "Brain dump",
+   "tiny": "Write down the one thing nagging you most.",
+   "standard": "List everything on your mind, then write the very next step for one item.",
+   "deep": "The full list, a next step for each, and the top three put in your calendar.",
+   "tinyMin": 2,
+   "standardMin": 10,
+   "deepMin": 25,
+   "why": "Unfinished tasks keep intruding on your thoughts, but making a specific plan for them stopped the intrusions, even before the task was done. Writing a to-do list at bedtime also helped people fall asleep faster.",
+   "source": "Masicampo & Baumeister, 2011, Journal of Personality and Social Psychology; Scullin et al., 2018, Journal of Experimental Psychology: General",
+   "ease": "Same notebook or note every time, so everything has one home.",
+   "anchors": [
+    "I close my laptop at the end of the day",
+    "I put my phone on charge for the night",
+    "I sit down where I work"
+   ],
+   "celebrate": "Close the notebook firmly. It is out of your head now.",
+   "starter": false
+  },
+  {
+   "id": "reach",
+   "domain": "HEART",
+   "title": "Reach out",
+   "tiny": "Send someone a one-line message: \"Saw this and thought of you.\"",
+   "standard": "Send a voice note, or make a short call to someone you like.",
+   "deep": "Make a real plan to see someone: a day, a time and a place.",
+   "tinyMin": 2,
+   "standardMin": 10,
+   "deepMin": 15,
+   "why": "People consistently underestimate how much others appreciate hearing from them. And strong social ties are linked to longer life about as strongly as not smoking is.",
+   "source": "Liu, Rim, Min & Min, 2023, Journal of Personality and Social Psychology; Holt-Lunstad, Smith & Layton, 2010, PLoS Medicine",
+   "ease": "Pin three people to the top of your messages, so the choice is already made.",
+   "anchors": [
+    "I sit down on the bus or train",
+    "I finish eating lunch",
+    "I get home in the evening"
+   ],
+   "celebrate": "Put the phone down and smile at it. Someone just got a nice surprise.",
+   "starter": false
+  },
+  {
+   "id": "kind",
+   "domain": "HEART",
+   "title": "Kind voice",
+   "tiny": "Hand on your chest, and say: \"This is hard, and I am doing my best.\"",
+   "standard": "Write to yourself the way you would write to a friend in exactly your situation.",
+   "deep": "That letter, then one kind thing for yourself you would normally save for someone else.",
+   "tinyMin": 1,
+   "standardMin": 10,
+   "deepMin": 30,
+   "why": "Being kind to yourself after a setback makes you more likely to try again, not less. In experiments, people encouraged to be self-compassionate after a failure studied longer and were more motivated to improve.",
+   "source": "Breines & Chen, 2012, Personality and Social Psychology Bulletin",
+   "ease": "Use the words you would say to a friend, not the ones you usually say to yourself.",
+   "anchors": [
+    "I notice I am being hard on myself",
+    "I sit down after getting home",
+    "I lie down in bed at night"
+   ],
+   "celebrate": "Give yourself the nod you would give a friend.",
+   "starter": false
+  },
+  {
+   "id": "good",
+   "domain": "HEART",
+   "title": "Three good things",
+   "tiny": "Name one thing that went okay today, out loud or in writing.",
+   "standard": "Write three good things from today, and why each one happened.",
+   "deep": "Write a thank-you letter to someone who helped you. Send it if you want to.",
+   "tinyMin": 1,
+   "standardMin": 10,
+   "deepMin": 25,
+   "why": "Writing three good things and their causes each night raised happiness and lowered depressive symptoms for months in a randomised trial. Later studies find the effect is smaller than first reported, but it is real and it is cheap.",
+   "source": "Seligman, Steen, Park & Peterson, 2005, American Psychologist",
+   "ease": "Do it in bed with the light off. Say them to the ceiling.",
+   "anchors": [
+    "I lie down in bed at night",
+    "I put my phone on charge for the night",
+    "I finish eating dinner"
+   ],
+   "celebrate": "Smile at the third one. You noticed it.",
+   "starter": false
+  },
+  {
+   "id": "worry",
+   "domain": "HEART",
+   "title": "Worry window",
+   "tiny": "When a worry turns up, write it down and tell it \"later\".",
+   "standard": "Fifteen minutes of deliberate worrying, same time and place, then stop.",
+   "deep": "Your worry window, then one small action on the worry you can actually act on.",
+   "tinyMin": 1,
+   "standardMin": 15,
+   "deepMin": 25,
+   "why": "Postponing worry to one fixed daily window, instead of fighting it all day, reduced worry and anxiety in a controlled trial. The worry gets its time; it just stops getting all of yours.",
+   "source": "McGowan & Behar, 2013, Behavior Modification",
+   "ease": "Choose the window now: same chair, same time, and not in bed.",
+   "anchors": [
+    "I notice I am worrying",
+    "I finish eating dinner",
+    "I sit down after getting home"
+   ],
+   "celebrate": "Shut the window: \"that is enough for today\".",
+   "starter": false
+  },
+  {
+   "id": "savour",
+   "domain": "HEART",
+   "title": "Something you enjoy",
+   "tiny": "Stop for thirty seconds and really notice one nice thing: a taste, a sound, the light.",
+   "standard": "Do one small thing only because you enjoy it, and do it on purpose.",
+   "deep": "Plan something to look forward to this week and put it in the calendar.",
+   "tinyMin": 1,
+   "standardMin": 20,
+   "deepMin": 15,
+   "why": "Scheduling enjoyable things is the core of behavioural activation, one of the best-supported treatments for depression. Low mood says wait until you feel like it; the evidence says do it first, and the feeling tends to follow.",
+   "source": "Cuijpers, van Straten & Warmerdam, 2007, Clinical Psychology Review (meta-analysis)",
+   "ease": "Write a list of ten tiny pleasures now, while you can think of them.",
+   "anchors": [
+    "I finish eating lunch",
+    "I get home in the evening",
+    "I close my laptop at the end of the day"
+   ],
+   "celebrate": "Say \"mm\" like you mean it.",
+   "starter": false
+  }
+ ]
+}

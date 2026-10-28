@@ -1,7 +1,7 @@
 {
  "atlas": "pixel/items.webp",
  "atlasWidth": 256,
- "atlasHeight": 31,
+ "atlasHeight": 57,
  "room": {
   "w": 160,
   "h": 100,
@@ -43,229 +43,803 @@
   "n": "#2E6F75",
   "p": "#F3B8C8",
   "P": "#D97B9B",
-  "i": "#FFFDF5"
+  "i": "#FFFDF5",
+  "q": "#E4DDF0",
+  "Q": "#B3A8C9",
+  "x": "#82769C"
  },
+ "families": [
+  "BODY",
+  "ROOM",
+  "HEART",
+  "WORLD"
+ ],
  "items": [
-  {
-   "id": "lamp",
-   "label": "Floor lamp",
-   "anchor": "floor",
-   "unlock": {
-    "currency": "level",
-    "amount": 2
-   },
-   "x": 0,
-   "y": 0,
-   "w": 14,
-   "h": 24
-  },
-  {
-   "id": "guitar",
-   "label": "Guitar",
-   "anchor": "floor",
-   "unlock": {
-    "currency": "level",
-    "amount": 8
-   },
-   "x": 15,
-   "y": 0,
-   "w": 12,
-   "h": 24
-  },
   {
    "id": "plant",
    "label": "Monstera",
+   "family": "HEART",
    "anchor": "floor",
-   "unlock": {
-    "currency": "rungs",
-    "amount": 0
+   "flat": false,
+   "first": true,
+   "spot": {
+    "x": 56,
+    "b": 72
    },
-   "x": 28,
+   "x": 36,
    "y": 0,
    "w": 16,
    "h": 20
   },
   {
-   "id": "cat",
-   "label": "Sleeping cat",
+   "id": "lamp",
+   "label": "Floor lamp",
+   "family": "ROOM",
    "anchor": "floor",
-   "unlock": {
-    "currency": "friction",
-    "amount": 8
+   "flat": false,
+   "first": true,
+   "spot": {
+    "x": 40,
+    "b": 70
    },
-   "x": 45,
+   "x": 13,
    "y": 0,
-   "w": 20,
-   "h": 12
+   "w": 14,
+   "h": 24
   },
   {
-   "id": "clock",
-   "label": "Clock",
-   "anchor": "wall",
-   "unlock": {
-    "currency": "level",
-    "amount": 3
+   "id": "rug",
+   "label": "Round rug",
+   "family": "ROOM",
+   "anchor": "floor",
+   "flat": true,
+   "first": false,
+   "spot": {
+    "x": 52,
+    "b": 92
    },
-   "x": 66,
-   "y": 0,
-   "w": 12,
+   "x": 224,
+   "y": 25,
+   "w": 24,
+   "h": 10
+  },
+  {
+   "id": "cat",
+   "label": "Sleeping cat",
+   "family": "HEART",
+   "anchor": "floor",
+   "flat": false,
+   "first": false,
+   "spot": {
+    "x": 56,
+    "b": 89
+   },
+   "x": 77,
+   "y": 25,
+   "w": 20,
    "h": 12
   },
   {
    "id": "beanbag",
    "label": "Beanbag",
+   "family": "ROOM",
    "anchor": "floor",
-   "unlock": {
-    "currency": "rungs",
-    "amount": 20
+   "flat": false,
+   "first": false,
+   "spot": {
+    "x": 108,
+    "b": 88
    },
-   "x": 79,
-   "y": 0,
+   "x": 143,
+   "y": 25,
    "w": 16,
    "h": 11
   },
   {
+   "id": "books",
+   "label": "Book stack",
+   "family": "WORLD",
+   "anchor": "floor",
+   "flat": false,
+   "first": false,
+   "spot": {
+    "x": 100,
+    "b": 97
+   },
+   "x": 86,
+   "y": 41,
+   "w": 13,
+   "h": 7
+  },
+  {
+   "id": "guitar",
+   "label": "Guitar",
+   "family": "WORLD",
+   "anchor": "floor",
+   "flat": false,
+   "first": false,
+   "spot": {
+    "x": 147,
+    "b": 84
+   },
+   "x": 0,
+   "y": 0,
+   "w": 12,
+   "h": 24
+  },
+  {
    "id": "record",
    "label": "Record player",
+   "family": "HEART",
    "anchor": "floor",
-   "unlock": {
-    "currency": "friction",
-    "amount": 16
+   "flat": false,
+   "first": false,
+   "spot": {
+    "x": 90,
+    "b": 72
    },
-   "x": 96,
-   "y": 0,
+   "x": 181,
+   "y": 25,
    "w": 15,
    "h": 11
   },
   {
    "id": "poster",
    "label": "Poster",
+   "family": "HEART",
    "anchor": "wall",
-   "unlock": {
-    "currency": "rungs",
-    "amount": 0
+   "flat": false,
+   "first": false,
+   "spot": {
+    "x": 128,
+    "b": 40
    },
-   "x": 112,
-   "y": 0,
+   "x": 168,
+   "y": 25,
    "w": 12,
    "h": 11
   },
   {
-   "id": "rug",
-   "label": "Round rug",
-   "anchor": "floor",
-   "unlock": {
-    "currency": "rungs",
-    "amount": 6
+   "id": "clock",
+   "label": "Clock",
+   "family": "ROOM",
+   "anchor": "wall",
+   "flat": false,
+   "first": false,
+   "spot": {
+    "x": 112,
+    "b": 18
    },
-   "x": 125,
-   "y": 0,
-   "w": 24,
-   "h": 10
+   "x": 98,
+   "y": 25,
+   "w": 12,
+   "h": 12
   },
   {
    "id": "shelf",
    "label": "Shelf",
+   "family": "ROOM",
    "anchor": "wall",
-   "unlock": {
-    "currency": "rungs",
-    "amount": 45
+   "flat": false,
+   "first": false,
+   "spot": {
+    "x": 6,
+    "b": 34
    },
-   "x": 150,
-   "y": 0,
+   "x": 68,
+   "y": 41,
    "w": 17,
    "h": 8
   },
   {
+   "id": "lights",
+   "label": "String lights",
+   "family": "HEART",
+   "anchor": "wall",
+   "flat": false,
+   "first": false,
+   "spot": {
+    "x": 68,
+    "b": 9
+   },
+   "x": 183,
+   "y": 41,
+   "w": 22,
+   "h": 6
+  },
+  {
    "id": "photo",
    "label": "Framed photo",
+   "family": "HEART",
    "anchor": "wall",
-   "unlock": {
-    "currency": "rungs",
-    "amount": 90
+   "flat": false,
+   "first": false,
+   "spot": {
+    "x": 26,
+    "b": 28
    },
-   "x": 168,
-   "y": 0,
+   "x": 58,
+   "y": 41,
    "w": 9,
    "h": 8
   },
   {
    "id": "pennant",
    "label": "Pennant",
+   "family": "WORLD",
    "anchor": "wall",
-   "unlock": {
-    "currency": "level",
-    "amount": 10
+   "flat": false,
+   "first": false,
+   "spot": {
+    "x": 142,
+    "b": 22
    },
-   "x": 178,
-   "y": 0,
+   "x": 44,
+   "y": 41,
    "w": 13,
    "h": 8
-  },
-  {
-   "id": "mug",
-   "label": "Mug",
-   "anchor": "floor",
-   "unlock": {
-    "currency": "rungs",
-    "amount": 0
-   },
-   "x": 192,
-   "y": 0,
-   "w": 9,
-   "h": 8
-  },
-  {
-   "id": "cushion",
-   "label": "Cushion",
-   "anchor": "floor",
-   "unlock": {
-    "currency": "rungs",
-    "amount": 0
-   },
-   "x": 202,
-   "y": 0,
-   "w": 12,
-   "h": 8
-  },
-  {
-   "id": "books",
-   "label": "Book stack",
-   "anchor": "floor",
-   "unlock": {
-    "currency": "level",
-    "amount": 5
-   },
-   "x": 215,
-   "y": 0,
-   "w": 13,
-   "h": 7
   },
   {
    "id": "window_box",
    "label": "Window box",
+   "family": "WORLD",
    "anchor": "wall",
-   "unlock": {
-    "currency": "rungs",
-    "amount": 150
+   "flat": false,
+   "first": false,
+   "spot": {
+    "x": 70,
+    "b": 53
    },
-   "x": 229,
-   "y": 0,
+   "x": 157,
+   "y": 41,
    "w": 17,
    "h": 7
   },
   {
-   "id": "lights",
-   "label": "String lights",
+   "id": "cushion",
+   "label": "Cushion",
+   "family": "HEART",
+   "anchor": "floor",
+   "flat": false,
+   "first": false,
+   "spot": {
+    "x": 82,
+    "b": 88
+   },
+   "x": 18,
+   "y": 41,
+   "w": 12,
+   "h": 8
+  },
+  {
+   "id": "bed",
+   "label": "Bed",
+   "family": "BODY",
+   "anchor": "floor",
+   "flat": false,
+   "first": true,
+   "spot": {
+    "x": 2,
+    "b": 76
+   },
+   "x": 197,
+   "y": 0,
+   "w": 38,
+   "h": 17
+  },
+  {
+   "id": "water",
+   "label": "Water jug",
+   "family": "BODY",
+   "anchor": "floor",
+   "flat": false,
+   "first": false,
+   "spot": {
+    "x": 116,
+    "b": 95
+   },
+   "x": 0,
+   "y": 41,
+   "w": 7,
+   "h": 10
+  },
+  {
+   "id": "fruit",
+   "label": "Fruit bowl",
+   "family": "BODY",
+   "anchor": "floor",
+   "flat": false,
+   "first": false,
+   "spot": {
+    "x": 124,
+    "b": 98
+   },
+   "x": 31,
+   "y": 41,
+   "w": 12,
+   "h": 8
+  },
+  {
+   "id": "sneakers",
+   "label": "Trainers",
+   "family": "BODY",
+   "anchor": "floor",
+   "flat": false,
+   "first": false,
+   "spot": {
+    "x": 30,
+    "b": 98
+   },
+   "x": 206,
+   "y": 41,
+   "w": 15,
+   "h": 6
+  },
+  {
+   "id": "yoga_mat",
+   "label": "Yoga mat",
+   "family": "BODY",
+   "anchor": "floor",
+   "flat": true,
+   "first": false,
+   "spot": {
+    "x": 4,
+    "b": 97
+   },
+   "x": 0,
+   "y": 52,
+   "w": 26,
+   "h": 5
+  },
+  {
+   "id": "dumbbells",
+   "label": "Dumbbells",
+   "family": "BODY",
+   "anchor": "floor",
+   "flat": false,
+   "first": false,
+   "spot": {
+    "x": 14,
+    "b": 88
+   },
+   "x": 112,
+   "y": 41,
+   "w": 13,
+   "h": 7
+  },
+  {
+   "id": "mirror",
+   "label": "Mirror",
+   "family": "BODY",
    "anchor": "wall",
-   "unlock": {
-    "currency": "friction",
-    "amount": 4
+   "flat": false,
+   "first": false,
+   "spot": {
+    "x": 46,
+    "b": 40
+   },
+   "x": 18,
+   "y": 25,
+   "w": 11,
+   "h": 15
+  },
+  {
+   "id": "towel",
+   "label": "Towel",
+   "family": "BODY",
+   "anchor": "wall",
+   "flat": false,
+   "first": false,
+   "spot": {
+    "x": 100,
+    "b": 44
+   },
+   "x": 64,
+   "y": 25,
+   "w": 12,
+   "h": 13
+  },
+  {
+   "id": "slippers",
+   "label": "Slippers",
+   "family": "BODY",
+   "anchor": "floor",
+   "flat": false,
+   "first": false,
+   "spot": {
+    "x": 48,
+    "b": 98
+   },
+   "x": 50,
+   "y": 52,
+   "w": 13,
+   "h": 4
+  },
+  {
+   "id": "basket",
+   "label": "Laundry basket",
+   "family": "ROOM",
+   "anchor": "floor",
+   "flat": false,
+   "first": false,
+   "spot": {
+    "x": 30,
+    "b": 86
+   },
+   "x": 129,
+   "y": 25,
+   "w": 13,
+   "h": 11
+  },
+  {
+   "id": "bin",
+   "label": "Bin",
+   "family": "ROOM",
+   "anchor": "floor",
+   "flat": false,
+   "first": false,
+   "spot": {
+    "x": 150,
+    "b": 95
+   },
+   "x": 197,
+   "y": 25,
+   "w": 9,
+   "h": 10
+  },
+  {
+   "id": "broom",
+   "label": "Broom",
+   "family": "ROOM",
+   "anchor": "floor",
+   "flat": false,
+   "first": false,
+   "spot": {
+    "x": 153,
+    "b": 74
+   },
+   "x": 28,
+   "y": 0,
+   "w": 7,
+   "h": 21
+  },
+  {
+   "id": "boxes",
+   "label": "Storage boxes",
+   "family": "ROOM",
+   "anchor": "floor",
+   "flat": false,
+   "first": false,
+   "spot": {
+    "x": 136,
+    "b": 72
    },
    "x": 0,
    "y": 25,
-   "w": 22,
-   "h": 6
+   "w": 17,
+   "h": 15
+  },
+  {
+   "id": "desk",
+   "label": "Journal desk",
+   "family": "HEART",
+   "anchor": "floor",
+   "flat": false,
+   "first": false,
+   "spot": {
+    "x": 108,
+    "b": 74
+   },
+   "x": 53,
+   "y": 0,
+   "w": 26,
+   "h": 19
+  },
+  {
+   "id": "candle",
+   "label": "Candle",
+   "family": "HEART",
+   "anchor": "floor",
+   "flat": false,
+   "first": false,
+   "spot": {
+    "x": 92,
+    "b": 98
+   },
+   "x": 160,
+   "y": 25,
+   "w": 7,
+   "h": 11
+  },
+  {
+   "id": "map",
+   "label": "World map",
+   "family": "WORLD",
+   "anchor": "wall",
+   "flat": false,
+   "first": true,
+   "spot": {
+    "x": 122,
+    "b": 30
+   },
+   "x": 43,
+   "y": 25,
+   "w": 20,
+   "h": 13
+  },
+  {
+   "id": "backpack",
+   "label": "Backpack",
+   "family": "WORLD",
+   "anchor": "floor",
+   "flat": false,
+   "first": false,
+   "spot": {
+    "x": 96,
+    "b": 82
+   },
+   "x": 30,
+   "y": 25,
+   "w": 12,
+   "h": 13
+  },
+  {
+   "id": "globe",
+   "label": "Globe",
+   "family": "WORLD",
+   "anchor": "floor",
+   "flat": false,
+   "first": false,
+   "spot": {
+    "x": 136,
+    "b": 98
+   },
+   "x": 236,
+   "y": 0,
+   "w": 13,
+   "h": 17
+  },
+  {
+   "id": "bike",
+   "label": "Bike",
+   "family": "WORLD",
+   "anchor": "floor",
+   "flat": false,
+   "first": false,
+   "spot": {
+    "x": 118,
+    "b": 82
+   },
+   "x": 164,
+   "y": 0,
+   "w": 32,
+   "h": 18
+  },
+  {
+   "id": "postcards",
+   "label": "Postcards",
+   "family": "WORLD",
+   "anchor": "wall",
+   "flat": false,
+   "first": false,
+   "spot": {
+    "x": 8,
+    "b": 52
+   },
+   "x": 111,
+   "y": 25,
+   "w": 17,
+   "h": 12
   }
- ]
+ ],
+ "fx": [
+  {
+   "id": "cobweb",
+   "x": 8,
+   "y": 41,
+   "w": 9,
+   "h": 9
+  },
+  {
+   "id": "dishes",
+   "x": 100,
+   "y": 41,
+   "w": 11,
+   "h": 7
+  },
+  {
+   "id": "dust",
+   "x": 27,
+   "y": 52,
+   "w": 7,
+   "h": 4
+  },
+  {
+   "id": "heart_cloud",
+   "x": 126,
+   "y": 41,
+   "w": 14,
+   "h": 7
+  },
+  {
+   "id": "heart_storm",
+   "x": 207,
+   "y": 25,
+   "w": 16,
+   "h": 10
+  },
+  {
+   "id": "heart_sun",
+   "x": 175,
+   "y": 41,
+   "w": 7,
+   "h": 6
+  },
+  {
+   "id": "laundry",
+   "x": 141,
+   "y": 41,
+   "w": 15,
+   "h": 7
+  },
+  {
+   "id": "me0",
+   "x": 80,
+   "y": 0,
+   "w": 20,
+   "h": 19
+  },
+  {
+   "id": "me1",
+   "x": 101,
+   "y": 0,
+   "w": 20,
+   "h": 19
+  },
+  {
+   "id": "me2",
+   "x": 122,
+   "y": 0,
+   "w": 20,
+   "h": 19
+  },
+  {
+   "id": "me3",
+   "x": 143,
+   "y": 0,
+   "w": 20,
+   "h": 19
+  },
+  {
+   "id": "paper",
+   "x": 35,
+   "y": 52,
+   "w": 5,
+   "h": 4
+  },
+  {
+   "id": "peel",
+   "x": 41,
+   "y": 52,
+   "w": 8,
+   "h": 4
+  },
+  {
+   "id": "pizza",
+   "x": 222,
+   "y": 41,
+   "w": 14,
+   "h": 5
+  },
+  {
+   "id": "sock",
+   "x": 237,
+   "y": 41,
+   "w": 8,
+   "h": 5
+  },
+  {
+   "id": "sparkle",
+   "x": 246,
+   "y": 41,
+   "w": 5,
+   "h": 5
+  }
+ ],
+ "mess": [
+  {
+   "fx": "sock",
+   "x": 34,
+   "b": 92,
+   "level": 1
+  },
+  {
+   "fx": "paper",
+   "x": 116,
+   "b": 86,
+   "level": 1
+  },
+  {
+   "fx": "dishes",
+   "x": 92,
+   "b": 82,
+   "level": 2
+  },
+  {
+   "fx": "laundry",
+   "x": 54,
+   "b": 99,
+   "level": 2
+  },
+  {
+   "fx": "dust",
+   "x": 140,
+   "b": 76,
+   "level": 2
+  },
+  {
+   "fx": "dust",
+   "x": 70,
+   "b": 74,
+   "level": 2
+  },
+  {
+   "fx": "pizza",
+   "x": 122,
+   "b": 99,
+   "level": 3
+  },
+  {
+   "fx": "cobweb",
+   "x": 0,
+   "b": 9,
+   "level": 3
+  },
+  {
+   "fx": "paper",
+   "x": 20,
+   "b": 97,
+   "level": 3
+  },
+  {
+   "fx": "peel",
+   "x": 104,
+   "b": 93,
+   "level": 3
+  },
+  {
+   "fx": "sock",
+   "x": 144,
+   "b": 90,
+   "level": 3
+  }
+ ],
+ "sparkles": [
+  {
+   "x": 28,
+   "y": 20
+  },
+  {
+   "x": 138,
+   "y": 54
+  },
+  {
+   "x": 84,
+   "y": 66
+  },
+  {
+   "x": 12,
+   "y": 70
+  },
+  {
+   "x": 150,
+   "y": 34
+  }
+ ],
+ "me": {
+  "x": 72,
+  "b": 95,
+  "weatherDrop": 2
+ },
+ "maxDirt": 3
 }

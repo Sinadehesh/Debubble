@@ -16,6 +16,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
+import com.debubble.app.engine.Domain
 import com.debubble.app.engine.Pillar
 import com.debubble.app.engine.Stage
 
@@ -82,7 +83,30 @@ object Ink {
     /** Text/icon colour to place on top of a filled accent block. 7.1:1 on the worst
      *  accent (Social), so filled buttons are readable in every pillar colour. */
     val OnAccent = Color(0xFF0B0E13)
+
+    /* The three care domains. Taken straight from the room's pixel palette — teal, honey,
+       blush — so a card and the part of the room it cleans are visibly the same thing.
+       All three clear 9:1 on Surface and 10:1 under OnAccent. */
+
+    /** Body. 10.5:1. */
+    val Body = Color(0xFF9BD7D1)
+
+    /** Room. 9.0:1. */
+    val Room = Color(0xFFE8B476)
+
+    /** Heart. 10.1:1. */
+    val Heart = Color(0xFFF3B8C8)
+
+    /** The frame around the room: its own darkest outline colour, so the edge belongs to it. */
+    val RoomFrame = Color(0xFF33243A)
 }
+
+val Domain.accent: Color
+    get() = when (this) {
+        Domain.BODY -> Ink.Body
+        Domain.ROOM -> Ink.Room
+        Domain.HEART -> Ink.Heart
+    }
 
 val Pillar.accent: Color
     get() = when (this) {

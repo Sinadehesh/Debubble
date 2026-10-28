@@ -24,6 +24,7 @@ from palette import rgb  # noqa: E402
 W, H = 160, 100
 FLOOR_Y = 62          # first row of floor
 SKIRT = 3             # skirting board height, sits above FLOOR_Y
+RAIL_Y = 42           # the chair rail; teal wainscot below it, papered wall above
 
 STAGES = ["sealed", "window", "door", "street", "open", "horizon", "unwalled"]
 
@@ -101,6 +102,13 @@ def light_pool(c, x, w, strength):
                 c.px[yy][xx] = "y"              # a warm core right under the opening
 
 
+def sill(c, x, w, y):
+    """A ledge under a window. Without one the window is a hole cut in a wall."""
+    c.rect(x - 4, y, w + 8, 2, "i")
+    c.rect(x - 4, y + 2, w + 8, 1, "K")
+    c.set(x - 4, y + 2, "."); c.set(x + w + 3, y + 2, ".")
+
+
 def shell(stage):
     c = Canvas(W, H)
     i = STAGES.index(stage)
@@ -134,8 +142,28 @@ def shell(stage):
             for yy in range(seams[band], seams[band + 1]):
                 c.set(x, yy, "d")
 
+    # --- the wall gets dressed, so an empty room on day one is a nice empty room.
+    #
+    # A tiny diamond on the upper wall, a teal wainscot below a chair rail, a crown at the
+    # ceiling. Wallpaper rather than a flat fill because a flat cream rectangle reads as a
+    # placeholder, and the first thing a new user sees here is this wall with nothing on it.
+    for y in range(4, RAIL_Y - 2, 6):
+        for x in range((y // 6) % 2 * 4 + 2, W, 8):
+            c.set(x, y, "W")
+            c.set(x, y + 1, "W"); c.set(x - 1, y + 1, "W"); c.set(x + 1, y + 1, "W")
+            c.set(x, y + 2, "W")
+    c.rect(0, 0, W, 2, "v")
+    c.rect(0, 2, W, 1, "W")
+    c.rect(0, RAIL_Y + 2, W, FLOOR_Y - SKIRT - RAIL_Y - 2, "c")       # wainscot
+    for x in range(4, W - 10, 19):                                    # panels
+        c.frame(x, RAIL_Y + 5, 15, FLOOR_Y - SKIRT - RAIL_Y - 8, "C")
+        c.rect(x + 1, RAIL_Y + 6, 13, 1, "i")
+    c.rect(0, RAIL_Y, W, 1, "i")                                      # chair rail
+    c.rect(0, RAIL_Y + 1, W, 1, "K")
+
     # --- skirting board
-    c.rect(0, FLOOR_Y - SKIRT, W, SKIRT, "v")
+    c.rect(0, FLOOR_Y - SKIRT, W, SKIRT, "i")
+    c.rect(0, FLOOR_Y - 1, W, 1, "W")
     c.rect(0, FLOOR_Y - SKIRT, W, 1, "K")
     c.rect(0, FLOOR_Y, W, 1, "k")
 
@@ -150,6 +178,7 @@ def shell(stage):
         sky(c, x, y, w, h, False)
         c.rect(x + w // 2 - 1, y, 2, h, "i")       # mullion
         c.rect(x, y + h // 2 - 1, w, 2, "i")
+        sill(c, x, w, y + h + 2)
         light_pool(c, x, w, 5)
 
     elif stage == "door":
@@ -158,6 +187,7 @@ def shell(stage):
         c.rect(x - 1, y - 1, w + 2, h + 2, "i")
         sky(c, x, y, w, h, False)
         c.rect(x + w // 2 - 1, y, 2, h, "i")
+        sill(c, x, w, y + h + 2)
         light_pool(c, x, w, 6)
         # An open door on the left: the leaf swung back against the wall, and the opening
         # beside it full of light. A plain lit rectangle read as a yellow sticker.
@@ -186,6 +216,7 @@ def shell(stage):
                     c.set(wx, wy, "y")
         for mx in (x + w // 3, x + 2 * w // 3):
             c.rect(mx, y, 2, h, "i")
+        sill(c, x, w, y + h + 2)
         light_pool(c, x, w, 8)
 
     elif stage == "open":

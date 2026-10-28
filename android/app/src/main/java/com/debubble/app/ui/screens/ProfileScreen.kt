@@ -546,7 +546,12 @@ private fun EvidenceBlock(state: AppState) {
 
 @Composable
 private fun HistoryRow(entry: LogEntry, dayIndex: Long, state: AppState) {
-    val colour: Color = if (entry.friction) Ink.Ember else entry.pillarEnum.accent
+    val care = entry.domainEnum
+    val colour: Color = when {
+        entry.friction -> Ink.Ember
+        care != null -> care.accent
+        else -> entry.pillarEnum.accent
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -566,7 +571,7 @@ private fun HistoryRow(entry: LogEntry, dayIndex: Long, state: AppState) {
                     fontWeight = FontWeight.Medium
                 )
             )
-            if (entry.note.isNotBlank()) {
+            if (entry.note.isNotBlank() && entry.kind != "CARE") {
                 Text(
                     text = entry.note,
                     color = Ink.Muted,
@@ -579,6 +584,7 @@ private fun HistoryRow(entry: LogEntry, dayIndex: Long, state: AppState) {
                     when (entry.kind) {
                         "MISSION" -> "Goal step ${entry.tier}"
                         "REP" -> "Attempt"
+                        "CARE" -> "${entry.note} · day ${entry.tier}"
                         else -> "Level ${entry.tier}"
                     }
                 )

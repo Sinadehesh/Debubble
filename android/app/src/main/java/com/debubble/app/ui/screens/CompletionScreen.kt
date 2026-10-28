@@ -54,7 +54,9 @@ fun CompletionScreen(
     pillar: Pillar,
     tierCleared: Int,
     onSave: (String) -> Unit,
-    onSkip: () -> Unit
+    onSkip: () -> Unit,
+    /** A WORLD item this mission earned for the room, if one arrived. */
+    reward: String? = null
 ) {
     var note by remember { mutableStateOf("") }
 
@@ -137,6 +139,15 @@ fun CompletionScreen(
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Pill("+${Progress.XP_CHALLENGE} XP", Ink.Gold, filled = true)
                     Pill(pillar.display, pillar.accent)
+                }
+                if (reward != null) {
+                    VSpace(12)
+                    Text(
+                        text = "New for your room, from out there: $reward.",
+                        color = Ink.Gold,
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.titleMedium
+                    )
                 }
                 VSpace(24)
                 Text(

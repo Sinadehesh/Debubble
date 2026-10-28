@@ -3,11 +3,14 @@ package com.debubble.app.data
 import com.debubble.app.engine.AvatarState
 import com.debubble.app.engine.Baseline
 import com.debubble.app.engine.BudgetTier
+import com.debubble.app.engine.CareState
+import com.debubble.app.engine.Domain
 import com.debubble.app.engine.Forecast
 import com.debubble.app.engine.Goal
 import com.debubble.app.engine.GoalState
 import com.debubble.app.engine.Goals
 import com.debubble.app.engine.Habitat
+import com.debubble.app.engine.HomeState
 import com.debubble.app.engine.Intention
 import com.debubble.app.engine.Pillar
 import com.debubble.app.engine.PillarState
@@ -26,10 +29,16 @@ data class LogEntry(
     val friction: Boolean = false,
     val epochDay: Long,
     val minutes: Int = 0,
-    /** "PILLAR" | "MISSION" | "REP" — the history is one stream carrying all three. */
+    /**
+     * "PILLAR" | "MISSION" | "REP" | "CARE" — the history is one stream carrying all of them.
+     * A CARE entry carries its [Domain] name in [pillar] and its size in [note].
+     */
     val kind: String = "PILLAR"
 ) {
     val pillarEnum: Pillar get() = runCatching { Pillar.valueOf(pillar) }.getOrDefault(Pillar.ACCESS)
+
+    /** The care domain, for a CARE entry. Null for everything else. */
+    val domainEnum: Domain? get() = if (kind == "CARE") Domain.from(pillar) else null
 }
 
 /**
@@ -139,6 +148,20 @@ data class AppState(
      */
     val habitatSeen: String = "",
 
+    /* ---- the room as a mirror: Body, Room and Heart ---- */
+
+    /** Per-domain care, keyed by [Domain] name. Missing means untouched. */
+    val care: Map<String, CareState> = emptyMap(),
+    /** What is in the room, and where. Starts empty — everything in it is earned. */
+    val home: HomeState = HomeState(),
+    /**
+     * The first honest check-in has been done. Until then the room shows a neutral
+     * lived-in state rather than a guess, and the app asks before the dashboard.
+     */
+    val movedIn: Boolean = false,
+    /** Decides which surprise item arrives next. Set once, on moving in. */
+    val homeSeed: Long = 0L,
+
     val log: List<LogEntry> = emptyList()
 ) {
     fun state(p: Pillar): PillarState = pillars[p.name] ?: PillarState()
@@ -180,9 +203,24 @@ data class AppState(
 
     /* ---- levels and armour ---- */
 
+    /* ---- care ---- */
+
+    fun care(d: Domain): CareState = care[d.name] ?: CareState()
+
+    fun withCare(d: Domain, s: CareState): AppState = copy(care = care + (d.name to s))
+
+    /** The surprise-item seed, falling back to the start day for state from before it existed. */
+    val rewardSeed: Long get() = if (homeSeed != 0L) homeSeed else startedDay
+
+    /** Days since any care was done in any domain, or 0 if none ever has been. */
+    fun daysSinceCare(today: Long): Long {
+        val last = Domain.order.maxOf { care(it).lastDoneDay }
+        return if (last == 0L) 0L else (today - last).coerceAtLeast(0L)
+    }
+
     /* ---- the room ---- */
 
-    /** Rungs cleared across all three ladders. Drives the habitat and nothing else. */
+    /** Rungs cleared across all three ladders. Opens the walls and earns WORLD items. */
     val clearedRungs: Int get() = Habitat.cleared(Pillar.order.associateWith { state(it) })
 
     val stage: Stage get() = Habitat.stageFor(clearedRungs)
