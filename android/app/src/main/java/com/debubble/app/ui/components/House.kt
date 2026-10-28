@@ -1,7 +1,5 @@
 package com.debubble.app.ui.components
 
-import android.graphics.BitmapFactory
-import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -37,12 +35,13 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import com.debubble.app.R
 import com.debubble.app.engine.Domain
 import com.debubble.app.engine.Draw
 import com.debubble.app.engine.Home
 import com.debubble.app.engine.HomeState
 import com.debubble.app.engine.ItemCatalogue
+import com.debubble.app.engine.Look
+import com.debubble.app.engine.RoomTap
 import com.debubble.app.engine.Scene
 import com.debubble.app.engine.Spot
 import com.debubble.app.engine.Stage
@@ -66,32 +65,39 @@ import kotlinx.coroutines.delay
  *  - **`FilterQuality.None`** on every draw. Any filtering turns a one-pixel outline into a
  *    three-pixel smear.
  */
-class RoomArt(val atlas: ImageBitmap, val catalogue: ItemCatalogue) {
+class RoomArt(val pixels: PixelAtlas) {
 
-    private val rects: Map<String, IntArray> = buildMap {
-        catalogue.items.forEach { put(it.id, intArrayOf(it.x, it.y, it.w, it.h)) }
-        catalogue.fx.forEach { put(it.id, intArrayOf(it.x, it.y, it.w, it.h)) }
+    val catalogue: ItemCatalogue get() = pixels.catalogue
+
+    /** The atlas as drawn, for things that do not wear your look: items, mess, icons. */
+    val atlas: ImageBitmap = pixels.base.asImageBitmap()
+
+    private var sheetLook: Look? = null
+    private var sheet: ImageBitmap = atlas
+
+    /** The atlas with you in [look]. Converted once per look, not per frame. */
+    fun sheet(look: Look): ImageBitmap {
+        if (look != sheetLook) {
+            sheet = pixels.forLook(look).asImageBitmap()
+            sheetLook = look
+        }
+        return sheet
     }
 
     /** x, y, w, h of a sprite in the atlas, item or effect alike. */
-    fun rect(id: String): IntArray? = rects[id]
+    fun rect(id: String): IntArray? =
+        pixels.rect(id)?.let { intArrayOf(it.left, it.top, it.width(), it.height()) }
 }
 
-/** Decode the atlas once. Not density-scaled: these are pixels, not artwork. */
+/** Decode the atlas once for the whole app. */
 @Composable
 fun rememberRoomArt(catalogue: ItemCatalogue): RoomArt {
     val context = LocalContext.current
-    return remember(catalogue) {
-        val options = BitmapFactory.Options().apply { inScaled = false }
-        val bitmap = context.assets.open(catalogue.atlas).use {
-            BitmapFactory.decodeStream(it, null, options)
-        } ?: error("could not decode ${catalogue.atlas}")
-        RoomArt(bitmap.asImageBitmap(), catalogue)
-    }
+    return remember(catalogue) { RoomArt(PixelAtlas.load(context, catalogue)) }
 }
 
 /**
- * A slow tick for the room's idle life: you bob, the weather drifts, sparkles twinkle.
+ * A slow tick for the room's idle life: you bob, your heart floats, sparkles twinkle.
  * Frozen at zero when the system asks for reduced motion.
  */
 @Composable
@@ -117,6 +123,13 @@ fun HouseScene(
     description: String = "",
     /** Sparkles everywhere, for the moment right after something was cleaned. */
     burst: Boolean = false,
+    /** A mission outside is still open today, so you are holding its letter. */
+    letter: Boolean = false,
+    /**
+     * Taps on the things that are tasks — you, the mess, your heart, the letter — and null for
+     * anywhere else. Only when not [editable]; a tap never steals a scroll.
+     */
+    onTap: ((RoomTap?) -> Unit)? = null,
     /** Drag things around. Off on the dashboard, where a scroll must stay a scroll. */
     editable: Boolean = false,
     selected: String? = null,
@@ -125,7 +138,8 @@ fun HouseScene(
 ) {
     val cat = art.catalogue
     val room = cat.room
-    val shell = ImageBitmap.imageResource(shellFor(stage))
+    val shell = ImageBitmap.imageResource(RoomPainter.shellFor(stage))
+    val sheet = art.sheet(home.look)
     val frame = rememberTicker(running = !rememberReducedMotion())
 
     // The item under the finger and where it is right now. Kept until the saved state comes
@@ -138,6 +152,8 @@ fun HouseScene(
     val currentDirt by rememberUpdatedState(dirt)
     val currentOnMove by rememberUpdatedState(onMove)
     val currentOnSelect by rememberUpdatedState(onSelect)
+    val currentOnTap by rememberUpdatedState(onTap)
+    val currentLetter by rememberUpdatedState(letter)
 
     BoxWithConstraints(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
         val available = if (constraints.hasBoundedWidth) constraints.maxWidth else room.w * 3
@@ -147,7 +163,19 @@ fun HouseScene(
         val height = with(density) { (room.h * scale).toDp() }
         val shape = RoundedCornerShape(10.dp)
 
-        val gestures = if (!editable) Modifier else Modifier
+        val gestures = if (!editable) {
+            if (onTap == null) Modifier
+            else Modifier.pointerInput(stage, scale) {
+                detectTapGestures { o ->
+                    currentOnTap?.invoke(
+                        Scene.tap(
+                            cat, stage, currentHome, currentDirt, currentLetter,
+                            (o.x / scale).toInt(), (o.y / scale).toInt()
+                        )
+                    )
+                }
+            }
+        } else Modifier
             .pointerInput(stage, scale) {
                 detectTapGestures { o ->
                     currentOnSelect(
@@ -214,15 +242,15 @@ fun HouseScene(
                 dstSize = IntSize(room.w * scale, room.h * scale),
                 filterQuality = FilterQuality.None
             )
-            val draws = Scene.draws(cat, stage, home, dirt, frame, moving, burst)
-            draws.forEach { sprite(art, it, scale) }
+            val draws = Scene.draws(cat, stage, home, dirt, frame, moving, burst, letter)
+            draws.forEach { sprite(art, sheet, it, scale) }
 
             // The selected thing gets a frame, so it is obvious what "put away" will take.
             val pick = selected ?: moving?.first
             if (editable && pick != null) {
                 val spot = moving?.takeIf { it.first == pick }?.second
                     ?: if (pick == Scene.ME) Home.meSpot(home, cat) else home.placed[pick]
-                val (w, h) = if (pick == Scene.ME) Home.ME_W to Home.ME_H
+                val (w, h) = if (pick == Scene.ME) cat.me.w to cat.me.h
                 else cat.item(pick)?.let { it.w to it.h } ?: (0 to 0)
                 if (spot != null && w > 0) {
                     drawRect(
@@ -238,10 +266,10 @@ fun HouseScene(
 }
 
 /** One sprite at its spot, scaled by a whole number, never filtered. */
-private fun DrawScope.sprite(art: RoomArt, d: Draw, scale: Int) {
+private fun DrawScope.sprite(art: RoomArt, sheet: ImageBitmap, d: Draw, scale: Int) {
     val r = art.rect(d.id) ?: return
     drawImage(
-        image = art.atlas,
+        image = sheet,
         srcOffset = IntOffset(r[0], r[1]),
         srcSize = IntSize(r[2], r[3]),
         dstOffset = IntOffset(d.x * scale, (d.b - r[3]) * scale),
@@ -252,34 +280,29 @@ private fun DrawScope.sprite(art: RoomArt, d: Draw, scale: Int) {
 
 /** Where a dragged thing may go: floor things on the floor, wall things on the wall. */
 private fun spotFor(cat: ItemCatalogue, id: String, x: Int, b: Int): Spot =
-    if (id == Scene.ME) Home.clamp(cat.room, Home.ME_W, Home.ME_H, false, x, b)
+    if (id == Scene.ME) Home.clamp(cat.room, cat.me.w, cat.me.h, false, x, b)
     else cat.item(id)?.let { Home.clamp(cat.room, it.w, it.h, it.onWall, x, b) } ?: Spot(x, b)
 
 /**
- * The room shell for a stage. Every stage has one — they are generated together by
- * android/tools/pixel/room.py, so there is no missing case to fall back from.
+ * One sprite on its own, at a whole-number scale: an item in the tray, a new arrival, a task
+ * icon, or you in a [look] for the look picker.
  */
-@DrawableRes
-private fun shellFor(stage: Stage): Int = when (stage) {
-    Stage.SEALED -> R.drawable.room_sealed
-    Stage.WINDOW -> R.drawable.room_window
-    Stage.DOOR -> R.drawable.room_door
-    Stage.STREET -> R.drawable.room_street
-    Stage.OPEN -> R.drawable.room_open
-    Stage.HORIZON -> R.drawable.room_horizon
-    Stage.UNWALLED -> R.drawable.room_unwalled
-}
-
-/** One sprite on its own, at a whole-number scale: an item in the tray or a new arrival. */
 @Composable
-fun SpriteIcon(art: RoomArt, id: String, pixelScale: Int, modifier: Modifier = Modifier) {
+fun SpriteIcon(
+    art: RoomArt,
+    id: String,
+    pixelScale: Int,
+    modifier: Modifier = Modifier,
+    look: Look? = null
+) {
     val r = art.rect(id) ?: return
     val density = LocalDensity.current
     val width = with(density) { (r[2] * pixelScale).toDp() }
     val height = with(density) { (r[3] * pixelScale).toDp() }
+    val image = if (look == null) art.atlas else art.sheet(look)
     Canvas(modifier = modifier.size(width, height)) {
         drawImage(
-            image = art.atlas,
+            image = image,
             srcOffset = IntOffset(r[0], r[1]),
             srcSize = IntSize(r[2], r[3]),
             dstOffset = IntOffset.Zero,

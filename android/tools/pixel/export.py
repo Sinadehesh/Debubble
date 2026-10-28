@@ -6,7 +6,11 @@ quality-82 WebP turns a one-pixel outline into a three-pixel smear and the whole
 being pixel art.
 
   res/drawable-nodpi/room_<stage>.webp   the seven room shells, 160x100
-  assets/pixel/items.webp                one atlas: every item, you, the mess, the weather
+  res/drawable-nodpi/widget_room_preview.webp
+                                         a lived-in room at 3x: the widget picker's preview,
+                                         and what the widget shows before its first paint
+  assets/pixel/items.webp                one atlas: every item, you, the mess, your heart,
+                                         today's letter and the task icons
   assets/pixel/items.json                where each sprite is in the atlas, which family
                                          earns it, where it lands, and where the mess goes
 
@@ -26,8 +30,9 @@ from PIL import Image                      # noqa: E402
 from palette import PALETTE, rgb           # noqa: E402
 from room import STAGES, shell, to_image, W, H, FLOOR_Y, SKIRT   # noqa: E402
 from sprites import SPRITES, FAMILIES, check as check_sprites   # noqa: E402
-from fx import (FX, ROOM_MESS, ROOM_SPARKLES, ME_SPOT, WEATHER_DROP, MAX_DIRT,  # noqa: E402
-                check as check_fx)
+from fx import (FX, ROOM_MESS, ROOM_SPARKLES, ME_SPOT, ME_W, ME_H, MAX_DIRT,  # noqa: E402
+                BUDDY_DX, BUDDY_DY, LETTER_DX, LETTER_DY, BANG_GAP, check as check_fx)
+from palette import LOOKS, LOOK_KEYS       # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 DRAWABLE = ROOT / "app" / "src" / "main" / "res" / "drawable-nodpi"
@@ -102,6 +107,16 @@ def main():
             print("FAIL", p)
         return 1
 
+    # The widget's stand-in: a week in, a bit lived-in, today's letter in hand. Scaled here,
+    # nearest-neighbour, because a launcher scaling a 160px image would blur every edge.
+    from scene import compose, default_spots
+    preview = compose("window", default_spots(["bed", "lamp", "plant", "rug", "water", "map", "cat"]),
+                      1, 1, 1, letter=True).resize((W * 3, H * 3), Image.NEAREST)
+    ppath = DRAWABLE / "widget_room_preview.webp"
+    preview.save(ppath, "WEBP", lossless=True, quality=100, method=6)
+    total += ppath.stat().st_size
+    print(f"  widget_room_preview {ppath.stat().st_size // 1024:>3} KB  {preview.width}x{preview.height}")
+
     atlas, index, fx = build_atlas()
     apath = ASSETS / "items.webp"
     atlas.save(apath, "WEBP", lossless=True, quality=100, method=6)
@@ -121,7 +136,12 @@ def main():
         # Where the Room mess goes, by level, and where a clean room sparkles. See fx.py.
         "mess": [{"fx": n, "x": x, "b": b, "level": lvl} for n, x, b, lvl in ROOM_MESS],
         "sparkles": [{"x": x, "y": y} for x, y in ROOM_SPARKLES],
-        "me": {"x": ME_SPOT[0], "b": ME_SPOT[1], "weatherDrop": WEATHER_DROP},
+        "me": {"x": ME_SPOT[0], "b": ME_SPOT[1], "w": ME_W, "h": ME_H,
+               "buddyDx": BUDDY_DX, "buddyDy": BUDDY_DY,
+               "letterDx": LETTER_DX, "letterDy": LETTER_DY, "bangGap": BANG_GAP},
+        # The ramps a character can be drawn in. Entry 0 is what the atlas holds; the app
+        # swaps by exact colour inside the "me" frames. See palette.LOOKS.
+        "looks": {k: [list(r) for r in v] for k, v in LOOKS.items()},
         "maxDirt": MAX_DIRT,
     }
     jpath = ASSETS / "items.json"

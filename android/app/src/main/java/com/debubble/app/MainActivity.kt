@@ -26,6 +26,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.debubble.app.engine.Domain
 import com.debubble.app.engine.Pillar
 import com.debubble.app.engine.Scene
+import com.debubble.app.engine.Today
 import com.debubble.app.ui.screens.AuditScreen
 import com.debubble.app.ui.screens.AvatarScreen
 import com.debubble.app.ui.screens.CareDoneScreen
@@ -173,7 +174,7 @@ private fun DeBubbleApp(
                                 state = state,
                                 dayIndex = vm.dayIndex(state),
                                 served = Pillar.order.associateWith { vm.serve(it, state) },
-                                ring = vm.ring(state),
+                                quests = vm.quests(state),
                                 mission = vm.serveMission(state),
                                 reps = vm.repTypes(state),
                                 principles = goal?.let { vm.track(it).principles } ?: emptyList(),
@@ -182,7 +183,7 @@ private fun DeBubbleApp(
                                 openForecasts = state.openForecasts,
                                 livePlans = vm.livePlans(state),
                                 debuffLabel = { id -> vm.audit.debuff(id)?.label ?: "From your audit" },
-                                pulse = pulse,
+                                onOpenQuest = vm::openQuest,
                                 onOpen = vm::openChallenge,
                                 onOpenMission = vm::openMission,
                                 onLogRep = { rep -> vm.logRep(rep.key, rep.friction, rep.label) },
@@ -202,9 +203,8 @@ private fun DeBubbleApp(
                                 art = art,
                                 library = vm.care,
                                 dirt = vm.dirt(state),
-                                careDone = Domain.order.filter { vm.careDoneToday(state, it) }.toSet(),
                                 welcomeBack = vm.welcomeBack(state),
-                                onOpenCare = vm::openCare,
+                                onRoomTap = vm::openFromRoom,
                                 onOpenRoom = vm::openRoom,
                                 onCheckIn = vm::openCheckIn
                             )
@@ -581,6 +581,7 @@ private fun DeBubbleApp(
                             home = state.home,
                             // A first move-in starts from the middle rather than from a guess.
                             initial = if (r.firstRun) Domain.order.associateWith { 1 } else vm.dirt(state),
+                            onLook = vm::setLook,
                             onSave = { levels -> vm.saveCheckIn(levels, r.firstRun) },
                             onBack = if (r.firstRun) null else vm::goDashboard
                         )
@@ -642,6 +643,11 @@ private fun DeBubbleApp(
                             },
                             onPutAway = vm::putAway,
                             onPutBack = vm::putBack,
+                            onLook = vm::setLook,
+                            letter = Today.letter(vm.quests(state)),
+                            widgetPlaced = vm.widgetPlaced(),
+                            canPinWidget = vm.canPinWidget(),
+                            onAddWidget = vm::requestWidget,
                             onSeen = vm::markRoomSeen,
                             onBack = vm::goDashboard
                         )

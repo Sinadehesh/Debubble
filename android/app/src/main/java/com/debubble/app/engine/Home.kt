@@ -50,7 +50,7 @@ data class ItemDef(
     val onWall: Boolean get() = anchor == "wall"
 }
 
-/** A sprite that is not an item: you, the mess, the weather, a sparkle. */
+/** A sprite that is not an item: you, your heart, the mess, a letter, an icon, a sparkle. */
 @Serializable
 data class FxDef(val id: String, val x: Int, val y: Int, val w: Int, val h: Int)
 
@@ -61,8 +61,65 @@ data class MessDef(val fx: String, val x: Int, val b: Int, val level: Int)
 @Serializable
 data class SparkleDef(val x: Int, val y: Int)
 
+/**
+ * Where you stand by default, how big you are, and where the two things that go with you sit:
+ * your heart buddy at one shoulder and, on a day with a mission still open, a letter in the
+ * other hand. Offsets are from your left edge and up from your feet. See fx.py.
+ */
 @Serializable
-data class MeDef(val x: Int, val b: Int, val weatherDrop: Int)
+data class MeDef(
+    val x: Int,
+    val b: Int,
+    val w: Int,
+    val h: Int,
+    val buddyDx: Int,
+    val buddyDy: Int,
+    val letterDx: Int,
+    val letterDy: Int,
+    val bangGap: Int
+)
+
+/**
+ * The ramps a character can be drawn in, as "#RRGGBB", light to dark. Entry 0 of each list is
+ * what the atlas holds. Written by android/tools/pixel/export.py from palette.LOOKS.
+ */
+@Serializable
+data class Looks(
+    /** Light, mid, shadow, blush. Skin carries its own blush, because one pink does not suit all. */
+    val skin: List<List<String>>,
+    val hair: List<List<String>>,
+    val top: List<List<String>>
+) {
+    /**
+     * Colour swaps that turn the atlas's look into [look], as ARGB ints, base to chosen.
+     * Applied by exact colour inside the "me" frames only; empty for the atlas's own look.
+     */
+    fun swaps(look: Look): Map<Int, Int> {
+        val out = mutableMapOf<Int, Int>()
+        fun add(ramps: List<List<String>>, pick: Int) {
+            val from = ramps.first()
+            val to = ramps[pick.coerceIn(ramps.indices)]
+            from.indices.forEach { i ->
+                val a = argb(from[i])
+                val b = argb(to[i])
+                if (a != b) out[a] = b
+            }
+        }
+        add(skin, look.skin)
+        add(hair, look.hair)
+        add(top, look.top)
+        return out
+    }
+
+    companion object {
+        /** "#RRGGBB" as an opaque ARGB int. */
+        fun argb(hex: String): Int = (0xFF000000L or hex.removePrefix("#").toLong(16)).toInt()
+    }
+}
+
+/** How you look: an index into each of [Looks]' ramps. Chosen on moving in. */
+@Serializable
+data class Look(val skin: Int = 0, val hair: Int = 0, val top: Int = 0)
 
 @Serializable
 data class RoomGeometry(val w: Int, val h: Int, val floorY: Int, val skirt: Int)
@@ -81,6 +138,7 @@ data class ItemCatalogue(
     val mess: List<MessDef>,
     val sparkles: List<SparkleDef>,
     val me: MeDef,
+    val looks: Looks,
     val maxDirt: Int
 ) {
     fun item(id: String): ItemDef? = items.firstOrNull { it.id == id }
@@ -100,14 +158,12 @@ data class HomeState(
     /** Where you stand, if you have been moved. Null means the default spot. */
     val me: Spot? = null,
     /** Arrived since the room was last opened, so they can be pointed out once. */
-    val unseen: Set<String> = emptySet()
+    val unseen: Set<String> = emptySet(),
+    /** How you look. */
+    val look: Look = Look()
 )
 
 object Home {
-
-    /** Width and height of the character frame. Matches fx.py. */
-    const val ME_W = 20
-    const val ME_H = 19
 
     fun ownedIn(home: HomeState, cat: ItemCatalogue, f: Family): Int =
         home.owned.count { id -> cat.item(id)?.family == f.name }
@@ -190,6 +246,18 @@ object Home {
 /** One sprite to draw: which atlas entry, and where its bottom-left corner sits. */
 data class Draw(val id: String, val x: Int, val b: Int)
 
+/** The things in the room that are a task, and what tapping each one opens. */
+enum class RoomTap {
+    /** You: your Body task. */
+    BODY,
+    /** Any of the mess: your Room task. */
+    ROOM,
+    /** Your heart buddy: your Heart task. */
+    HEART,
+    /** The letter in your hand: today's mission outside. */
+    OUTSIDE
+}
+
 /**
  * What the room looks like, as an ordered list of sprites. Pure, so the order is tested
  * rather than eyeballed — draw order is the part that goes subtly wrong.
@@ -198,8 +266,9 @@ data class Draw(val id: String, val x: Int, val b: Int)
  *  2. flat things on the floor (a rug, a mat), under everything that stands
  *  3. everything standing — furniture, mess and you — sorted by baseline, so whatever is
  *     nearer the viewer is drawn over whatever is further back
- *  4. the Heart weather over your head
- *  5. sparkles, last, because they are light
+ *  4. today's letter in your hand, with its "!", while a mission outside is still open
+ *  5. your heart buddy at your shoulder, a beat out of step with you
+ *  6. sparkles, last, because they are light
  *
  * The room shell itself is drawn first by the caller; it is a separate bitmap per stage.
  * Mirrors android/tools/pixel/scene.py, which renders the reference images.
@@ -207,6 +276,8 @@ data class Draw(val id: String, val x: Int, val b: Int)
 object Scene {
 
     const val ME = "me"
+    const val LETTER = "letter"
+    const val BANG = "bang"
     private const val SPARKLE = "sparkle"
 
     /** Points the celebration burst twinkles across, as (x, baseline) in room pixels. */
@@ -217,19 +288,29 @@ object Scene {
 
     fun meFrame(body: Int): String = "me${body.coerceIn(0, Care.MAX_DIRT)}"
 
-    fun weather(heart: Int): String? = when (heart.coerceIn(0, Care.MAX_DIRT)) {
-        0 -> "heart_sun"
-        1 -> null
-        2 -> "heart_cloud"
-        else -> "heart_storm"
+    fun buddy(heart: Int): String = "buddy${heart.coerceIn(0, Care.MAX_DIRT)}"
+
+    /**
+     * Left edges of your heart buddy and your letter, for you standing at [me]. The buddy
+     * takes your right unless that would leave the room; the letter takes the other hand.
+     */
+    fun sides(cat: ItemCatalogue, me: Spot): Pair<Int, Int> {
+        val m = cat.me
+        val bw = cat.fx(buddy(0))?.w ?: 0
+        val lw = cat.fx(LETTER)?.w ?: 0
+        val right = me.x + m.buddyDx + bw <= cat.room.w
+        val bx = if (right) me.x + m.buddyDx else me.x + m.w - m.buddyDx - bw
+        val lx = if (right) me.x + m.letterDx else me.x + m.w - m.letterDx - lw
+        return bx to lx.coerceIn(0, (cat.room.w - lw).coerceAtLeast(0))
     }
 
     /**
-     * @param frame an animation tick. Odd frames bob you and the weather by a pixel and
-     *   swap which sparkles are lit. Pass 0 forever for reduced motion.
+     * @param frame an animation tick. Odd frames bob you by a pixel, your buddy floats the
+     *   other way, and the sparkles swap. Pass 0 forever for reduced motion.
      * @param moving an item being dragged and where it currently is, drawn there instead of
      *   at its saved spot.
      * @param burst sparkles everywhere — the moment after something was cleaned.
+     * @param letter a mission outside is still open today, so you are holding its letter.
      */
     fun draws(
         cat: ItemCatalogue,
@@ -238,7 +319,8 @@ object Scene {
         dirt: Map<Domain, Int>,
         frame: Int = 0,
         moving: Pair<String, Spot>? = null,
-        burst: Boolean = false
+        burst: Boolean = false,
+        letter: Boolean = false
     ): List<Draw> {
         val body = dirt[Domain.BODY] ?: Care.START_DIRT
         val room = dirt[Domain.ROOM] ?: Care.START_DIRT
@@ -274,20 +356,24 @@ object Scene {
         standing += Triple(me.b, 2, Draw(meFrame(body), me.x, me.b - bob))
         standing.sortedWith(compareBy({ it.first }, { it.second })).forEach { out += it.third }
 
-        weather(heart)?.let { id ->
-            val w = cat.fx(id)
-            if (w != null) {
-                val x = me.x + (Home.ME_W - w.w) / 2
-                out += Draw(id, x, me.b - Home.ME_H + cat.me.weatherDrop - bob)
+        val (bx, lx) = sides(cat, me)
+        if (letter) {
+            val l = cat.fx(LETTER)
+            val bang = cat.fx(BANG)
+            if (l != null) {
+                val lb = me.b - cat.me.letterDy - bob
+                out += Draw(LETTER, lx, lb)
+                if (bang != null) out += Draw(BANG, lx + (l.w - bang.w) / 2, lb - l.h - cat.me.bangGap)
             }
         }
+        out += Draw(buddy(heart), bx, me.b - cat.me.buddyDy - (1 - bob))
 
         if (room == 0) {
             cat.sparkles.forEachIndexed { i, p ->
                 if ((i + frame) % 2 == 0) out += Draw(SPARKLE, p.x, p.y)
             }
         }
-        if (body == 0) out += Draw(SPARKLE, me.x + Home.ME_W - 4, me.b - Home.ME_H + 6 - bob)
+        if (body == 0) out += Draw(SPARKLE, me.x + 2, me.b - cat.me.h + 6 - bob)
         if (burst) {
             BURST.forEachIndexed { i, (x, y) ->
                 if ((i + frame) % 3 != 0) out += Draw(SPARKLE, x, y)
@@ -296,9 +382,19 @@ object Scene {
         return out
     }
 
+    /** Width and height of a drawn sprite, item or effect, or null for an unknown id. */
+    private fun size(cat: ItemCatalogue, id: String): Pair<Int, Int>? =
+        cat.item(id)?.let { it.w to it.h } ?: cat.fx(id)?.let { it.w to it.h }
+
+    private fun under(cat: ItemCatalogue, d: Draw, x: Int, y: Int): Boolean {
+        val (w, h) = size(cat, d.id) ?: return false
+        return x >= d.x && x < d.x + w && y >= d.b - h && y < d.b
+    }
+
     /**
      * What is under a point, for dragging: the topmost item or you, or null for empty floor.
-     * Mess and weather are not grabbable — mess goes by being cleaned, not by being moved.
+     * Mess, your buddy and the letter are not grabbable — mess goes by being cleaned, not by
+     * being moved, and the other two go where you go.
      */
     fun hit(
         cat: ItemCatalogue,
@@ -311,13 +407,40 @@ object Scene {
         val meIds = (0..Care.MAX_DIRT).map { meFrame(it) }.toSet()
         draws(cat, stage, home, dirt).asReversed().forEach { d ->
             val isMe = d.id in meIds
-            val (w, h) = when {
-                isMe -> Home.ME_W to Home.ME_H
-                else -> cat.item(d.id)?.let { it.w to it.h } ?: return@forEach
+            if (!isMe && cat.item(d.id) == null) return@forEach
+            if (under(cat, d, x, y)) return if (isMe) ME else d.id
+        }
+        return null
+    }
+
+    /**
+     * Which task a tap in the room is asking for, or null for anywhere else.
+     *
+     * This is what makes the room the way in rather than a picture above a list: tap
+     * yourself to look after your body, the mess to tidy, your heart to tend it, the letter
+     * to go out. Checked topmost first, so the letter in front of you wins over you.
+     */
+    fun tap(
+        cat: ItemCatalogue,
+        stage: Stage,
+        home: HomeState,
+        dirt: Map<Domain, Int>,
+        letter: Boolean,
+        x: Int,
+        y: Int
+    ): RoomTap? {
+        val messIds = cat.mess.map { it.fx }.toSet()
+        val meIds = (0..Care.MAX_DIRT).map { meFrame(it) }.toSet()
+        val buddyIds = (0..Care.MAX_DIRT).map { buddy(it) }.toSet()
+        draws(cat, stage, home, dirt, letter = letter).asReversed().forEach { d ->
+            val kind = when (d.id) {
+                in buddyIds -> RoomTap.HEART
+                LETTER, BANG -> RoomTap.OUTSIDE
+                in meIds -> RoomTap.BODY
+                in messIds -> RoomTap.ROOM
+                else -> null
             }
-            if (x >= d.x && x < d.x + w && y >= d.b - h && y < d.b) {
-                return if (isMe) ME else d.id
-            }
+            if (kind != null && under(cat, d, x, y)) return kind
         }
         return null
     }

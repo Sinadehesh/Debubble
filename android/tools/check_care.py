@@ -148,18 +148,26 @@ def empty_home():
 
 
 # ---------------------------------------------------------------- Scene (Home.kt)
-ME_W, ME_H = 20, 19
+ME = CAT["me"]
+FXD = {f["id"]: f for f in CAT["fx"]}
 
 
-def weather(heart):
-    return {0: "heart_sun", 1: None, 2: "heart_cloud"}.get(heart, "heart_storm")
+def buddy(heart):
+    return f"buddy{max(0, min(MAX_DIRT, heart))}"
 
 
-def draws(stage, home, dirt, frame=0, moving=None, burst=False):
+def sides(me):
+    bw, lw = FXD["buddy0"]["w"], FXD["letter"]["w"]
+    right = me[0] + ME["buddyDx"] + bw <= CAT["room"]["w"]
+    bx = me[0] + ME["buddyDx"] if right else me[0] + ME["w"] - ME["buddyDx"] - bw
+    lx = me[0] + ME["letterDx"] if right else me[0] + ME["w"] - ME["letterDx"] - lw
+    return bx, max(0, min(max(0, CAT["room"]["w"] - lw), lx))
+
+
+def draws(stage, home, dirt, frame=0, moving=None, burst=False, letter=False):
     body, room, heart = dirt
     walls = stage != "unwalled"
     items = {i["id"]: i for i in CAT["items"]}
-    fx = {f["id"]: f for f in CAT["fx"]}
 
     def spot_of(i, default):
         return moving[1] if moving and moving[0] == i else default
@@ -174,32 +182,71 @@ def draws(stage, home, dirt, frame=0, moving=None, burst=False):
     standing = [(s[1], 0, (d["id"], s[0], s[1])) for d, s in placed if d["anchor"] != "wall" and not d["flat"]]
     standing += [(m["b"], 1, (m["fx"], m["x"], m["b"])) for m in CAT["mess"]
                  if m["fx"] != "cobweb" and room >= m["level"]]
-    me = spot_of("me", home.get("me") or (CAT["me"]["x"], CAT["me"]["b"]))
+    me = spot_of("me", home.get("me") or (ME["x"], ME["b"]))
     bob = 1 if frame % 2 == 1 else 0
     standing.append((me[1], 2, (f"me{body}", me[0], me[1] - bob)))
     out += [t[2] for t in sorted(standing, key=lambda t: (t[0], t[1]))]
-    w = weather(heart)
-    if w:
-        out.append((w, me[0] + (ME_W - fx[w]["w"]) // 2, me[1] - ME_H + CAT["me"]["weatherDrop"] - bob))
+    bx, lx = sides(me)
+    if letter:
+        lb = me[1] - ME["letterDy"] - bob
+        out.append(("letter", lx, lb))
+        out.append(("bang", lx + (FXD["letter"]["w"] - FXD["bang"]["w"]) // 2,
+                    lb - FXD["letter"]["h"] - ME["bangGap"]))
+    out.append((buddy(heart), bx, me[1] - ME["buddyDy"] - (1 - bob)))
     if room == 0:
         out += [("sparkle", p["x"], p["y"]) for i, p in enumerate(CAT["sparkles"]) if (i + frame) % 2 == 0]
     if body == 0:
-        out.append(("sparkle", me[0] + ME_W - 4, me[1] - ME_H + 6 - bob))
+        out.append(("sparkle", me[0] + 2, me[1] - ME["h"] + 6 - bob))
     return out
 
 
+def size(i):
+    items = {it["id"]: it for it in CAT["items"]}
+    d = items.get(i) or FXD.get(i)
+    return (d["w"], d["h"]) if d else None
+
+
+def under(d, x, y):
+    wh = size(d[0])
+    return bool(wh) and d[1] <= x < d[1] + wh[0] and d[2] - wh[1] <= y < d[2]
+
+
 def hit(stage, home, dirt, x, y):
-    items = {i["id"]: i for i in CAT["items"]}
+    items = {i["id"] for i in CAT["items"]}
+    me_ids = {f"me{i}" for i in range(MAX_DIRT + 1)}
     for d in reversed(draws(stage, home, dirt)):
-        if d[0].startswith("me") and d[0][2:].isdigit():
-            w, h, rid = ME_W, ME_H, "me"
-        elif d[0] in items:
-            w, h, rid = items[d[0]]["w"], items[d[0]]["h"], d[0]
-        else:
+        if d[0] not in me_ids and d[0] not in items:
             continue
-        if d[1] <= x < d[1] + w and d[2] - h <= y < d[2]:
-            return rid
+        if under(d, x, y):
+            return "me" if d[0] in me_ids else d[0]
     return None
+
+
+def tap(stage, home, dirt, letter, x, y):
+    mess = {m["fx"] for m in CAT["mess"]}
+    for d in reversed(draws(stage, home, dirt, letter=letter)):
+        kind = ("HEART" if d[0].startswith("buddy") else
+                "OUTSIDE" if d[0] in ("letter", "bang") else
+                "BODY" if d[0] in {f"me{i}" for i in range(MAX_DIRT + 1)} else
+                "ROOM" if d[0] in mess else None)
+        if kind and under(d, x, y):
+            return kind
+    return None
+
+
+def argb(h):
+    return 0xFF000000 | int(h.lstrip("#"), 16)
+
+
+def swaps(look):
+    out = {}
+    for key, pick in zip(("skin", "hair", "top"), look):
+        ramps = CAT["looks"][key]
+        to = ramps[max(0, min(len(ramps) - 1, pick))]
+        for a, b in zip(ramps[0], to):
+            if argb(a) != argb(b):
+                out[argb(a)] = argb(b)
+    return out
 
 
 def home_with(*ids):
@@ -218,9 +265,36 @@ def check_scene(ok):
     ok(any(d[0] == "sparkle" for d in draws("window", home_with(), (1, 0, 1))), "clean sparkles")
     ok(not any(d[0] == "sparkle" for d in draws("window", home_with(), (1, 1, 1))), "lived-in sparkles")
     for b in range(4):
-        ok(sum(1 for d in draws("sealed", home_with(), (b, 1, 1)) if d[0] == f"me{b}") == 1, "me frame")
-    ok(any(d[0] == "heart_storm" for d in draws("sealed", home_with(), (1, 1, 3))), "storm")
-    ok(any(d[0] == "heart_sun" for d in draws("sealed", home_with(), (1, 1, 0))), "sun")
+        dr = draws("sealed", home_with(), (b, 1, b))
+        ok(sum(1 for d in dr if d[0] == f"me{b}") == 1, "me frame")
+        ok(sum(1 for d in dr if d[0] == f"buddy{b}") == 1, "buddy frame")
+        ok((FXD[f"me{b}"]["w"], FXD[f"me{b}"]["h"]) == (ME["w"], ME["h"]), "me size")
+    ok(not any(d[0] in ("letter", "bang") for d in draws("sealed", home_with(), (1, 1, 1))), "no letter")
+    lt = [d[0] for d in draws("sealed", home_with(), (1, 1, 1), letter=True)]
+    ok(lt.index("letter") > lt.index("me1") and "bang" in lt, "letter in front of you")
+    for x in (0, 40, 70, CAT["room"]["w"] - ME["w"]):
+        bx, lx = sides((x, 96))
+        ok(0 <= bx and bx + FXD["buddy0"]["w"] <= CAT["room"]["w"], f"buddy in room at {x}")
+        ok(0 <= lx and lx + FXD["letter"]["w"] <= CAT["room"]["w"], f"letter in room at {x}")
+        ok((bx > x) != (lx > x), f"buddy and letter same side at {x}")
+    me = (ME["x"], ME["b"])
+    bx, lx = sides(me)
+    dd = (1, 3, 1)
+    ok(tap("sealed", home_with(), dd, True, me[0] + ME["w"] // 2, me[1] - 4) == "BODY", "tap body")
+    bh = FXD["buddy1"]
+    ok(tap("sealed", home_with(), dd, True, bx + bh["w"] // 2, me[1] - ME["buddyDy"] - bh["h"] // 2 - 1) == "HEART",
+       "tap heart")
+    ok(tap("sealed", home_with(), dd, True, lx + 1, me[1] - ME["letterDy"] - 2) == "OUTSIDE", "tap letter")
+    sock = next(m for m in CAT["mess"] if m["fx"] == "sock")
+    ok(tap("sealed", home_with(), dd, True, sock["x"] + 2, sock["b"] - 2) == "ROOM", "tap mess")
+    ok(tap("sealed", home_with(), dd, True, CAT["room"]["w"] - 2, 2) is None, "tap nothing")
+    ok(tap("sealed", home_with(), dd, False, lx + 1, me[1] - ME["letterDy"] - 2) != "OUTSIDE", "tap no letter")
+    ok(swaps((0, 0, 0)) == {}, "first look is the atlas")
+    L = CAT["looks"]
+    other = (len(L["skin"]) - 1, len(L["hair"]) - 1, len(L["top"]) - 1)
+    own = {argb(c) for c in L["skin"][0] + L["hair"][0] + L["top"][0]}
+    ok(swaps(other) and set(swaps(other)) <= own, "look swaps only the character")
+    ok(swaps((99, 99, 99)) == swaps(other), "look clamps")
     h = home_with("mirror", "bed")
     ok(any(d[0] == "mirror" for d in draws("window", h, (1, 1, 1))), "mirror on wall")
     ok(not any(d[0] == "mirror" for d in draws("unwalled", h, (1, 1, 1))), "mirror without walls")

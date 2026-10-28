@@ -224,8 +224,12 @@ def check_composables(files):
         for symbol, imp in COMPOSABLES:
             if imp in imports:
                 continue
+            # The same name imported from somewhere else — android.graphics.Canvas, say —
+            # is that class, not the composable.
+            if any(i.endswith("." + symbol) for i in imports):
+                continue
             # A file that declares its own is using that one, not the library's.
-            if re.search(rf"\bfun\s+{symbol}\s*\(", code):
+            if re.search(rf"\b(fun|class)\s+{symbol}\s*\(", code):
                 continue
             if re.search(rf"(?<![\w.]){symbol}\s*\(", code):
                 problems.append(f"{path}: calls '{symbol}' without 'import {imp}'")

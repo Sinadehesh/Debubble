@@ -10,10 +10,14 @@ import com.debubble.app.engine.Feel
 import com.debubble.app.engine.Home
 import com.debubble.app.engine.HomeState
 import com.debubble.app.engine.ItemCatalogue
+import com.debubble.app.engine.Look
+import com.debubble.app.engine.Looks
+import com.debubble.app.engine.RoomTap
 import com.debubble.app.engine.Scene
 import com.debubble.app.engine.Size
 import com.debubble.app.engine.Spot
 import com.debubble.app.engine.Stage
+import com.debubble.app.engine.Today
 import java.io.File
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
@@ -315,14 +319,81 @@ class CareTest {
     }
 
     @Test
-    fun `you show the body, and the weather over you shows the heart`() {
-        (0..Care.MAX_DIRT).forEach { body ->
-            val draws = Scene.draws(items, Stage.SEALED, HomeState(), levels(body, 1, 1))
-            assertEquals(1, draws.count { it.id == "me$body" })
+    fun `you show the body, and the heart at your shoulder shows the heart`() {
+        (0..Care.MAX_DIRT).forEach { level ->
+            val draws = Scene.draws(items, Stage.SEALED, HomeState(), levels(level, 1, level))
+            assertEquals(1, draws.count { it.id == "me$level" })
+            assertEquals("the heart is always there, as a companion", 1, draws.count { it.id == "buddy$level" })
         }
-        assertTrue(Scene.draws(items, Stage.SEALED, HomeState(), levels(1, 1, 1)).none { it.id.startsWith("heart_") })
-        assertTrue(Scene.draws(items, Stage.SEALED, HomeState(), levels(1, 1, 3)).any { it.id == "heart_storm" })
-        assertTrue(Scene.draws(items, Stage.SEALED, HomeState(), levels(1, 1, 0)).any { it.id == "heart_sun" })
+    }
+
+    @Test
+    fun `the character frames, the buddy and the letter are all in the atlas`() {
+        (0..Care.MAX_DIRT).forEach {
+            val me = items.fx(Scene.meFrame(it))!!
+            assertEquals(items.me.w, me.w)
+            assertEquals(items.me.h, me.h)
+            assertNotNull(items.fx(Scene.buddy(it)))
+        }
+        assertNotNull(items.fx(Scene.LETTER))
+        assertNotNull(items.fx(Scene.BANG))
+        Today.ICONS.forEach { assertNotNull("missing icon $it", items.fx(it)) }
+    }
+
+    @Test
+    fun `you hold the letter only while a mission is open, in front of you`() {
+        val without = Scene.draws(items, Stage.SEALED, HomeState(), levels(1, 1, 1))
+        assertFalse(without.any { it.id == Scene.LETTER || it.id == Scene.BANG })
+        val with = Scene.draws(items, Stage.SEALED, HomeState(), levels(1, 1, 1), letter = true).map { it.id }
+        assertTrue(with.indexOf(Scene.LETTER) > with.indexOf("me1"))
+        assertTrue(with.contains(Scene.BANG))
+    }
+
+    @Test
+    fun `the buddy and the letter swap sides at the right wall, and stay in the room`() {
+        val bw = items.fx(Scene.buddy(0))!!.w
+        val lw = items.fx(Scene.LETTER)!!.w
+        listOf(0, 40, 70, items.room.w - items.me.w).forEach { x ->
+            val me = Spot(x, 96)
+            val (bx, lx) = Scene.sides(items, me)
+            assertTrue("buddy off the room at x=$x", bx >= 0 && bx + bw <= items.room.w)
+            assertTrue("letter off the room at x=$x", lx >= 0 && lx + lw <= items.room.w)
+            assertTrue("buddy and letter on the same side at x=$x", (bx > me.x) != (lx > me.x))
+        }
+    }
+
+    @Test
+    fun `tapping the room opens the task that thing stands for`() {
+        val home = HomeState()
+        val me = Home.meSpot(home, items)
+        val dirt = levels(1, 3, 1)
+        fun tap(x: Int, y: Int) = Scene.tap(items, Stage.SEALED, home, dirt, letter = true, x = x, y = y)
+        assertEquals(RoomTap.BODY, tap(me.x + items.me.w / 2, me.b - 4))
+        val (bx, lx) = Scene.sides(items, me)
+        val buddy = items.fx(Scene.buddy(1))!!
+        assertEquals(RoomTap.HEART, tap(bx + buddy.w / 2, me.b - items.me.buddyDy - buddy.h / 2 - 1))
+        assertEquals(RoomTap.OUTSIDE, tap(lx + 1, me.b - items.me.letterDy - 2))
+        val sock = items.mess.first { it.fx == "sock" }
+        assertEquals(RoomTap.ROOM, tap(sock.x + 2, sock.b - 2))
+        assertNull(tap(items.room.w - 2, 2))
+        // No letter, nothing to tap where it would be.
+        assertTrue(
+            Scene.tap(items, Stage.SEALED, home, dirt, letter = false, x = lx + 1, y = me.b - items.me.letterDy - 2) != RoomTap.OUTSIDE
+        )
+    }
+
+    @Test
+    fun `the first look is the atlas, and every other look swaps only the character`() {
+        assertTrue(items.looks.swaps(Look()).isEmpty())
+        val l = items.looks
+        val other = Look(skin = l.skin.size - 1, hair = l.hair.size - 1, top = l.top.size - 1)
+        val swaps = l.swaps(other)
+        assertTrue(swaps.isNotEmpty())
+        // Every swapped colour is one of the character's own, never a room colour.
+        val own = (l.skin.first() + l.hair.first() + l.top.first()).map { Looks.argb(it) }.toSet()
+        assertTrue(own.containsAll(swaps.keys))
+        // Out of range picks clamp rather than crash.
+        assertEquals(l.swaps(Look(skin = 99, hair = 99, top = 99)), swaps)
     }
 
     @Test

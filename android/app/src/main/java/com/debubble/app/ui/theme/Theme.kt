@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import com.debubble.app.engine.Domain
 import com.debubble.app.engine.Pillar
+import com.debubble.app.engine.Quest
 import com.debubble.app.engine.Stage
 
 /* ------------------------------------------------------------------ palette
@@ -30,39 +31,45 @@ import com.debubble.app.engine.Stage
    below, borders exist again, and selection states are loud. The rule is simple: if you
    cannot tell at a glance whether something is a button, the design has failed.
 
-   Contrast ratios below are measured against Surface (#181D26) unless stated.              */
+   The neutrals are plum, not slate. They were a cool navy, and the room above them is a
+   sunny flat outlined in warm plum (#33243A), so the screen read as two products: a cosy
+   picture pasted onto a dashboard. Each neutral was moved to the room's hue at the same
+   relative luminance — grounds no lighter, inks no darker — so every contrast ratio below
+   held, and check_habitat.py still passes on every stage.
+
+   Contrast ratios below are measured against Surface (#231927) unless stated.              */
 
 object Ink {
-    /** App ground. Deep slate rather than pure black, so a raised surface can read as raised. */
-    val Void = Color(0xFF0E1116)
+    /** App ground. Deep plum rather than pure black, so a raised surface can read as raised. */
+    val Void = Color(0xFF140E16)
 
     /** Default card. A clear, obvious step up from the ground. */
-    val Surface = Color(0xFF181D26)
+    val Surface = Color(0xFF231927)
 
     /** Raised card — pressed states, nested panels, the thing in front. */
-    val SurfaceHigh = Color(0xFF232B38)
+    val SurfaceHigh = Color(0xFF332538)
 
     /** Inset wells: progress tracks, counters, anything that should look recessed. */
-    val Well = Color(0xFF11151C)
+    val Well = Color(0xFF1A121C)
 
     /** Visible resting border. Not decoration — this is what makes a control look like one.
      *  3.7:1 on Surface, which clears the WCAG 3:1 floor for non-text UI boundaries. */
-    val Border = Color(0xFF6B7789)
+    val Border = Color(0xFF866E8D)
 
     /** Border on a focused or selected control. 5.4:1. */
-    val BorderStrong = Color(0xFF8593A6)
+    val BorderStrong = Color(0xFF9F8CA4)
 
     /** 15.8:1 on Surface. */
-    val Primary = Color(0xFFF5F7FA)
+    val Primary = Color(0xFFFCF6F1)
 
     /** 9.0:1. Body copy. */
-    val Secondary = Color(0xFFB4BECD)
+    val Secondary = Color(0xFFCAB8C8)
 
     /** 5.4:1, and 4.6:1 on SurfaceHigh. The floor for anything that is text at any size. */
-    val Muted = Color(0xFF8593A6)
+    val Muted = Color(0xFFA28BA4)
 
     /** Structure only — inactive ticks, dividers. Never text. */
-    val Faint = Color(0xFF4A5462)
+    val Faint = Color(0xFF5E4D63)
 
     /** Access. 6.4:1. */
     val Access = Color(0xFF4DA3FF)
@@ -114,6 +121,10 @@ val Pillar.accent: Color
         Pillar.ACTIVITY -> Ink.Activity
         Pillar.SOCIAL -> Ink.Social
     }
+
+/** A task's colour: its domain's for care, its ladder's for a mission. */
+val Quest.accent: Color
+    get() = domain?.accent ?: pillar?.accent ?: Ink.Gold
 
 /** The wash behind a selected control in this pillar's colour. */
 val Pillar.wash: Color get() = accent.copy(alpha = 0.16f)

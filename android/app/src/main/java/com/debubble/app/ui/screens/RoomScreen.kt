@@ -29,15 +29,18 @@ import com.debubble.app.engine.Domain
 import com.debubble.app.engine.Family
 import com.debubble.app.engine.Home
 import com.debubble.app.engine.HomeState
+import com.debubble.app.engine.Look
 import com.debubble.app.engine.Scene
 import com.debubble.app.engine.Stage
 import com.debubble.app.ui.components.HouseScene
 import com.debubble.app.ui.components.Label
 import com.debubble.app.ui.components.LabelledProgress
+import com.debubble.app.ui.components.LookPicker
 import com.debubble.app.ui.components.RoomArt
 import com.debubble.app.ui.components.SecondaryButton
 import com.debubble.app.ui.components.SectionHeader
 import com.debubble.app.ui.components.SpriteIcon
+import com.debubble.app.ui.components.TextAction
 import com.debubble.app.ui.components.TopBar
 import com.debubble.app.ui.components.VSpace
 import com.debubble.app.ui.components.panel
@@ -65,10 +68,18 @@ fun RoomScreen(
     onMove: (id: String, x: Int, b: Int) -> Unit,
     onPutAway: (String) -> Unit,
     onPutBack: (String) -> Unit,
+    onLook: (Look) -> Unit,
+    /** A mission outside is still open today, so you are holding its letter. */
+    letter: Boolean,
+    /** Whether a widget is already on the home screen, and whether the launcher can place one. */
+    widgetPlaced: Boolean,
+    canPinWidget: Boolean,
+    onAddWidget: () -> Unit,
     onSeen: () -> Unit,
     onBack: () -> Unit
 ) {
     var selected by remember { mutableStateOf<String?>(null) }
+    var dressing by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { onSeen() }
     val cat = art.catalogue
     val walls = Home.wallsStand(stage)
@@ -94,6 +105,7 @@ fun RoomScreen(
                 home = home,
                 dirt = dirt,
                 editable = true,
+                letter = letter,
                 selected = selected,
                 onSelect = { selected = it },
                 onMove = onMove,
@@ -103,7 +115,7 @@ fun RoomScreen(
             val pick = selected
             val item = pick?.let { cat.item(it) }
             when {
-                pick == Scene.ME -> Label("That is you. Put yourself wherever you like.")
+                pick == Scene.ME -> Label("That is you. Put yourself wherever you like, and your heart and anything you are holding come too.")
                 item != null -> Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -132,6 +144,14 @@ fun RoomScreen(
                 )
             }
 
+            VSpace(6)
+            SectionHeader("You")
+            if (dressing || pick == Scene.ME) {
+                LookPicker(art = art, look = home.look, onChange = onLook)
+            } else {
+                TextAction("Change how you look", colour = Ink.Secondary, onClick = { dressing = true })
+            }
+
             if (stored.isNotEmpty()) {
                 VSpace(6)
                 SectionHeader("Put away", trailing = "${stored.size}")
@@ -157,6 +177,19 @@ fun RoomScreen(
                         )
                         Label("Put back", color = Ink.Gold, strong = true)
                     }
+                }
+            }
+
+            // Always here, unlike the one-time card on the dashboard: someone who said "not
+            // now" there should be able to find it again without being asked twice.
+            if (!widgetPlaced) {
+                VSpace(6)
+                SectionHeader("On your home screen")
+                Label("Your room and today's four as a widget. Tap a task there to start it.")
+                if (canPinWidget) {
+                    SecondaryButton("Add the widget", onClick = onAddWidget)
+                } else {
+                    Label("Long-press an empty spot on your home screen, choose Widgets, and find DeBubble.")
                 }
             }
 

@@ -15,6 +15,8 @@ import com.debubble.app.engine.ItemCatalogue
 import com.debubble.app.engine.Curriculum
 import com.debubble.app.engine.LearnCurriculum
 import com.debubble.app.engine.RemediationPool
+import com.debubble.app.engine.Scene
+import com.debubble.app.engine.Today
 import com.debubble.app.engine.Goal
 import com.debubble.app.engine.GoalTrack
 import com.debubble.app.engine.Goals
@@ -137,8 +139,16 @@ class Repository(private val context: Context) {
         Family.entries.forEach { f ->
             require(cat.family(f).isNotEmpty()) { "no ${f.name} items" }
         }
-        listOf("me0", "me1", "me2", "me3", "heart_sun", "heart_cloud", "heart_storm", "sparkle")
+        (0..Care.MAX_DIRT).flatMap { listOf(Scene.meFrame(it), Scene.buddy(it)) }
+            .plus(listOf(Scene.LETTER, Scene.BANG, "sparkle"))
+            .plus(Today.ICONS)
             .forEach { require(cat.fx(it) != null) { "missing sprite $it" } }
+        require(cat.fx(Scene.meFrame(0))?.let { it.w == cat.me.w && it.h == cat.me.h } == true) {
+            "the me frames are not ${cat.me.w}x${cat.me.h}"
+        }
+        listOf(cat.looks.skin, cat.looks.hair, cat.looks.top).forEach { ramps ->
+            require(ramps.isNotEmpty() && ramps.all { it.size == ramps.first().size }) { "ragged looks" }
+        }
         cat
     }
 

@@ -22,10 +22,10 @@ SRC = HERE.parent / "app" / "src" / "main" / "java" / "com" / "debubble" / "app"
 # Text and structure inks, from ui/theme/Theme.kt. Each entry is (name, hex, floor).
 # 4.5 is the WCAG AA floor for body text, 3.0 for large text and non-text boundaries.
 INKS = [
-    ("Primary", 0xF5F7FA, 4.5),
-    ("Secondary", 0xB4BECD, 4.5),
-    ("Muted", 0x8593A6, 4.5),
-    ("Border", 0x6B7789, 3.0),
+    ("Primary", 0xFCF6F1, 4.5),
+    ("Secondary", 0xCAB8C8, 4.5),
+    ("Muted", 0xA28BA4, 4.5),
+    ("Border", 0x866E8D, 3.0),
     ("Access", 0x4DA3FF, 4.5),
     ("Activity", 0x3DDC97, 4.5),
     ("Social", 0xFF6B81, 4.5),
@@ -36,7 +36,7 @@ INKS = [
 # Surfaces that sit on top of a habitat ground and carry their own fill. Unchanged by the
 # habitat, so they are checked once — but they are checked, because a panel whose fill is
 # lighter than the ground behind it loses its edge.
-SURFACES = [("Surface", 0x181D26), ("SurfaceHigh", 0x232B38), ("Well", 0x11151C)]
+SURFACES = [("Surface", 0x231927), ("SurfaceHigh", 0x332538), ("Well", 0x1A121C)]
 
 
 def channel(c):
@@ -110,13 +110,13 @@ def main():
     # decides whether a card still reads as a card at stage seven.
     lightest = max(found, key=lambda s: luminance(s[2]))
     for name, fill in SURFACES:
-        r = ratio(0x6B7789, fill)
+        r = ratio(0x866E8D, fill)
         if r < 3.0:
             problems.append(f"{name}: Border on it is {r:.2f}:1, floor 3.0")
         rows.append(f"  {name:13} border {r:5.2f}:1")
     rows.append(
         f"  lightest ground is {lightest[0]} ({lightest[2]:06X}); "
-        f"Surface against it: {ratio(0x181D26, lightest[2]):.2f}:1"
+        f"Surface against it: {ratio(0x231927, lightest[2]):.2f}:1"
     )
 
     print("\n".join(rows))

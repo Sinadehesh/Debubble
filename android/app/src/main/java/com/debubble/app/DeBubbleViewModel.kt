@@ -8,6 +8,10 @@ import com.debubble.app.data.LogEntry
 import com.debubble.app.data.Repository
 import com.debubble.app.data.Note
 import com.debubble.app.data.Notes
+import com.debubble.app.data.dirt
+import com.debubble.app.data.outsidePillar
+import com.debubble.app.data.quests
+import com.debubble.app.data.serve
 import com.debubble.app.engine.AuditCatalogue
 import com.debubble.app.engine.Baseline
 import com.debubble.app.engine.BudgetTier
@@ -43,6 +47,10 @@ import com.debubble.app.engine.Goals
 import com.debubble.app.engine.Pillar
 import com.debubble.app.engine.Progress
 import com.debubble.app.engine.Protocol
+import com.debubble.app.engine.Quest
+import com.debubble.app.engine.RoomTap
+import com.debubble.app.engine.Today
+import com.debubble.app.engine.Look
 import com.debubble.app.engine.Served
 import com.debubble.app.widget.DayWidget
 import com.debubble.app.ui.components.RingState
@@ -123,6 +131,9 @@ sealed interface Route {
 /** The widget's "check your prediction" link. Matched, not parsed. */
 const val WIDGET_REVIEW = "review"
 
+/** A widget link that opens the room to arrange it. */
+const val LINK_ROOM = "room"
+
 // `app` is a property, not just a constructor argument: the widget helpers below need a
 // context after construction, and a stored application reference is the one kind that is
 // safe to hold in a view model.
@@ -191,13 +202,10 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
 
     // ------------------------------------------------------------------ serving
 
-    fun serve(pillar: Pillar, s: AppState): Served = Engine.serve(
-        pillar = pillar,
-        state = s.state(pillar),
-        curriculum = curriculum,
-        baseline = s.baseline,
-        forceAlternate = pillar.name in s.swappedToday
-    )
+    fun serve(pillar: Pillar, s: AppState): Served = s.serve(pillar, curriculum)
+
+    /** Today's four: body, room, heart, and one mission outside. See engine/Today.kt. */
+    fun quests(s: AppState): List<Quest> = s.quests(today(), care, curriculum)
 
     /**
      * The day's mission, or null when no campaign is active or it is already finished.
@@ -307,9 +315,18 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
      * widget placed before an update and tapped after one must not drop someone into a
      * screen that no longer means what it did.
      */
-    fun openFromWidget(link: String) {
+    fun openFromWidget(link: String) = openLink(link)
+
+    /**
+     * Follow a link from a quest, the room or the widget: "care:BODY", "tier:SOCIAL:4",
+     * "mission:…", "room", or the review marker. Anything it does not recognise opens
+     * nothing, which on the dashboard is the right thing to do.
+     */
+    private fun openLink(link: String) {
         val s = state.value
         when {
+            link.startsWith(Today.CARE) -> Domain.from(link.removePrefix(Today.CARE))?.let { openCare(it) }
+            link == LINK_ROOM -> openRoom()
             link == WIDGET_REVIEW -> {
                 // The oldest unchecked prediction, because that is the one most at risk of
                 // being forgotten entirely.
@@ -989,6 +1006,10 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
             DayWidget.canRequestPin(app) &&
             !DayWidget.isInstalled(app)
 
+    fun widgetPlaced(): Boolean = DayWidget.isInstalled(app)
+
+    fun canPinWidget(): Boolean = DayWidget.canRequestPin(app)
+
     /** Hand it to the launcher, which shows its own dialog. We are told nothing either way. */
     fun requestWidget() {
         DayWidget.requestPin(app)
@@ -1021,8 +1042,7 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
     fun openRoom() { _route.value = Route.Room }
 
     /** Today's level for each domain. What the room draws and what the cards say. */
-    fun dirt(s: AppState): Map<Domain, Int> =
-        Domain.order.associateWith { Care.dirt(it, s.care(it), today()) }
+    fun dirt(s: AppState): Map<Domain, Int> = s.dirt(today())
 
     fun careDoneToday(s: AppState, d: Domain): Boolean = Care.doneToday(s.care(d), today())
 
@@ -1146,7 +1166,7 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
     }
 
     fun moveMe(x: Int, b: Int) {
-        val spot = Home.clamp(items.room, Home.ME_W, Home.ME_H, false, x, b)
+        val spot = Home.clamp(items.room, items.me.w, items.me.h, false, x, b)
         viewModelScope.launch { repo.update { s -> s.copy(home = s.home.copy(me = spot)) } }
     }
 
@@ -1167,6 +1187,29 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
             }
         }
     }
+
+    /** How you look. Any time, from moving in or from the room. */
+    fun setLook(look: Look) {
+        viewModelScope.launch { repo.update { s -> s.copy(home = s.home.copy(look = look)) } }
+    }
+
+    /**
+     * A tap on something in the room that is a task: you, the mess, your heart, the letter.
+     * A mission already done today has no letter to tap, so OUTSIDE only ever opens one
+     * that is still open.
+     */
+    fun openFromRoom(tap: RoomTap) {
+        val s = state.value
+        when (tap) {
+            RoomTap.BODY -> openCare(Domain.BODY)
+            RoomTap.ROOM -> openCare(Domain.ROOM)
+            RoomTap.HEART -> openCare(Domain.HEART)
+            RoomTap.OUTSIDE -> s.outsidePillar(today()).let { if (!s.isDoneToday(it)) openChallenge(it) }
+        }
+    }
+
+    /** Open whatever a quest row points at. */
+    fun openQuest(q: Quest) = openLink(q.link)
 
     /** New arrivals have been seen in the room. */
     fun markRoomSeen() {

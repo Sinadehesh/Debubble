@@ -1,9 +1,11 @@
 package com.debubble.app.widget
 
 import com.debubble.app.data.AppState
-import com.debubble.app.engine.Curriculum
-import com.debubble.app.engine.Engine
+import com.debubble.app.engine.Domain
 import com.debubble.app.engine.Pillar
+import com.debubble.app.engine.Quest
+import com.debubble.app.engine.QuestKind
+import com.debubble.app.engine.Today
 
 /**
  * What the home-screen widget should say, decided without touching Android.
@@ -12,99 +14,92 @@ import com.debubble.app.engine.Pillar
  * nobody will ever see a stack trace from: it draws on someone else's launcher, in a process
  * that is not ours, and a wrong decision here shows up as stale or blank text rather than a
  * crash anybody reports. So the decision is pure and the rendering is dumb.
+ *
+ * The widget is the room and today's four, the same as the top of the app. Each row leads
+ * with its cue — "When I wake up: splash water on my face" — because an if-then plan works
+ * by being retrieved at the moment it names (Gollwitzer & Sheeran, 2006), and a plan filed
+ * inside an app is only retrieved by people who already remembered. On the home screen it is
+ * in front of them when the moment arrives.
+ *
+ * There is still no "mark it done" button. Finishing runs through the before-and-after and,
+ * for a mission, a prediction to check — the parts that do the work. A one-tap tick on the
+ * home screen would let someone skip both and collect the tick instead.
  */
 data class WidgetCue(
-    /** Small accented line at the top. */
-    val kicker: String,
-    val tone: Tone,
-    /** The largest text. Always a moment, never a score. */
-    val cue: String,
-    val body: String,
-    /** Top right. Empty rather than "0 days". */
-    val badge: String,
+    /** "Today", or a whole-day message when all four are done. */
+    val title: String,
+    /** "2 of 4". Empty when there is nothing to count. */
+    val count: String,
+    val rows: List<Row>,
+    /** A live plan for something that is not one of the four, said as the plan. */
+    val plan: String,
     /** Whether a prediction is waiting to be checked from a previous day. */
     val review: Boolean,
-    /** What tapping it opens. Empty means just open the app. */
-    val link: String
+    /** Whether the room should be drawn at all, or only the message. */
+    val ready: Boolean
 ) {
-    enum class Tone { ACCESS, ACTIVITY, SOCIAL, PLAN, DONE, NEUTRAL }
+    data class Row(
+        val icon: String,
+        /** "Body · Lived-in", "Outside · Social, level 4". */
+        val name: String,
+        /** The cue and the smallest version, or "Done today". */
+        val text: String,
+        val done: Boolean,
+        val tone: Tone,
+        /** What tapping it opens. Empty means just open the app. */
+        val link: String
+    )
+
+    enum class Tone { BODY, ROOM, HEART, ACCESS, ACTIVITY, SOCIAL }
 }
 
 object WidgetCues {
 
-    /** Shown when state cannot be read at all. Never a spinner, never blank. */
+    /** Shown before moving in, or when state cannot be read. Never a spinner, never blank. */
     val unavailable = WidgetCue(
-        kicker = "DeBubble",
-        tone = WidgetCue.Tone.NEUTRAL,
-        cue = "Open the app to pick up today.",
-        body = "",
-        badge = "",
+        title = "Open DeBubble to move in.",
+        count = "",
+        rows = emptyList(),
+        plan = "",
         review = false,
-        link = ""
+        ready = false
     )
 
-    /**
-     * The order of these branches is the whole design.
-     *
-     * A live if-then plan comes first, because that is the thing the widget exists for: the
-     * plan works by being retrieved when the cue arrives, and a plan filed inside an app is
-     * retrieved by people who already remembered. Everything else is a fallback.
-     */
-    fun of(state: AppState, today: Long, curriculum: Curriculum): WidgetCue {
-        val rolled = state.rolledTo(today)
+    fun of(state: AppState, today: Long, quests: List<Quest>): WidgetCue {
+        if (!state.onboarded || !state.movedIn || quests.isEmpty()) return unavailable
 
-        // An unchecked prediction from a previous day. Surfaced as a second action rather than
-        // taking over the widget, because it is a loose end and not today's instruction.
-        val stale = rolled.openForecasts.any { it.createdDay < today }
+        val done = Today.doneCount(quests)
+        val outsideLink = quests.firstOrNull { it.kind == QuestKind.OUTSIDE }?.link.orEmpty()
+        // A plan for one of the four is already that row's cue. Any other live plan — a
+        // goal step, a focus challenge — gets its own line, because it is still a moment
+        // the user chose and the widget is where it gets remembered.
+        val other = state.liveIntentions(today).firstOrNull { it.challengeId != outsideLink }
 
-        val plan = rolled.liveIntentions(today).firstOrNull()
-        if (plan != null) {
-            return WidgetCue(
-                kicker = "Your plan",
-                tone = WidgetCue.Tone.PLAN,
-                cue = plan.sentence,
-                body = plan.challengeTitle,
-                badge = badge(rolled),
-                review = stale,
-                link = plan.challengeId
-            )
-        }
-
-        val next = Pillar.order.firstOrNull { !rolled.isDoneToday(it) }
-            ?: return WidgetCue(
-                kicker = "Done for today",
-                tone = WidgetCue.Tone.DONE,
-                cue = "All three, today.",
-                body = "Nothing else is asked of you. The next one is tomorrow.",
-                badge = badge(rolled),
-                review = stale,
-                link = ""
-            )
-
-        val served = Engine.serve(
-            pillar = next,
-            state = rolled.state(next),
-            curriculum = curriculum,
-            baseline = rolled.baseline
-        )
         return WidgetCue(
-            kicker = "${next.display} · level ${served.tier}",
-            tone = when (next) {
-                Pillar.ACCESS -> WidgetCue.Tone.ACCESS
-                Pillar.ACTIVITY -> WidgetCue.Tone.ACTIVITY
-                Pillar.SOCIAL -> WidgetCue.Tone.SOCIAL
+            title = if (done == quests.size) "All done today" else "Today",
+            count = "$done of ${quests.size}",
+            rows = quests.map { q ->
+                WidgetCue.Row(
+                    icon = q.icon,
+                    name = "${q.name} · ${q.status}",
+                    text = if (q.done) "Done today" else q.line,
+                    done = q.done,
+                    tone = toneOf(q),
+                    link = if (q.done && q.kind == QuestKind.OUTSIDE) "" else q.link
+                )
             },
-            // The anchor, as a sentence. This is the part that decides whether it happens, so
-            // it gets the large type and the directive goes underneath.
-            cue = "When ${served.anchor}.",
-            body = served.opener.ifBlank { served.directive },
-            badge = badge(rolled),
-            review = stale,
-            link = "tier:${next.name}:${served.tier}"
+            plan = other?.sentence.orEmpty(),
+            review = state.openForecasts.any { it.createdDay < today },
+            ready = true
         )
     }
 
-    /** A one-day streak is not a streak, so it says nothing rather than "1 day". */
-    private fun badge(state: AppState): String =
-        if (state.streak >= 2) "${state.streak} days" else ""
+    private fun toneOf(q: Quest): WidgetCue.Tone = when {
+        q.domain == Domain.BODY -> WidgetCue.Tone.BODY
+        q.domain == Domain.ROOM -> WidgetCue.Tone.ROOM
+        q.domain == Domain.HEART -> WidgetCue.Tone.HEART
+        q.pillar == Pillar.ACTIVITY -> WidgetCue.Tone.ACTIVITY
+        q.pillar == Pillar.SOCIAL -> WidgetCue.Tone.SOCIAL
+        else -> WidgetCue.Tone.ACCESS
+    }
 }

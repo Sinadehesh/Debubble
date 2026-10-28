@@ -21,10 +21,12 @@ import androidx.compose.ui.unit.dp
 import com.debubble.app.engine.CareLibrary
 import com.debubble.app.engine.Domain
 import com.debubble.app.engine.HomeState
+import com.debubble.app.engine.Look
 import com.debubble.app.engine.Stage
 import com.debubble.app.ui.components.Dot
 import com.debubble.app.ui.components.HouseScene
 import com.debubble.app.ui.components.Label
+import com.debubble.app.ui.components.LookPicker
 import com.debubble.app.ui.components.PrimaryButton
 import com.debubble.app.ui.components.RoomArt
 import com.debubble.app.ui.components.SelectRow
@@ -55,6 +57,7 @@ fun CheckInScreen(
     stage: Stage,
     home: HomeState,
     initial: Map<Domain, Int>,
+    onLook: (Look) -> Unit,
     onSave: (Map<Domain, Int>) -> Unit,
     onBack: (() -> Unit)?
 ) {
@@ -100,6 +103,15 @@ fun CheckInScreen(
                 dirt = levels,
                 description = "Your room, as you describe it"
             )
+
+            // Moving in is when you make the character yours, before anything else happens
+            // to it. Afterwards it lives in the room screen.
+            if (firstRun) {
+                VSpace(4)
+                Text("This is you", color = Ink.Primary, style = MaterialTheme.typography.titleMedium)
+                Label("Pick what looks like you. You can change it any time from your room.")
+                LookPicker(art = art, look = home.look, onChange = onLook)
+            }
 
             Domain.order.forEach { d ->
                 val info = library.info(d)

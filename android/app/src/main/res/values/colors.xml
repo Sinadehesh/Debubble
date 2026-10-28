@@ -10,16 +10,19 @@
     <color name="void_ground">#FF000000</color>
     <color name="ic_launcher_background">#FF000000</color>
 
-    <color name="ink_void">#FF0E1116</color>
-    <color name="ink_surface">#FF181D26</color>
-    <color name="ink_surface_high">#FF232B38</color>
-    <color name="ink_border">#FF6B7789</color>
-    <color name="ink_primary">#FFF5F7FA</color>
-    <color name="ink_secondary">#FFB4BECD</color>
-    <color name="ink_muted">#FF8593A6</color>
+    <color name="ink_void">#FF140E16</color>
+    <color name="ink_surface">#FF231927</color>
+    <color name="ink_surface_high">#FF332538</color>
+    <color name="ink_border">#FF866E8D</color>
+    <color name="ink_primary">#FFFCF6F1</color>
+    <color name="ink_secondary">#FFCAB8C8</color>
+    <color name="ink_muted">#FFA28BA4</color>
     <color name="ink_access">#FF4DA3FF</color>
     <color name="ink_activity">#FF3DDC97</color>
     <color name="ink_social">#FFFF6B81</color>
     <color name="ink_ember">#FFFFB020</color>
     <color name="ink_gold">#FFFFC94D</color>
+    <color name="ink_body">#FF9BD7D1</color>
+    <color name="ink_room">#FFE8B476</color>
+    <color name="ink_heart">#FFF3B8C8</color>
 </resources>

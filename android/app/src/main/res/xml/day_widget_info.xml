@@ -2,21 +2,24 @@
 <!--
     updatePeriodMillis is 0 on purpose. The content changes when the user's state changes or
     when the date rolls over, and both of those are events we already have — a timer would
-    wake the device to redraw text that had not changed. Repository.update() refreshes the
-    widget on every write, and the receiver listens for DATE_CHANGED so the cue is right in
-    the morning even if the app has not been opened.
+    wake the device to redraw a room that had not changed. Repository.update() refreshes the
+    widget on every write, and DayWidget books one inexact alarm for just after midnight, so
+    the room and the four are right in the morning even if the app has not been opened.
+
+    Four by four by default, because the room needs the width to be seen and the four rows
+    need the height to be read. It resizes down to a strip of icons under the room.
 -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:minWidth="250dp"
-    android:minHeight="110dp"
+    android:minHeight="250dp"
     android:minResizeWidth="180dp"
-    android:minResizeHeight="110dp"
+    android:minResizeHeight="140dp"
     android:targetCellWidth="4"
-    android:targetCellHeight="2"
+    android:targetCellHeight="4"
     android:updatePeriodMillis="0"
-    android:initialLayout="@layout/widget_day"
-    android:previewLayout="@layout/widget_day"
-    android:previewImage="@mipmap/ic_launcher"
+    android:initialLayout="@layout/widget_room"
+    android:previewLayout="@layout/widget_room"
+    android:previewImage="@drawable/widget_room_preview"
     android:resizeMode="horizontal|vertical"
     android:description="@string/widget_description"
     android:widgetCategory="home_screen" />

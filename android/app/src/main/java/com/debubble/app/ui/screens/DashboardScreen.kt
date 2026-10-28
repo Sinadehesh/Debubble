@@ -5,16 +5,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -44,13 +41,14 @@ import com.debubble.app.engine.Intention
 import com.debubble.app.engine.Pillar
 import com.debubble.app.engine.Principle
 import com.debubble.app.engine.Progress
+import com.debubble.app.engine.Quest
+import com.debubble.app.engine.QuestKind
 import com.debubble.app.engine.RepType
+import com.debubble.app.engine.RoomTap
 import com.debubble.app.engine.Routed
 import com.debubble.app.engine.Served
-import com.debubble.app.ui.components.Avatar
-import com.debubble.app.ui.components.BubbleRing
+import com.debubble.app.engine.Today
 import com.debubble.app.ui.components.ChallengeCard
-import com.debubble.app.ui.components.CheckBox
 import com.debubble.app.ui.components.Dot
 import com.debubble.app.ui.components.Glyph
 import com.debubble.app.ui.components.Glyphs
@@ -60,39 +58,45 @@ import com.debubble.app.ui.components.Label
 import com.debubble.app.ui.components.Pill
 import com.debubble.app.ui.components.PrimaryButton
 import com.debubble.app.ui.components.ProgressTrack
+import com.debubble.app.ui.components.QuestRow
 import com.debubble.app.ui.components.RepTracker
-import com.debubble.app.ui.components.RingState
 import com.debubble.app.ui.components.RoomArt
 import com.debubble.app.ui.components.SecondaryButton
 import com.debubble.app.ui.components.SectionHeader
+import com.debubble.app.ui.components.SpriteIcon
 import com.debubble.app.ui.components.TextAction
+import com.debubble.app.ui.components.TodayHeader
 import com.debubble.app.ui.components.VSpace
 import com.debubble.app.ui.components.panel
-import com.debubble.app.ui.components.rememberReducedMotion
+import com.debubble.app.ui.components.pixelScale
 import com.debubble.app.ui.theme.Ink
 import com.debubble.app.ui.theme.Space
 import com.debubble.app.ui.theme.accent
+import com.debubble.app.ui.theme.centered
 import com.debubble.app.ui.theme.roomGround
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 /**
  * Home.
  *
- * Top to bottom: who you are, your room, how your body, room and heart are doing, the three
- * care routines that clean them, then one mission outside the bubble, then the readouts and
- * the campaign. Every section is a labelled block with a visible boundary, so the screen can
- * be scanned rather than decoded.
+ * Top to bottom: the day, your room, today's four, how far the room has opened, then your
+ * plans, the focus from your audit, and your goal. Every section is a labelled block with a
+ * visible boundary, so the screen can be scanned rather than decoded.
  *
- * The order is the argument. Looking after yourself comes before going further out, because
- * the foundation is what makes the stretch possible: behavioural activation restores routine
- * activities before pleasurable and harder ones for the same reason. The care cards are
- * three, small, and the same every day; the mission is one, and new every day.
+ * The room and the list are one thing. Each of today's four lives somewhere in the room — you
+ * are your body, the floor is your room, the heart at your shoulder is your heart, and the
+ * letter in your hand is today's mission outside — and tapping it there opens it, the same as
+ * tapping its row. Care comes first in the list because the foundation is what makes the
+ * stretch possible: behavioural activation restores routine activities before harder ones for
+ * the same reason. Three are the same every day; the fourth is new every day.
  */
 @Composable
 fun DashboardScreen(
     state: AppState,
     dayIndex: Long,
     served: Map<Pillar, Served>,
-    ring: RingState,
+    quests: List<Quest>,
     mission: Served?,
     reps: List<RepType>,
     principles: List<Principle>,
@@ -101,7 +105,7 @@ fun DashboardScreen(
     openForecasts: List<Forecast>,
     livePlans: List<Intention>,
     debuffLabel: (String) -> String,
-    pulse: Pillar?,
+    onOpenQuest: (Quest) -> Unit,
     onOpen: (Pillar) -> Unit,
     onOpenMission: () -> Unit,
     onLogRep: (RepType) -> Unit,
@@ -119,26 +123,22 @@ fun DashboardScreen(
     onAddWidget: () -> Unit,
     onDismissWidget: () -> Unit,
     onAcknowledgeHabitat: () -> Unit,
-    /* ---- the room as a mirror ---- */
+    /* ---- the room ---- */
     art: RoomArt,
     library: CareLibrary,
     dirt: Map<Domain, Int>,
-    careDone: Set<Domain>,
     welcomeBack: String?,
-    onOpenCare: (Domain) -> Unit,
+    onRoomTap: (RoomTap) -> Unit,
     onOpenRoom: () -> Unit,
     onCheckIn: () -> Unit
 ) {
-    val tiers = Pillar.order.associateWith { state.state(it).tier }
-    val open = Pillar.order.count { !state.isDoneToday(it) }
     val stage = state.stage
-    val careOpen = Domain.order.count { it !in careDone }
-    // One mission leads, the same one all day: the first not yet done, starting from a pillar
-    // that rotates daily so no ladder is always the one that gets skipped.
-    val lead = Pillar.order.indices
-        .map { Pillar.order[(it + dayIndex.toInt()) % Pillar.order.size] }
-        .firstOrNull { !state.isDoneToday(it) }
-    var moreMissions by remember { mutableStateOf(false) }
+    val next = Today.next(quests)
+    val outside = quests.firstOrNull { it.kind == QuestKind.OUTSIDE }
+    // The other two ladders, for anyone who wants more than one mission today. Optional,
+    // folded away, and never counted against the day.
+    val extras = Pillar.order.filter { it != outside?.pillar && !state.isDoneToday(it) }
+    var showExtras by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -146,7 +146,7 @@ fun DashboardScreen(
             .background(roomGround())
             .verticalScroll(rememberScrollState())
     ) {
-        HeroBar(state = state, dayIndex = dayIndex, onOpenAvatar = onOpenAvatar)
+        TopLine(state = state, dayIndex = dayIndex, onOpenAvatar = onOpenAvatar)
 
         if (welcomeBack != null) {
             Text(
@@ -162,234 +162,100 @@ fun DashboardScreen(
             )
         }
 
-        // The room: the largest thing on the screen, and the first. It is a mirror — messy
-        // when the real ones are neglected, clean when they are looked after — and tapping
-        // it opens it full screen to rearrange.
+        // The room: the largest thing on the screen, and the first. A mirror of the real
+        // ones, and the way into today's tasks — tap whatever needs you. Anywhere else opens
+        // it full screen to rearrange.
         VSpace(10)
         HouseScene(
             art = art,
             stage = stage,
             home = state.home,
             dirt = dirt,
-            modifier = Modifier
-                .padding(horizontal = 8.dp)
-                .clickable(role = Role.Button, onClick = onOpenRoom),
+            letter = Today.letter(quests),
+            onTap = { tap -> if (tap == null) onOpenRoom() else onRoomTap(tap) },
+            modifier = Modifier.padding(horizontal = 8.dp),
             description = "Your room. " + Domain.order.joinToString(". ") { d ->
                 "${library.info(d).name}: ${library.levelName(d, dirt[d] ?: 0)}"
-            } + ". Tap to arrange it."
+            } + ". Tap yourself, your heart, the mess or the letter to start that task."
         )
-        VSpace(10)
-
-        // How each one is doing, in its own colour, under the room it shows up in.
-        Row(
+        Text(
+            text = if (Today.letter(quests)) "Tap you, your heart, the mess, or the letter in your hand."
+            else "Tap you, your heart or the mess. Anywhere else to rearrange.",
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = Space.gutter),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Domain.order.forEach { d ->
-                val level = dirt[d] ?: 0
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .heightIn(min = Space.tap)
-                        .panel(fill = Ink.Surface, border = d.accent.copy(alpha = 0.55f))
-                        .clickable(role = Role.Button) { onOpenCare(d) }
-                        .padding(horizontal = 10.dp, vertical = 9.dp),
-                    verticalArrangement = Arrangement.spacedBy(5.dp)
-                ) {
-                    Label(library.info(d).name, color = d.accent, strong = true)
-                    Text(
-                        text = library.levelName(d, level),
-                        color = Ink.Primary,
-                        style = MaterialTheme.typography.labelLarge
-                    )
-                    LevelPips(level = level, colour = d.accent)
-                }
-            }
-        }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = Space.gutter),
-            horizontalArrangement = Arrangement.spacedBy(Space.gap)
-        ) {
-            Box(modifier = Modifier.weight(1f)) {
-                TextAction("Honest check-in", colour = Ink.Secondary, onClick = onCheckIn)
-            }
-            Box(modifier = Modifier.weight(1f)) {
-                TextAction("Arrange your room", colour = Ink.Secondary, onClick = onOpenRoom)
-            }
-        }
+                .padding(horizontal = Space.gutter)
+                .padding(top = 6.dp),
+            color = Ink.Muted,
+            style = MaterialTheme.typography.labelMedium.centered
+        )
 
         Column(
             modifier = Modifier.padding(horizontal = Space.gutter),
             verticalArrangement = Arrangement.spacedBy(Space.gap)
         ) {
             if (state.habitatChanged) {
-                VSpace(12)
+                VSpace(10)
                 HabitatAnnouncement(stage = stage, onDismiss = onAcknowledgeHabitat)
-                VSpace(6)
             }
 
             if (openForecasts.isNotEmpty()) {
-                VSpace(12)
+                VSpace(10)
                 SectionHeader("Waiting on you", trailing = "${openForecasts.size}")
-                VSpace(4)
-                Column(verticalArrangement = Arrangement.spacedBy(Space.gap)) {
-                    openForecasts.take(2).forEach { f ->
-                        ForecastPrompt(f) { onReview(f.id) }
-                    }
-                }
-                VSpace(6)
+                openForecasts.take(2).forEach { f -> ForecastPrompt(f) { onReview(f.id) } }
             }
-
-            if (livePlans.isNotEmpty()) {
-                VSpace(12)
-                SectionHeader("Your plans")
-                VSpace(4)
-                Column(verticalArrangement = Arrangement.spacedBy(Space.gap)) {
-                    livePlans.take(3).forEach { PlanRow(it) }
-                }
-                VSpace(6)
-            }
-
-            // Directly under the plans, because that is what the widget shows and the
-            // adjacency is the argument. Offering it on an empty dashboard on day one would
-            // be asking for home-screen space before the app has earned any.
-            if (offerWidget) {
-                VSpace(12)
-                WidgetOffer(onAdd = onAddWidget, onDismiss = onDismissWidget)
-            }
-
 
             VSpace(12)
-            SectionHeader(
-                title = "Look after yourself",
-                trailing = if (careOpen == 0) "All done" else "$careOpen left"
-            )
-            Label("Same three every day, any size. Tiny counts.")
-            Domain.order.forEach { d ->
-                val cs = state.care(d)
-                val routine = library.chosen(d, cs)
-                CareCard(
-                    domain = d,
-                    title = routine.title,
-                    cue = cs.anchor.ifBlank { routine.anchors.first() },
-                    tiny = routine.tiny,
-                    level = library.levelName(d, dirt[d] ?: 0),
-                    done = d in careDone,
-                    onClick = { onOpenCare(d) }
+            TodayHeader(quests)
+            quests.forEach { q ->
+                QuestRow(
+                    art = art,
+                    quest = q,
+                    next = q == next,
+                    onClick = { onOpenQuest(q) }
                 )
             }
 
-            VSpace(16)
-            SectionHeader(
-                title = "Step outside",
-                trailing = if (open == 0) "All done" else "$open open"
-            )
-            Label("One new thing a day opens the walls. More if you want them.")
-            if (lead != null) {
-                served[lead]?.let { s ->
-                    ChallengeCard(served = s, done = false, onClick = { onOpen(lead) })
-                }
-            }
-            val others = Pillar.order.filter { it != lead }
-            if (others.isNotEmpty()) {
-                if (moreMissions || lead == null) {
-                    others.forEach { pillar ->
-                        served[pillar]?.let { s ->
-                            ChallengeCard(
-                                served = s,
-                                done = state.isDoneToday(pillar),
-                                onClick = { onOpen(pillar) }
-                            )
-                        }
+            if (extras.isNotEmpty()) {
+                if (showExtras) {
+                    Label("Extra missions. Optional — today's one is the one that counts.")
+                    extras.forEach { p ->
+                        served[p]?.let { s -> ChallengeCard(served = s, done = false, onClick = { onOpen(p) }) }
                     }
                 } else {
                     TextAction(
-                        text = "Show the other ${others.size} missions",
+                        text = if (outside?.done == true) "Want more? ${extras.size} more missions outside"
+                        else "${extras.size} more missions outside, if you want them",
                         colour = Ink.Secondary,
-                        onClick = { moreMissions = true }
+                        onClick = { showExtras = true }
                     )
                 }
             }
 
-            if (open == 0) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .panel(border = Ink.Activity.copy(alpha = 0.6f))
-                        .padding(14.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Glyph(Glyphs.Check, colour = Ink.Activity, size = 22)
-                    Text(
-                        text = "All three missions done. Your bubble got bigger in every " +
-                            "direction today — that is not a normal day.",
-                        color = Ink.Secondary,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
+            VSpace(6)
+            WorldStrip(
+                state = state,
+                owned = state.home.owned.size,
+                total = art.catalogue.items.size,
+                onOpenRoom = onOpenRoom,
+                onCheckIn = onCheckIn
+            )
+
+            if (livePlans.isNotEmpty()) {
+                VSpace(10)
+                SectionHeader("Your plans")
+                livePlans.take(3).forEach { PlanRow(it) }
             }
 
-            // The bubble and the ladders, as a readout of the missions above it.
-            VSpace(10)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Bottom
-            ) {
-                Text(
-                    text = stage.label,
-                    color = Ink.Primary,
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Label("${state.clearedRungs} missions done")
-            }
-            ProgressTrack(Habitat.progress(state.clearedRungs), Ink.Gold, height = 5)
-            Label(Habitat.caption(state.clearedRungs))
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1.7f)
-            ) {
-                BubbleRing(
-                    state = ring,
-                    pulse = pulse,
-                    animate = !rememberReducedMotion(),
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Pillar.order.forEach { p ->
-                    Row(
-                        modifier = Modifier
-                            .weight(1f)
-                            .panel(fill = Ink.Surface)
-                            .padding(horizontal = 10.dp, vertical = 9.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(7.dp)
-                    ) {
-                        Dot(p.accent, size = 8)
-                        Column {
-                            Label(p.display)
-                            Text(
-                                text = "Lv ${tiers.getValue(p)}",
-                                color = p.accent,
-                                style = MaterialTheme.typography.labelLarge
-                            )
-                        }
-                    }
-                }
+            // After the list it puts on the home screen, because that adjacency is the
+            // argument. Offering it on an empty dashboard on day one would be asking for
+            // home-screen space before the app has earned any.
+            if (offerWidget) {
+                VSpace(10)
+                WidgetOffer(onAdd = onAddWidget, onDismiss = onDismissWidget)
             }
 
             if (!routed.isEmpty) {
-                VSpace(16)
+                VSpace(14)
                 SectionHeader("Focus", trailing = routed.rationale.ifBlank { null })
                 routed.campaign?.let { c ->
                     ChallengeCard(
@@ -424,9 +290,10 @@ fun DashboardScreen(
                         .panel(fill = Ink.Surface)
                         .clickable(role = Role.Button, onClick = onOpenCampaign)
                         .padding(horizontal = 14.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    SpriteIcon(art, Today.ICON_GOAL, pixelScale = pixelScale(2.6f))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = goal.display,
@@ -470,6 +337,89 @@ fun DashboardScreen(
             }
 
             VSpace(24)
+        }
+    }
+}
+
+/**
+ * The day, and your level, in one line. Slim on purpose: the room is the hero of this
+ * screen, and a header that competed with it would be saying the number matters more.
+ */
+@Composable
+private fun TopLine(state: AppState, dayIndex: Long, onOpenAvatar: () -> Unit) {
+    val today = remember { LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE d MMMM")) }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = Space.gutter)
+            .padding(top = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text("Day $dayIndex", color = Ink.Primary, style = MaterialTheme.typography.headlineMedium)
+            Label(today)
+        }
+        Column(
+            modifier = Modifier
+                .width(132.dp)
+                .heightIn(min = Space.tap)
+                .panel(fill = Ink.Surface, shape = RoundedCornerShape(Space.radius))
+                .clickable(role = Role.Button, onClick = onOpenAvatar)
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Level ${state.level}", color = Ink.Primary, style = MaterialTheme.typography.labelLarge)
+                if (state.plates > 0) Label("${state.plates}", color = Ink.Ember, strong = true)
+            }
+            ProgressTrack(fraction = state.levelProgress, accent = Ink.Gold, height = 6)
+            Label("${Progress.xpIntoLevel(state.xp)} / ${Progress.XP_PER_LEVEL} XP")
+        }
+    }
+}
+
+/**
+ * How far the room has opened, and what is in it. Missions outside are what open the walls,
+ * so this sits right under the list that has today's mission in it.
+ */
+@Composable
+private fun WorldStrip(
+    state: AppState,
+    owned: Int,
+    total: Int,
+    onOpenRoom: () -> Unit,
+    onCheckIn: () -> Unit
+) {
+    val stage = state.stage
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .panel(fill = Ink.Surface)
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(stage.label, color = Ink.Primary, style = MaterialTheme.typography.titleMedium)
+            Label("$owned of $total things")
+        }
+        ProgressTrack(Habitat.progress(state.clearedRungs), Ink.Gold, height = 6)
+        Label(Habitat.caption(state.clearedRungs))
+        Row(horizontalArrangement = Arrangement.spacedBy(Space.gap)) {
+            Box(modifier = Modifier.weight(1f)) {
+                TextAction("Honest check-in", colour = Ink.Secondary, onClick = onCheckIn)
+            }
+            Box(modifier = Modifier.weight(1f)) {
+                TextAction("Arrange your room", colour = Ink.Secondary, onClick = onOpenRoom)
+            }
         }
     }
 }
@@ -537,63 +487,6 @@ private fun PlanRow(plan: Intention) {
             color = Ink.Primary,
             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium)
         )
-    }
-}
-
-/**
- * Who you are, at the top of your own home screen.
- *
- * The avatar is here rather than buried in a profile tab because it is the thing that changes
- * when you do something, and a reward you have to navigate to is not a reward.
- */
-@Composable
-private fun HeroBar(state: AppState, dayIndex: Long, onOpenAvatar: () -> Unit) {
-    val level = state.level
-    val plates = state.plates
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = Space.gutter)
-            .padding(top = 14.dp, bottom = 4.dp)
-            .panel(fill = Ink.Surface, shape = RoundedCornerShape(Space.radiusLarge))
-            .clickable(role = Role.Button, onClick = onOpenAvatar)
-            .padding(12.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Avatar(
-            avatar = state.avatar,
-            friction = state.friction,
-            size = 76
-        )
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text(
-                    text = "Level $level",
-                    color = Ink.Primary,
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Pill("Day $dayIndex", Ink.Muted)
-                if (plates > 0) Pill("$plates armour", Ink.Ember)
-            }
-            ProgressTrack(
-                fraction = state.levelProgress,
-                accent = Ink.Gold,
-                height = 8
-            )
-            Label(
-                "${Progress.xpIntoLevel(state.xp)} / ${Progress.XP_PER_LEVEL} XP " +
-                    "to level ${level + 1}"
-            )
-        }
-        Glyph(Glyphs.ArrowRight, colour = Ink.Muted, size = 18)
     }
 }
 
@@ -878,11 +771,12 @@ private fun WidgetOffer(onAdd: () -> Unit, onDismiss: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Glyph(Glyphs.Spark, colour = Ink.Gold, size = 18)
-            Label("Put it on your home screen", color = Ink.Gold, strong = true)
+            Label("Put your room on your home screen", color = Ink.Gold, strong = true)
         }
         Text(
-            text = "A plan you have to open an app to read gets read by people who already " +
-                "remembered. On your home screen it is there when the moment is.",
+            text = "Your room and today's four, where you will see them. A plan you have to " +
+                "open an app to read gets read by people who already remembered; on your " +
+                "home screen it is there when the moment is.",
             color = Ink.Secondary,
             style = MaterialTheme.typography.bodyMedium
         )
@@ -893,96 +787,6 @@ private fun WidgetOffer(onAdd: () -> Unit, onDismiss: () -> Unit) {
             Box(modifier = Modifier.weight(1f)) {
                 SecondaryButton("Not now", onClick = onDismiss)
             }
-        }
-    }
-}
-
-/**
- * One of the three care routines, as a card.
- *
- * Shaped like a challenge card so it reads as the same kind of thing — a filled panel, a
- * coloured edge, an explicit call to action — but it stays tappable after it is done,
- * because a second session is welcome: it cleans the room further, it just does not count
- * twice toward the habit.
- */
-@Composable
-private fun CareCard(
-    domain: Domain,
-    title: String,
-    cue: String,
-    tiny: String,
-    level: String,
-    done: Boolean,
-    onClick: () -> Unit
-) {
-    val accent = domain.accent
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(IntrinsicSize.Min)
-            .panel(fill = if (done) Ink.Void else Ink.Surface, border = if (done) Ink.Faint else Ink.Border)
-            .clickable(role = Role.Button, onClick = onClick)
-    ) {
-        Box(
-            modifier = Modifier
-                .width(5.dp)
-                .fillMaxHeight()
-                .background(if (done) Ink.Faint else accent)
-        )
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = 14.dp, vertical = 13.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Pill(text = domain.name.lowercase().replaceFirstChar { it.uppercase() }, colour = accent)
-                Label(level)
-            }
-            Text(
-                text = title,
-                color = if (done) Ink.Secondary else Ink.Primary,
-                style = MaterialTheme.typography.titleMedium
-            )
-            Text(
-                text = "When $cue: ${tiny.replaceFirstChar { it.lowercase() }}",
-                color = if (done) Ink.Muted else Ink.Secondary,
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(7.dp)
-            ) {
-                if (done) {
-                    CheckBox(selected = true, accent = accent, size = 20)
-                    Label("Done today", color = accent, strong = true)
-                } else {
-                    Label("Start", color = accent, strong = true)
-                    Glyph(Glyphs.ArrowRight, colour = accent, size = 17)
-                }
-            }
-        }
-    }
-}
-
-/** Four pips, filled for how clean it is: four lit is spotless, one lit is the messiest. */
-@Composable
-private fun LevelPips(level: Int, colour: Color) {
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        repeat(4) { i ->
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(5.dp)
-                    .background(
-                        if (i < 4 - level) colour else Ink.Faint,
-                        RoundedCornerShape(50)
-                    )
-            )
         }
     }
 }
