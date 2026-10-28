@@ -4,20 +4,27 @@ package com.debubble.app.engine
  * The room the app is drawn inside, and how it opens up.
  *
  * The original plan was a separate 8-bit room on its own screen, decorated with things the
- * user had unlocked. That has a problem the literature on the endowment effect does not fix:
- * a room on its own screen is a screen people stop visiting, and then it is decorating
- * nothing. The version that earns its keep is the app itself being the room — so progress
- * does not buy furniture, it opens the walls.
+ * user had unlocked, and this comment used to argue against it: a room on its own screen is
+ * a screen people stop visiting, and then it is decorating nothing. The objection was about
+ * the *screen*, not the decorating, and it does not apply here — the room is the dashboard,
+ * the first thing you see, so furnishing it is furnishing the main surface of the app.
+ *
+ * So progress does both now. It opens the walls, and it hands you things to put in the room.
+ * The second half matters more than it looks: before it, clearing a rung incremented a
+ * counter and nothing else, which is a product that asks people to do frightening things and
+ * gives back a number.
  *
  * Seven stages, and they are deliberately not a reward schedule. Each one is reached by
- * clearing rungs, announced once, and then simply true from then on; there is nothing to
- * collect, nothing to lose by missing a day, and no stage that can be taken back. That rules
- * out the one shape this app must never take — a thing you keep opening to protect a number —
- * while still giving the surface a visible memory of how far someone has come.
+ * clearing rungs, announced once, and then simply true from then on; nothing here can be
+ * lost by missing a day and no stage can be taken back. The furniture follows the same rule —
+ * an item you have earned stays earned. That rules out the one shape this app must never
+ * take, a thing you keep opening to protect a number, while still giving the surface a
+ * visible memory of how far someone has come.
  *
- * Everything here is pure. The colours are verified against the WCAG floors by
- * android/tools/check_habitat.py, because a theme that drifts is a theme that eventually
- * makes a sentence unreadable on someone's phone and nobody finds out.
+ * Everything here is pure. The stage colours still shade the app's own chrome, and are
+ * verified against the WCAG floors by android/tools/check_habitat.py — but the room itself
+ * is now a picture with nothing written on it, so its palette is not rationed by contrast
+ * the way the old procedural backdrop's was. That is why it can be sunny.
  */
 enum class Stage(
     /** Cleared rungs needed to reach this stage. */

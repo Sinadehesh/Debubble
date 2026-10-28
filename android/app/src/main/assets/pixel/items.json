@@ -1,0 +1,271 @@
+{
+ "atlas": "pixel/items.webp",
+ "atlasWidth": 256,
+ "atlasHeight": 31,
+ "room": {
+  "w": 160,
+  "h": 100,
+  "floorY": 62,
+  "skirt": 3
+ },
+ "stages": [
+  "sealed",
+  "window",
+  "door",
+  "street",
+  "open",
+  "horizon",
+  "unwalled"
+ ],
+ "palette": {
+  "k": "#33243A",
+  "K": "#5A4660",
+  "w": "#FFF3DC",
+  "W": "#F3DFBB",
+  "v": "#D7BE95",
+  "f": "#E8B476",
+  "F": "#C88B4E",
+  "d": "#9C6436",
+  "s": "#CFEEFF",
+  "S": "#86CCF2",
+  "b": "#4FA3D9",
+  "g": "#B4E86A",
+  "G": "#63C04C",
+  "h": "#2F7F3E",
+  "t": "#E08A5F",
+  "T": "#C2603A",
+  "r": "#8E3F2A",
+  "y": "#FFE08A",
+  "Y": "#FFBF4D",
+  "o": "#E08A2B",
+  "c": "#9BD7D1",
+  "C": "#4FA8A4",
+  "n": "#2E6F75",
+  "p": "#F3B8C8",
+  "P": "#D97B9B",
+  "i": "#FFFDF5"
+ },
+ "items": [
+  {
+   "id": "lamp",
+   "label": "Floor lamp",
+   "anchor": "floor",
+   "unlock": {
+    "currency": "level",
+    "amount": 2
+   },
+   "x": 0,
+   "y": 0,
+   "w": 14,
+   "h": 24
+  },
+  {
+   "id": "guitar",
+   "label": "Guitar",
+   "anchor": "floor",
+   "unlock": {
+    "currency": "level",
+    "amount": 8
+   },
+   "x": 15,
+   "y": 0,
+   "w": 12,
+   "h": 24
+  },
+  {
+   "id": "plant",
+   "label": "Monstera",
+   "anchor": "floor",
+   "unlock": {
+    "currency": "rungs",
+    "amount": 0
+   },
+   "x": 28,
+   "y": 0,
+   "w": 16,
+   "h": 20
+  },
+  {
+   "id": "cat",
+   "label": "Sleeping cat",
+   "anchor": "floor",
+   "unlock": {
+    "currency": "friction",
+    "amount": 8
+   },
+   "x": 45,
+   "y": 0,
+   "w": 20,
+   "h": 12
+  },
+  {
+   "id": "clock",
+   "label": "Clock",
+   "anchor": "wall",
+   "unlock": {
+    "currency": "level",
+    "amount": 3
+   },
+   "x": 66,
+   "y": 0,
+   "w": 12,
+   "h": 12
+  },
+  {
+   "id": "beanbag",
+   "label": "Beanbag",
+   "anchor": "floor",
+   "unlock": {
+    "currency": "rungs",
+    "amount": 20
+   },
+   "x": 79,
+   "y": 0,
+   "w": 16,
+   "h": 11
+  },
+  {
+   "id": "record",
+   "label": "Record player",
+   "anchor": "floor",
+   "unlock": {
+    "currency": "friction",
+    "amount": 16
+   },
+   "x": 96,
+   "y": 0,
+   "w": 15,
+   "h": 11
+  },
+  {
+   "id": "poster",
+   "label": "Poster",
+   "anchor": "wall",
+   "unlock": {
+    "currency": "rungs",
+    "amount": 0
+   },
+   "x": 112,
+   "y": 0,
+   "w": 12,
+   "h": 11
+  },
+  {
+   "id": "rug",
+   "label": "Round rug",
+   "anchor": "floor",
+   "unlock": {
+    "currency": "rungs",
+    "amount": 6
+   },
+   "x": 125,
+   "y": 0,
+   "w": 24,
+   "h": 10
+  },
+  {
+   "id": "shelf",
+   "label": "Shelf",
+   "anchor": "wall",
+   "unlock": {
+    "currency": "rungs",
+    "amount": 45
+   },
+   "x": 150,
+   "y": 0,
+   "w": 17,
+   "h": 8
+  },
+  {
+   "id": "photo",
+   "label": "Framed photo",
+   "anchor": "wall",
+   "unlock": {
+    "currency": "rungs",
+    "amount": 90
+   },
+   "x": 168,
+   "y": 0,
+   "w": 9,
+   "h": 8
+  },
+  {
+   "id": "pennant",
+   "label": "Pennant",
+   "anchor": "wall",
+   "unlock": {
+    "currency": "level",
+    "amount": 10
+   },
+   "x": 178,
+   "y": 0,
+   "w": 13,
+   "h": 8
+  },
+  {
+   "id": "mug",
+   "label": "Mug",
+   "anchor": "floor",
+   "unlock": {
+    "currency": "rungs",
+    "amount": 0
+   },
+   "x": 192,
+   "y": 0,
+   "w": 9,
+   "h": 8
+  },
+  {
+   "id": "cushion",
+   "label": "Cushion",
+   "anchor": "floor",
+   "unlock": {
+    "currency": "rungs",
+    "amount": 0
+   },
+   "x": 202,
+   "y": 0,
+   "w": 12,
+   "h": 8
+  },
+  {
+   "id": "books",
+   "label": "Book stack",
+   "anchor": "floor",
+   "unlock": {
+    "currency": "level",
+    "amount": 5
+   },
+   "x": 215,
+   "y": 0,
+   "w": 13,
+   "h": 7
+  },
+  {
+   "id": "window_box",
+   "label": "Window box",
+   "anchor": "wall",
+   "unlock": {
+    "currency": "rungs",
+    "amount": 150
+   },
+   "x": 229,
+   "y": 0,
+   "w": 17,
+   "h": 7
+  },
+  {
+   "id": "lights",
+   "label": "String lights",
+   "anchor": "wall",
+   "unlock": {
+    "currency": "friction",
+    "amount": 4
+   },
+   "x": 0,
+   "y": 25,
+   "w": 22,
+   "h": 6
+  }
+ ]
+}
