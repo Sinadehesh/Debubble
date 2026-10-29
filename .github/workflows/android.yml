@@ -117,14 +117,32 @@ jobs:
           DEBUBBLE_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: ./gradlew :app:bundleRelease :app:assembleRelease --stacktrace
 
-      # Fail if either came out unsigned or signed with anything but the key above.
+      # Fail if either came out unsigned, or signed in a way Google Play refuses. The
+      # certificate's owner line is left out of the log: it can hold a name and a town.
       - name: Check signatures
         if: steps.signing.outputs.ready == 'true'
         run: |
           apksigner=$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)apksigner
-          "$apksigner" verify --print-certs app/build/outputs/apk/release/*.apk | grep -i "certificate SHA-256"
-          jarsigner -verify app/build/outputs/bundle/release/*.aab | tail -1
-          jarsigner -verify app/build/outputs/bundle/release/*.aab | grep -q "jar verified"
+          aab=$(ls app/build/outputs/bundle/release/*.aab)
+          apk=$(ls app/build/outputs/apk/release/*.apk)
+          "$apksigner" verify "$apk"
+          jarsigner -verify "$aab" | grep -q "jar verified" || { echo "::error::The bundle is not signed."; exit 1; }
+          cert=$(keytool -printcert -jarfile "$aab")
+          if echo "$cert" | grep -q "CN=Android Debug"; then
+            echo "::error::Signed with a debug key. Google Play refuses debug-signed uploads."
+            exit 1
+          fi
+          echo "$cert" | grep -E "Valid from|SHA256:|Signature algorithm|Public Key Algorithm" | sort -u
+          bits=$(echo "$cert" | sed -n 's/.*Public Key Algorithm: \([0-9]*\)-bit RSA.*/\1/p' | head -1)
+          if [ -n "$bits" ] && [ "$bits" -lt 2048 ]; then
+            echo "::error::The key is $bits-bit RSA. Google Play needs at least 2048."
+            exit 1
+          fi
+          until=$(echo "$cert" | sed -n 's/.*until: //p' | head -1)
+          if end=$(date -d "$until" +%s 2>/dev/null) && [ "$end" -lt "$(date -d 2033-10-22 +%s)" ]; then
+            echo "::warning::The key expires $until. Google Play expects keys valid past 22 October 2033."
+          fi
+          echo "APK and bundle are signed with the same release key."
 
       - name: Upload release bundle
         if: steps.signing.outputs.ready == 'true'
