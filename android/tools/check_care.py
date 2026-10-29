@@ -234,6 +234,51 @@ def tap(stage, home, dirt, letter, x, y):
     return None
 
 
+def kind_of(i):
+    mess = {m["fx"] for m in CAT["mess"]}
+    return ("HEART" if i in {f"buddy{n}" for n in range(MAX_DIRT + 1)} else
+            "OUTSIDE" if i in ("letter", "bang") else
+            "BODY" if i in {f"me{n}" for n in range(MAX_DIRT + 1)} else
+            "ROOM" if i in mess else None)
+
+
+def spots(stage, home, dirt, letter):
+    """Mirror of Scene.spots: one area per task, whose middle a tap resolves to that task."""
+    drawn = draws(stage, home, dirt, letter=letter)
+    out = {}
+    for kind in ("BODY", "ROOM", "HEART", "OUTSIDE"):
+        areas = []
+        for d in drawn:
+            wh = size(d[0])
+            if kind_of(d[0]) == kind and wh:
+                areas.append((d[1], d[2] - wh[1], wh[0], wh[1]))
+        areas.sort(key=lambda a: -a[2] * a[3])
+        pick = next((a for a in areas
+                     if tap(stage, home, dirt, letter, a[0] + a[2] // 2, a[1] + a[3] // 2) == kind),
+                    areas[0] if areas else None)
+        if pick:
+            out[kind] = pick
+    return out
+
+
+def check_spots(ok):
+    """Every spot the tour lights up opens what the tour says it does, in every state."""
+    homes = [home_with(), home_with("rug", "cat", "bed", "sneakers"), home_with("bed", "lamp", "plant")]
+    for stage in ("sealed", "window", "unwalled"):
+        for h in homes:
+            for dd in [(b, r, he) for b in range(4) for r in range(4) for he in range(4)]:
+                for letter in (False, True):
+                    sp = spots(stage, h, dd, letter)
+                    ok({"BODY", "HEART"} <= set(sp), f"you and your heart always there {stage} {dd}")
+                    ok(("ROOM" in sp) == (dd[1] > 0), f"mess spot iff mess {stage} {dd}")
+                    ok(("OUTSIDE" in sp) == letter, f"letter spot iff letter {stage} {dd}")
+                    for kind, (x, y, w, hh) in sp.items():
+                        ok(0 <= x and x + w <= CAT["room"]["w"] and 0 <= y and y + hh <= CAT["room"]["h"],
+                           f"{kind} spot inside the room {stage} {dd}")
+                        ok(tap(stage, h, dd, letter, x + w // 2, y + hh // 2) == kind,
+                           f"tap the middle of {kind} {stage} {dd} letter={letter}")
+
+
 def argb(h):
     return 0xFF000000 | int(h.lstrip("#"), 16)
 
@@ -394,6 +439,7 @@ def main():
     ok(all(b > a for a, b in zip(vals, vals[1:])) and vals[0] == 0, "automaticity monotone")
 
     counts = check_scene(ok)
+    check_spots(ok)
 
     if fails:
         for f in fails:

@@ -1,5 +1,6 @@
 package com.debubble.app.ui.screens
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -48,6 +49,8 @@ import com.debubble.app.engine.RoomTap
 import com.debubble.app.engine.Routed
 import com.debubble.app.engine.Served
 import com.debubble.app.engine.Today
+import com.debubble.app.engine.Tour
+import com.debubble.app.engine.TourSpot
 import com.debubble.app.ui.components.ChallengeCard
 import com.debubble.app.ui.components.Dot
 import com.debubble.app.ui.components.Glyph
@@ -66,6 +69,8 @@ import com.debubble.app.ui.components.SectionHeader
 import com.debubble.app.ui.components.SpriteIcon
 import com.debubble.app.ui.components.TextAction
 import com.debubble.app.ui.components.TodayHeader
+import com.debubble.app.ui.components.tourSpot
+import com.debubble.app.ui.components.tourViewport
 import com.debubble.app.ui.components.VSpace
 import com.debubble.app.ui.components.panel
 import com.debubble.app.ui.components.pixelScale
@@ -130,7 +135,9 @@ fun DashboardScreen(
     welcomeBack: String?,
     onRoomTap: (RoomTap) -> Unit,
     onOpenRoom: () -> Unit,
-    onCheckIn: () -> Unit
+    onCheckIn: () -> Unit,
+    /** Hoisted so the tour can scroll to what it is pointing at. */
+    scroll: ScrollState = rememberScrollState()
 ) {
     val stage = state.stage
     val next = Today.next(quests)
@@ -144,7 +151,8 @@ fun DashboardScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(roomGround())
-            .verticalScroll(rememberScrollState())
+            .tourViewport(scroll)
+            .verticalScroll(scroll)
     ) {
         TopLine(state = state, dayIndex = dayIndex, onOpenAvatar = onOpenAvatar)
 
@@ -205,13 +213,14 @@ fun DashboardScreen(
             }
 
             VSpace(12)
-            TodayHeader(quests)
+            TodayHeader(quests, modifier = Modifier.tourSpot(TourSpot.TODAY))
             quests.forEach { q ->
                 QuestRow(
                     art = art,
                     quest = q,
                     next = q == next,
-                    onClick = { onOpenQuest(q) }
+                    onClick = { onOpenQuest(q) },
+                    modifier = Modifier.tourSpot(Tour.spotOf(q))
                 )
             }
 
@@ -237,7 +246,8 @@ fun DashboardScreen(
                 owned = state.home.owned.size,
                 total = art.catalogue.items.size,
                 onOpenRoom = onOpenRoom,
-                onCheckIn = onCheckIn
+                onCheckIn = onCheckIn,
+                modifier = Modifier.tourSpot(TourSpot.WORLD)
             )
 
             if (livePlans.isNotEmpty()) {
@@ -393,11 +403,12 @@ private fun WorldStrip(
     owned: Int,
     total: Int,
     onOpenRoom: () -> Unit,
-    onCheckIn: () -> Unit
+    onCheckIn: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val stage = state.stage
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .panel(fill = Ink.Surface)
             .padding(14.dp),

@@ -18,15 +18,24 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.debubble.app.engine.Domain
 import com.debubble.app.engine.Pillar
+import com.debubble.app.engine.QuestKind
 import com.debubble.app.engine.Scene
 import com.debubble.app.engine.Today
+import com.debubble.app.engine.Tour
+import com.debubble.app.engine.TourAction
+import com.debubble.app.engine.TourSpot
+import com.debubble.app.ui.components.LocalTourTargets
+import com.debubble.app.ui.components.TourOverlay
+import com.debubble.app.ui.components.TourTargets
 import com.debubble.app.ui.screens.AuditScreen
 import com.debubble.app.ui.screens.AvatarScreen
 import com.debubble.app.ui.screens.CareDoneScreen
@@ -56,6 +65,8 @@ import com.debubble.app.ui.theme.DeBubbleTheme
 import com.debubble.app.ui.theme.Ink
 import com.debubble.app.ui.theme.LocalStage
 import com.debubble.app.ui.components.rememberRoomArt
+import com.debubble.app.ui.components.tourSpot
+import com.debubble.app.ui.theme.accent
 import com.debubble.app.widget.DayWidget
 import kotlinx.coroutines.delay
 
@@ -104,6 +115,7 @@ private fun DeBubbleApp(
     val state by vm.state.collectAsStateWithLifecycle()
     val route by vm.route.collectAsStateWithLifecycle()
     val pulse by vm.pulse.collectAsStateWithLifecycle()
+    val tourAsked by vm.tour.collectAsStateWithLifecycle()
     // The room's sprites, decoded once for the whole app.
     val art = rememberRoomArt(vm.items)
 
@@ -139,7 +151,7 @@ private fun DeBubbleApp(
             when (val r = route) {
                 is Route.Loading -> Box(modifier = Modifier.fillMaxSize())
 
-                is Route.Intro -> IntroScreen(onDone = vm::finishIntro)
+                is Route.Intro -> IntroScreen(art = art, onDone = vm::finishIntro)
 
                 is Route.Calibration -> {
                     // Reachable again from the profile, so it has to be cancellable.
@@ -168,52 +180,89 @@ private fun DeBubbleApp(
 
                 is Route.Dashboard -> {
                     val goal = state.primaryGoal
-                    Column(modifier = Modifier.fillMaxSize()) {
-                        Box(modifier = Modifier.weight(1f)) {
-                            DashboardScreen(
-                                state = state,
-                                dayIndex = vm.dayIndex(state),
-                                served = Pillar.order.associateWith { vm.serve(it, state) },
-                                quests = vm.quests(state),
-                                mission = vm.serveMission(state),
-                                reps = vm.repTypes(state),
-                                principles = goal?.let { vm.track(it).principles } ?: emptyList(),
-                                routed = vm.routed(state),
-                                routedDone = state.routedDoneToday,
-                                openForecasts = state.openForecasts,
-                                livePlans = vm.livePlans(state),
-                                debuffLabel = { id -> vm.audit.debuff(id)?.label ?: "From your audit" },
-                                onOpenQuest = vm::openQuest,
-                                onOpen = vm::openChallenge,
-                                onOpenMission = vm::openMission,
-                                onLogRep = { rep -> vm.logRep(rep.key, rep.friction, rep.label) },
-                                onUndoRep = { rep -> vm.unlogRep(rep.key, rep.friction) },
-                                onReview = vm::openReview,
-                                onOpenRoutedCampaign = vm::openRoutedCampaign,
-                                onOpenRoutedRemediation = vm::openRoutedRemediation,
-                                onOpenPrinciple = vm::openPrinciple,
-                                onAllPrinciples = vm::goPrinciples,
-                                onPickGoal = vm::goGoalPicker,
-                                onOpenCampaign = vm::goCampaign,
-                                onOpenAvatar = vm::goAvatar,
-                                offerWidget = vm.shouldOfferWidget(state),
-                                onAddWidget = vm::requestWidget,
-                                onDismissWidget = vm::declineWidget,
-                                onAcknowledgeHabitat = vm::acknowledgeHabitat,
+                    val quests = vm.quests(state)
+                    val touring = vm.touring(state, tourAsked)
+                    val targets = remember { TourTargets() }
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        CompositionLocalProvider(LocalTourTargets provides if (touring) targets else null) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    // Under the tour the screen is a picture: TalkBack reads the card,
+                                    // not the rows it is pointing at.
+                                    .then(if (touring) Modifier.clearAndSetSemantics { } else Modifier)
+                            ) {
+                                Box(modifier = Modifier.weight(1f)) {
+                                    DashboardScreen(
+                                        state = state,
+                                        dayIndex = vm.dayIndex(state),
+                                        served = Pillar.order.associateWith { vm.serve(it, state) },
+                                        quests = quests,
+                                        mission = vm.serveMission(state),
+                                        reps = vm.repTypes(state),
+                                        principles = goal?.let { vm.track(it).principles } ?: emptyList(),
+                                        routed = vm.routed(state),
+                                        routedDone = state.routedDoneToday,
+                                        openForecasts = state.openForecasts,
+                                        livePlans = vm.livePlans(state),
+                                        debuffLabel = { id -> vm.audit.debuff(id)?.label ?: "From your audit" },
+                                        onOpenQuest = vm::openQuest,
+                                        onOpen = vm::openChallenge,
+                                        onOpenMission = vm::openMission,
+                                        onLogRep = { rep -> vm.logRep(rep.key, rep.friction, rep.label) },
+                                        onUndoRep = { rep -> vm.unlogRep(rep.key, rep.friction) },
+                                        onReview = vm::openReview,
+                                        onOpenRoutedCampaign = vm::openRoutedCampaign,
+                                        onOpenRoutedRemediation = vm::openRoutedRemediation,
+                                        onOpenPrinciple = vm::openPrinciple,
+                                        onAllPrinciples = vm::goPrinciples,
+                                        onPickGoal = vm::goGoalPicker,
+                                        onOpenCampaign = vm::goCampaign,
+                                        onOpenAvatar = vm::goAvatar,
+                                        offerWidget = vm.shouldOfferWidget(state),
+                                        onAddWidget = vm::requestWidget,
+                                        onDismissWidget = vm::declineWidget,
+                                        onAcknowledgeHabitat = vm::acknowledgeHabitat,
+                                        art = art,
+                                        library = vm.care,
+                                        dirt = vm.dirt(state),
+                                        welcomeBack = vm.welcomeBack(state),
+                                        onRoomTap = vm::openFromRoom,
+                                        onOpenRoom = vm::openRoom,
+                                        onCheckIn = vm::openCheckIn
+                                    )
+                                }
+                                TabBar(
+                                    current = Tab.TODAY,
+                                    onSelect = vm::selectTab,
+                                    modifier = Modifier.navigationBarsPadding().tourSpot(TourSpot.TABS)
+                                )
+                            }
+                        }
+                        if (touring) {
+                            // Fixed for the length of the tour: nothing underneath can change it.
+                            val steps = remember {
+                                Tour.steps(quests, widget = !vm.widgetPlaced(), canPin = vm.canPinWidget())
+                            }
+                            TourOverlay(
+                                steps = steps,
+                                targets = targets,
                                 art = art,
-                                library = vm.care,
-                                dirt = vm.dirt(state),
-                                welcomeBack = vm.welcomeBack(state),
-                                onRoomTap = vm::openFromRoom,
-                                onOpenRoom = vm::openRoom,
-                                onCheckIn = vm::openCheckIn
+                                look = state.home.look,
+                                outside = quests.firstOrNull { it.kind == QuestKind.OUTSIDE }?.accent ?: Ink.Gold,
+                                onAction = { action ->
+                                    when (action) {
+                                        TourAction.START_NEXT -> {
+                                            val next = Today.next(quests)
+                                            vm.endTour()
+                                            if (next != null) vm.openQuest(next)
+                                        }
+                                        TourAction.ADD_WIDGET -> vm.requestWidget()
+                                    }
+                                },
+                                onDone = vm::endTour
                             )
                         }
-                        TabBar(
-                            current = Tab.TODAY,
-                            onSelect = vm::selectTab,
-                            modifier = Modifier.navigationBarsPadding()
-                        )
                     }
                 }
 
@@ -233,7 +282,8 @@ private fun DeBubbleApp(
                                 onToggleSound = vm::toggleSound,
                                 onToggleAmbient = vm::toggleAmbient,
                                 widgetPlaced = vm.widgetPlaced(),
-                                onAddWidget = vm::requestWidget
+                                onAddWidget = vm::requestWidget,
+                                onReplayTour = vm::replayTour
                             )
                         }
                         TabBar(
@@ -289,7 +339,8 @@ private fun DeBubbleApp(
                             onSwap = if (r.pillar.name !in state.swappedToday) {
                                 { vm.swap(r.pillar) }
                             } else null,
-                            onBack = vm::abort
+                            onBack = vm::abort,
+                            firstTime = state.neverOut
                         )
                     }
                 }
@@ -334,7 +385,8 @@ private fun DeBubbleApp(
                                     )
                                 },
                                 onSwap = null,
-                                onBack = vm::abort
+                                onBack = vm::abort,
+                                firstTime = state.neverOut
                             )
                         }
                     }
@@ -528,7 +580,8 @@ private fun DeBubbleApp(
                                     vm.frictionRouted(id, served.pillar, served.directive)
                                 },
                                 onSwap = null,
-                                onBack = vm::goDashboard
+                                onBack = vm::goDashboard,
+                                firstTime = state.neverOut
                             )
                         }
                     }
@@ -603,7 +656,8 @@ private fun DeBubbleApp(
                             onChooseRoutine = { id -> vm.chooseRoutine(d, id) },
                             onSetAnchor = { a -> vm.setAnchor(d, a) },
                             onDone = { size -> vm.completeCare(d, size) },
-                            onBack = vm::goDashboard
+                            onBack = vm::goDashboard,
+                            firstTime = state.neverCared
                         )
                     }
                 }

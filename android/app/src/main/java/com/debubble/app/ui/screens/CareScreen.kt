@@ -27,8 +27,10 @@ import com.debubble.app.engine.CareLibrary
 import com.debubble.app.engine.CareState
 import com.debubble.app.engine.Domain
 import com.debubble.app.engine.Size
+import com.debubble.app.engine.Tour
 import com.debubble.app.ui.components.Glyph
 import com.debubble.app.ui.components.Glyphs
+import com.debubble.app.ui.components.FirstTimeSteps
 import com.debubble.app.ui.components.HoldToCommit
 import com.debubble.app.ui.components.Label
 import com.debubble.app.ui.components.Pill
@@ -66,7 +68,9 @@ fun CareScreen(
     onChooseRoutine: (String) -> Unit,
     onSetAnchor: (String) -> Unit,
     onDone: (Size) -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    /** Nothing looked after yet: say how this screen works, in order. */
+    firstTime: Boolean = false
 ) {
     val info = library.info(domain)
     val routine = library.chosen(domain, care)
@@ -102,6 +106,7 @@ fun CareScreen(
                 color = Ink.Primary,
                 style = MaterialTheme.typography.displayMedium
             )
+            if (firstTime) FirstTimeSteps(Tour.CARE_HOW, accent)
 
             // ---- when: the cue
             VSpace(6)

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -27,6 +28,8 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.imageResource
@@ -155,6 +158,11 @@ fun HouseScene(
     val currentOnTap by rememberUpdatedState(onTap)
     val currentLetter by rememberUpdatedState(letter)
 
+    // Only while the tour is showing: where the room and the tasks in it are, so it can
+    // light them up. Measured from the same draw list the taps use.
+    val tour = LocalTourTargets.current
+    var canvasAt by remember { mutableStateOf<Offset?>(null) }
+
     BoxWithConstraints(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
         val available = if (constraints.hasBoundedWidth) constraints.maxWidth else room.w * 3
         val scale = maxOf(1, available / room.w)
@@ -162,6 +170,12 @@ fun HouseScene(
         val width = with(density) { (room.w * scale).toDp() }
         val height = with(density) { (room.h * scale).toDp() }
         val shape = RoundedCornerShape(10.dp)
+
+        if (tour != null) {
+            val at = canvasAt
+            val spots = remember(cat, stage, home, dirt, letter) { Scene.spots(cat, stage, home, dirt, letter) }
+            SideEffect { if (at != null) tour.room(at, scale, room.w, room.h, spots) }
+        }
 
         val gestures = if (!editable) {
             if (onTap == null) Modifier
@@ -229,6 +243,10 @@ fun HouseScene(
         Canvas(
             modifier = Modifier
                 .size(width, height)
+                .then(
+                    if (tour == null) Modifier
+                    else Modifier.onGloballyPositioned { canvasAt = it.positionInRoot() }
+                )
                 .clip(shape)
                 .border(2.dp, Ink.RoomFrame, shape)
                 .then(gestures)

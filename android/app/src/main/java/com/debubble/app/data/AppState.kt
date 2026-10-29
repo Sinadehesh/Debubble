@@ -53,6 +53,8 @@ data class AppState(
     /** The three-card intro has been seen. Separate from [onboarded] so someone who
      *  recalibrates later is not shown the explainer again. */
     val introSeen: Boolean = false,
+    /** The tour of the home screen has been finished or skipped. Replayable from You. */
+    val tourSeen: Boolean = false,
     val onboarded: Boolean = false,
     val baseline: Baseline = Baseline(),
     val pillars: Map<String, PillarState> = Pillar.order.associate { it.name to PillarState() },
@@ -206,6 +208,12 @@ data class AppState(
     /* ---- care ---- */
 
     fun care(d: Domain): CareState = care[d.name] ?: CareState()
+
+    /** Nothing looked after yet, so the care screen says how it works. */
+    val neverCared: Boolean get() = log.none { it.kind == "CARE" }
+
+    /** No mission tried yet, done or not, so the mission screen says how it works. */
+    val neverOut: Boolean get() = log.none { it.kind == "PILLAR" || it.kind == "MISSION" || it.kind == "AUDIT" }
 
     fun withCare(d: Domain, s: CareState): AppState = copy(care = care + (d.name to s))
 

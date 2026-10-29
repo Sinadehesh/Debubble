@@ -30,10 +30,12 @@ import com.debubble.app.audio.rememberSound
 import com.debubble.app.engine.Engine
 import com.debubble.app.engine.Intention
 import com.debubble.app.engine.Served
+import com.debubble.app.engine.Tour
 import com.debubble.app.ui.components.Divider
 import com.debubble.app.ui.components.Glyph
 import com.debubble.app.ui.components.Glyphs
 import com.debubble.app.ui.components.GlitchBurst
+import com.debubble.app.ui.components.FirstTimeSteps
 import com.debubble.app.ui.components.HoldToCommit
 import com.debubble.app.ui.components.Label
 import com.debubble.app.ui.components.Pill
@@ -64,7 +66,9 @@ fun ChallengeScreen(
     onCommit: (Int) -> Unit,
     onFriction: () -> Unit,
     onSwap: (() -> Unit)?,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    /** No mission tried yet: say how this screen works, in order. */
+    firstTime: Boolean = false
 ) {
     val pillar = served.pillar
     val haptics = rememberHaptics()
@@ -121,6 +125,11 @@ fun ChallengeScreen(
                     color = Ink.Primary,
                     style = MaterialTheme.typography.displayMedium
                 )
+
+                if (firstTime) {
+                    VSpace(14)
+                    FirstTimeSteps(Tour.OUTSIDE_HOW, pillar.accent)
+                }
 
                 VSpace(20)
 

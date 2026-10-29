@@ -246,6 +246,12 @@ object Home {
 /** One sprite to draw: which atlas entry, and where its bottom-left corner sits. */
 data class Draw(val id: String, val x: Int, val b: Int)
 
+/** A rectangle in room pixels: left, top, width, height. */
+data class Area(val x: Int, val y: Int, val w: Int, val h: Int) {
+    val cx: Int get() = x + w / 2
+    val cy: Int get() = y + h / 2
+}
+
 /** The things in the room that are a task, and what tapping each one opens. */
 enum class RoomTap {
     /** You: your Body task. */
@@ -429,19 +435,48 @@ object Scene {
         x: Int,
         y: Int
     ): RoomTap? {
-        val messIds = cat.mess.map { it.fx }.toSet()
-        val meIds = (0..Care.MAX_DIRT).map { meFrame(it) }.toSet()
-        val buddyIds = (0..Care.MAX_DIRT).map { buddy(it) }.toSet()
         draws(cat, stage, home, dirt, letter = letter).asReversed().forEach { d ->
-            val kind = when (d.id) {
-                in buddyIds -> RoomTap.HEART
-                LETTER, BANG -> RoomTap.OUTSIDE
-                in meIds -> RoomTap.BODY
-                in messIds -> RoomTap.ROOM
-                else -> null
-            }
+            val kind = kindOf(cat, d.id)
             if (kind != null && under(cat, d, x, y)) return kind
         }
         return null
     }
+
+    /**
+     * Where each task is in the room, for the tour to point at: you, your heart buddy, the
+     * letter, and one piece of the mess. Only what is drawn is there — a clean floor has no
+     * mess to point at, and a finished mission no letter.
+     *
+     * Chosen so that a tap in the middle of each one opens that task. The tour says "tap the
+     * mess", so the piece of mess it lights up must not be one you are standing in front of.
+     */
+    fun spots(
+        cat: ItemCatalogue,
+        stage: Stage,
+        home: HomeState,
+        dirt: Map<Domain, Int>,
+        letter: Boolean
+    ): Map<RoomTap, Area> {
+        val drawn = draws(cat, stage, home, dirt, letter = letter)
+        return RoomTap.entries.mapNotNull { kind ->
+            val areas = drawn
+                .filter { kindOf(cat, it.id) == kind }
+                .mapNotNull { d -> size(cat, d.id)?.let { (w, h) -> Area(d.x, d.b - h, w, h) } }
+                .sortedByDescending { it.w * it.h }
+            val pick = areas.firstOrNull { tap(cat, stage, home, dirt, letter, it.cx, it.cy) == kind }
+                ?: areas.firstOrNull()
+            pick?.let { kind to it }
+        }.toMap()
+    }
+
+    /** Which task a drawn sprite stands for, or null for furniture and sparkles. */
+    private fun kindOf(cat: ItemCatalogue, id: String): RoomTap? = when (id) {
+        in BUDDIES -> RoomTap.HEART
+        LETTER, BANG -> RoomTap.OUTSIDE
+        in MES -> RoomTap.BODY
+        else -> if (cat.mess.any { it.fx == id }) RoomTap.ROOM else null
+    }
+
+    private val MES = (0..Care.MAX_DIRT).map { meFrame(it) }.toSet()
+    private val BUDDIES = (0..Care.MAX_DIRT).map { buddy(it) }.toSet()
 }

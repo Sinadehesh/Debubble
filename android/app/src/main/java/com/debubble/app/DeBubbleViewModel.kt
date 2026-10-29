@@ -341,6 +341,29 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
         }
     }
 
+    // ------------------------------------------------------------------ the tour
+
+    /**
+     * Whether the tour is showing, as asked for in this session: true when replayed from
+     * You, false once closed. Null follows the saved flag, so it shows by itself only until
+     * it has been finished or skipped once.
+     */
+    private val _tour = MutableStateFlow<Boolean?>(null)
+    val tour: StateFlow<Boolean?> = _tour
+
+    fun touring(s: AppState, asked: Boolean?): Boolean = s.movedIn && (asked ?: !s.tourSeen)
+
+    fun replayTour() {
+        _tour.value = true
+        goDashboard()
+    }
+
+    /** Finished or skipped. Hidden at once, rather than when the write lands. */
+    fun endTour() {
+        _tour.value = false
+        viewModelScope.launch { repo.update { it.copy(tourSeen = true) } }
+    }
+
     /** Back out of a challenge without penalty. Abandoning is not friction — only saying so is. */
     fun abort() { _route.value = Route.Dashboard }
 

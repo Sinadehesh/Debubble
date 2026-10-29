@@ -78,7 +78,9 @@ fun ProfileScreen(
     onToggleAmbient: () -> Unit,
     /** Whether a widget is already on a home screen, which changes the wording only. */
     widgetPlaced: Boolean,
-    onAddWidget: () -> Unit
+    onAddWidget: () -> Unit,
+    /** The first-day tour of the home screen, again. */
+    onReplayTour: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -136,6 +138,26 @@ fun ProfileScreen(
                 accent = if (state.streak > 0) Ink.Activity else Ink.Primary
             )
             StatTile("Done", "${state.tiersCleared}", Modifier.weight(1f))
+        }
+
+        // The tour promises it is here, so it is near the top rather than under settings.
+        VSpace(14)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = Space.tap)
+                .panel()
+                .clickable(role = Role.Button, onClick = onReplayTour)
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Glyph(Glyphs.Spark, colour = Ink.Gold, size = 18)
+            Column(modifier = Modifier.weight(1f)) {
+                Text("How it works", color = Ink.Primary, style = MaterialTheme.typography.titleMedium)
+                Label("Take the tour of your home screen again")
+            }
+            Glyph(Glyphs.ArrowRight, colour = Ink.Muted, size = 18)
         }
 
         VSpace(24)
@@ -311,11 +333,11 @@ fun ProfileScreen(
         ) {
             Text(
                 text = if (widgetPlaced) {
-                    "The widget is on your home screen. It shows the moment you planned " +
-                        "for, so it is in front of you when the moment arrives."
+                    "Your room and today's four are on your home screen, so they are in " +
+                        "front of you when the moment arrives."
                 } else {
-                    "A widget showing the moment you planned for. The plan only works if " +
-                        "you see it when the cue turns up, and an app has to be opened first."
+                    "Your room and today's four, on your home screen. A plan only works if " +
+                        "you see it when the moment turns up, and an app has to be opened first."
                 },
                 color = Ink.Secondary,
                 style = MaterialTheme.typography.bodyMedium
