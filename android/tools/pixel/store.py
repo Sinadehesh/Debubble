@@ -19,6 +19,7 @@ so no pixel lands on a half and blurs. A launcher shows the middle 72dp, which i
 
 Run:  python3 android/tools/pixel/store.py
       python3 android/tools/pixel/store.py screenshots <raw folder>
+      python3 android/tools/pixel/store.py site <raw folder> <website img folder>
 
 The raw screenshots come from the "Store screenshots" workflow, which photographs the real
 app on an emulator (androidTest/StoreShots.kt); this only adds the captions.
@@ -287,6 +288,19 @@ def wallpaper(w, h, z):
     return g.image().resize((g.w * z, g.h * z), Image.NEAREST).crop((0, 0, w, h))
 
 
+STATUS_BAR = 63          # px: Android's 24dp status bar on the 420dpi emulator
+
+
+def tidy(shot):
+    """Paint over the status bar. The emulator's clock and icons are noise in a store
+    picture; the app draws edge to edge, so the strip is filled with whatever colour is
+    behind it (the app's background, or a sheet's dimming)."""
+    im = shot.convert("RGB").copy()
+    fill = im.getpixel((im.width // 2, STATUS_BAR // 2))
+    ImageDraw.Draw(im).rectangle((0, 0, im.width, STATUS_BAR - 1), fill=fill)
+    return im
+
+
 def framed(shot, caption):
     """A real screenshot under a two-line caption, on the room's wallpaper."""
     out = wallpaper(SHOT_W, SHOT_H, 6)
@@ -300,7 +314,7 @@ def framed(shot, caption):
     # running off the bottom edge so it reads as a phone held up rather than a postcard.
     w = 920
     h = round(shot.height * w / shot.width)
-    phone = shot.convert("RGBA").resize((w, h), Image.LANCZOS)
+    phone = tidy(shot).convert("RGBA").resize((w, h), Image.LANCZOS)
     x, y, r, edge = (SHOT_W - w) // 2, 300, 48, 12
     mask = Image.new("L", (w, h), 0)
     ImageDraw.Draw(mask).rounded_rectangle((0, 0, w - 1, h + r), radius=r, fill=255)
@@ -321,6 +335,25 @@ def screenshots(raw_dir):
             print("wrote", dest / f"{name}.png")
 
 
+def site_images(raw_dir, out_dir):
+    """The app's web page: icons, banner, a link-preview card and the gallery."""
+    out = pathlib.Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    icon_png(192).convert("RGB").save(out / "icon-192.png")
+    icon_png(180).convert("RGB").save(out / "apple-touch-icon.png")
+    banner = feature_graphic().convert("RGB")
+    banner.save(out / "feature-graphic.webp", lossless=True)
+    # A link preview is 1200x630: the banner, whole, on the room's wallpaper.
+    card = wallpaper(1200, 630, 6).convert("RGB")
+    card.paste(banner, ((1200 - 1024) // 2, (630 - 500) // 2))
+    card.save(out / "social.jpg", quality=92)
+    for i, name in enumerate(CAPTIONS, start=1):
+        src = pathlib.Path(raw_dir) / f"{name}.png"
+        if src.exists():
+            tidy(Image.open(src)).resize((540, 960), Image.LANCZOS).save(out / f"screenshot-{i}.webp", quality=88)
+    print("wrote site images to", out)
+
+
 def main():
     bg, fg = background(), foreground()
     RES.mkdir(parents=True, exist_ok=True)
@@ -337,5 +370,7 @@ def main():
 if __name__ == "__main__":
     if len(sys.argv) > 2 and sys.argv[1] == "screenshots":
         screenshots(sys.argv[2])       # store.py screenshots <folder of raw emulator shots>
+    elif len(sys.argv) > 3 and sys.argv[1] == "site":
+        site_images(sys.argv[2], sys.argv[3])     # store.py site <raw shots> <site img folder>
     else:
         main()
