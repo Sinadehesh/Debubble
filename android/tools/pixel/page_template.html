@@ -138,7 +138,7 @@ details .body{display:flex;flex-direction:column;gap:8px;margin-top:8px}
 @media (max-width:820px){.rules{grid-template-columns:minmax(0,1fr)}}
 .rule{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 14px;display:flex;flex-direction:column;gap:6px}
 .rule h3{color:var(--glow)}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--glow);color:var(--ink-on);font-weight:800;border-radius:12px;padding:10px 16px;max-width:calc(100% - 32px);box-shadow:0 6px 24px #0008;z-index:5}
+.toast{position:fixed;left:50%;transform:translateX(-50%);width:max-content;max-width:min(440px,calc(100% - 32px));bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--glow);color:var(--ink-on);font-weight:800;border-radius:12px;padding:10px 16px;box-shadow:0 6px 24px #0008;z-index:5}
 canvas.px{image-rendering:pixelated}
 
 /* The tour: the page dimmed by one huge shadow around a hole, and a card beside the hole. */
@@ -165,13 +165,77 @@ canvas.px{image-rendering:pixelated}
 .howto ol{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;counter-reset:h}
 .howto li{display:flex;gap:10px;font-size:14px;counter-increment:h}
 .howto li::before{content:counter(h);flex:none;width:22px;height:22px;border-radius:50%;background:var(--c);color:var(--ink-on);font-weight:800;font-size:12.5px;display:grid;place-items:center}
-@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}.tour-hole::after{animation:none}}
+
+/* ---- the world: tabs, letters, postcards, the bell, the jar ---- */
+:root{--paper:#FFF3DC;--paper-2:#F3DFBB;--paper-edge:#D7BE95;--paper-ink:#33243A;--paper-muted:#6E5A73;--ember:#FFB020}
+.amb{color:var(--ember)}
+.sidenav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:6px}
+.sidenav button{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:0;border-radius:10px;color:var(--faint);font:inherit;font-size:12.5px;font-weight:800;padding:6px 2px;cursor:pointer;min-height:48px}
+.sidenav button[aria-current="true"]{background:var(--panel-2);color:var(--cream)}
+.sidenav button:not([aria-current="true"]) canvas{opacity:.62}
+.mail{display:flex;gap:12px;align-items:center;background:var(--paper);color:var(--paper-ink);border:2px solid var(--paper-ink);border-radius:14px;padding:12px;text-align:left;cursor:pointer;font:inherit}
+.mail span span{display:block;color:var(--paper-muted);font-size:14px}
+.chip{display:inline-flex;gap:4px;align-items:center;color:var(--glow);font-weight:800}
+.donebar{display:grid;grid-template-columns:92px 1fr;gap:10px;margin-top:6px}
+.bell{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:var(--panel);border:1px solid #9F8CA4;border-radius:14px;color:var(--cream);font:inherit;font-size:13px;font-weight:800;cursor:pointer;min-height:64px}
+.bell.set{background:var(--panel-2);border:2px solid var(--glow);color:var(--glow)}
+.hold{position:relative;overflow:hidden;border:2px solid var(--c);border-radius:14px;background:color-mix(in srgb,var(--c) 18%,transparent);color:var(--cream);font:inherit;min-height:64px;cursor:pointer;text-align:left;padding:0;touch-action:none;user-select:none;-webkit-user-select:none}
+.hold i{position:absolute;inset:0 auto 0 0;width:0;background:var(--c)}
+.hold span{position:relative;display:flex;flex-direction:column;padding:10px 16px}
+.hold b{font-size:17px}.hold small{color:var(--dim);font-size:12.5px}
+.letter{background:var(--paper);border:2px solid var(--paper-ink);border-radius:14px;overflow:hidden;color:var(--paper-ink)}
+.flap{height:40px;position:relative;background:linear-gradient(to bottom right,transparent 49.5%,var(--paper-edge) 50%,transparent 51.5%) left/50% 100% no-repeat,linear-gradient(to bottom left,transparent 49.5%,var(--paper-edge) 50%,transparent 51.5%) right/50% 100% no-repeat,var(--paper-2);clip-path:polygon(0 0,100% 0,50% 100%)}
+.flap i{position:absolute;left:50%;bottom:-2px;width:26px;height:26px;margin-left:-13px;border-radius:50%;border:2px solid var(--paper-ink)}
+.lin{padding:14px 18px 18px;display:flex;flex-direction:column;gap:10px}
+.pk{font-size:13px;font-weight:800;color:var(--paper-muted)}
+.pt{color:var(--paper-ink)}.pw{color:var(--paper-muted);font-size:15px}
+.tags{display:flex;flex-wrap:wrap;gap:8px}.tags span{background:var(--paper-2);border-radius:99px;padding:4px 12px;font-weight:800;font-size:13px}
+.steps{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.st{display:flex;gap:12px}.st .n{flex:none;width:26px;height:26px;border-radius:50%;background:var(--c);color:var(--ink-on);display:grid;place-items:center;font-size:13px}
+.st .n.amb{background:var(--ember);color:var(--ink-on)}
+.st span{font-weight:800;font-size:13px;color:var(--c)}.st span.amb{color:var(--ember)}.st p{font-size:15px}
+.guess{border:1px solid color-mix(in srgb,var(--ember) 70%,transparent);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px;background:var(--panel)}
+.guess textarea,.paper input{width:100%;font:inherit;border-radius:12px;border:1px solid var(--line);background:var(--night);color:var(--cream);padding:10px 12px}
+.paper input{background:#fffaf0;color:var(--paper-ink);border-color:var(--paper-edge)}
+.guess input[type=range]{width:100%;accent-color:var(--ember)}
+.guess label{display:flex;flex-direction:column;gap:4px}
+.friction{display:flex;gap:12px;align-items:center;background:var(--panel-2);border:1px solid var(--ember);border-radius:14px;padding:12px 14px;color:var(--cream);font:inherit;text-align:left;cursor:pointer}
+.friction b{color:var(--ember);display:block}.friction small{color:var(--dim);font-size:13px}.friction>span:nth-child(2){flex:1}
+.paper{background:var(--paper);color:var(--paper-ink);border:2px solid var(--paper-ink);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:6px}
+.paper.shade{background:var(--paper-2)}.paper span{color:var(--paper-muted);font-size:13px}
+.pop{animation:pop .5s cubic-bezier(.3,1.6,.5,1)}@keyframes pop{from{transform:scale(.6)}to{transform:scale(1)}}
+.stages{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px}
+.stg{flex:none;width:132px;display:flex;flex-direction:column;gap:3px}
+.stg img{width:132px;image-rendering:pixelated;border-radius:8px;display:block}
+.stg.here img{outline:3px solid var(--glow)}.stg.here b{color:var(--glow)}.stg.locked img{opacity:.35}
+.road{display:flex;gap:12px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;color:var(--cream);font:inherit;text-align:left;cursor:pointer;width:100%}
+.road.today{border:2px solid var(--c)}.road[disabled]{opacity:.7;cursor:default}
+.roadtrack{position:relative;display:block;height:8px;border-radius:8px;background:#1A121C;margin:6px 0}
+.roadtrack i{position:absolute;inset:0 auto 0 0;background:var(--c);border-radius:8px}
+.roadtrack em{position:absolute;top:-3px;width:2px;height:14px;background:#5E4D63}
+.jar{display:flex;gap:14px;align-items:center;background:var(--panel-2);border:1px solid var(--ember);border-radius:14px;padding:14px}
+.you{display:flex;gap:16px;align-items:center;background:color-mix(in srgb,var(--room) 12%,transparent);border:1px solid color-mix(in srgb,var(--room) 55%,transparent);border-radius:14px;padding:16px}
+.you>div{display:flex;flex-direction:column;gap:6px;flex:1}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.stats div{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px;display:flex;flex-direction:column}
+.stats b{font-family:var(--display);font-size:22px}
+.hats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.hat{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:12px;color:var(--cream);font:inherit;cursor:pointer;padding:4px}
+.hat.on{border:2px solid var(--glow);background:var(--panel-2)}.hat[disabled]{cursor:default}.hat[disabled] canvas{opacity:.35}
+.tip{display:flex;gap:12px;background:var(--panel-2);border:1px solid color-mix(in srgb,var(--heart) 75%,transparent);border-radius:14px;padding:12px 14px}
+.tip .link{color:var(--heart);padding:4px 0;min-height:36px}
+.sheet-back{position:fixed;inset:0;background:rgba(20,14,22,.7);z-index:30}
+.sheet{position:fixed;z-index:31;left:0;right:0;bottom:0;max-width:520px;margin:0 auto;background:var(--panel);border:1px solid var(--line);border-radius:20px 20px 0 0;padding:18px max(16px,env(safe-area-inset-left,0px)) calc(18px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:10px;max-height:85vh;overflow:auto;box-shadow:0 -10px 40px #000a}
+.setrow{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--glow);border-radius:12px;padding:4px 4px 4px 14px;color:var(--glow)}
+.choice{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:12px 16px;color:var(--cream);font:inherit;font-size:15px;cursor:pointer;min-height:52px;text-align:left}
+.choice input{font:inherit;background:var(--night);color:var(--cream);border:1px solid var(--line);border-radius:8px;padding:6px 8px;color-scheme:dark}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}.tour-hole::after{animation:none}.pop{animation:none}}
 </style>
 
 <div class="wrap">
   <header>
     <h1>Debubble Room</h1>
-    <p class="lede">Your room mirrors your real body, room and heart, and today's one mission outside is the letter in your hand. Tap yourself, your heart, the mess or the letter to start that task. Doing the real thing cleans the room and earns something for it. You start with nothing. After you move in, a short tour shows you around; "Show me around" replays it. This is the app's engine running in the browser.</p>
+    <p class="lede">Your room mirrors your real body, room and heart, and today's one mission outside is the letter in your hand. Tap yourself, your heart, the mess or the letter to start that task. Doing the real thing cleans the room and earns something for it. You start with nothing. Not now? The bell beside "I did it" reminds you at a time you pick. After you move in, a short tour shows you around; "Show me around" replays it. This is the app's engine running in the browser.</p>
   </header>
 
   <div class="grid">
@@ -222,6 +286,8 @@ canvas.px{image-rendering:pixelated}
     <div class="rule"><h3>Habits need sameness</h3><p class="why">Automaticity comes from repeating the same act at the same moment (Lally et al., 2010; Wood &amp; Rünger, 2016). So each care area has one routine you keep, at one cue. What changes day to day is its size, never the act. A tiny version counts in full.</p></div>
     <div class="rule"><h3>Exposure needs one thing, done properly</h3><p class="why">One mission a day, from ladders that climb slowly, with the moment, the first two minutes and the safety behaviour to drop. The other two ladders are there as extras. Missions open the walls and bring things from the world.</p></div>
     <div class="rule"><h3>Make it yours</h3><p class="why">You pick how you look when you move in. People keep going longer with a character they made to look like them (Birk et al., 2016), and value what they built over what they were handed (Norton et al., 2012).</p></div>
+    <div class="rule"><h3>Not now? Then when.</h3><p class="why">A plan only works if it is remembered at the moment it names, and remembering to do something later is what fails most. So the moment you decide "not now" is the moment the app asks "then when?" — a bell beside "I did it". Reminders help people repeat things (Fenerty et al., 2012); the cue is what makes them stick (Stawarz, Cox &amp; Blandford, 2015).</p></div>
+    <div class="rule"><h3>Trying counts</h3><p class="why">A no, a silence, turning back: each is a spark in your courage jar, because approaching the thing is what exposure rewards, whatever comes back. And the guess you write before going is checked after, because a fear that goes unchecked is never disproved (Craske et al., 2014).</p></div>
     <div class="rule"><h3>Missing a day is not a reset</h3><p class="why">In Lally's study one missed day did not set habits back, so there is no streak to break. After a gap the app says welcome back and suggests the smallest version (Breines &amp; Chen, 2012).</p></div>
   </section>
 
@@ -348,6 +414,8 @@ function draws(stageKey, home, lv, frame, moving, burst, letter) {
   const me = spotOf("me", home.me || {x: ME.x, b: ME.b});
   const bob = frame % 2 === 1 ? 1 : 0;
   standing.push([me.b, 2, ["me" + body, me.x, me.b - bob]]);
+  const hat = S.look && S.look.hat ? (CAT.hats || [])[S.look.hat - 1] : null;
+  if (hat && fxDef(hat.id)) standing.push([me.b, 3, [hat.id, me.x, me.b - ME.h + fxDef(hat.id).h - bob]]);
   standing.sort((a, b) => a[0] - b[0] || a[1] - b[1]).forEach(t => out.push(t[2]));
   const [bx, lx] = sides(me);
   if (letter) {
@@ -416,24 +484,31 @@ function fresh() {
   const day = 1, care = {};
   const start = {BODY: 2, ROOM: 3, HEART: 2};
   DOMS.forEach(d => care[d] = {dirt: start[d], setDay: day, reps: 0, lastDoneDay: 0, routine: "", routineFrom: 0, anchor: "", better: 0, same: 0, worse: 0});
-  return {day, seed: 20261028, care, home: {owned: [], placed: {}, me: null}, rungs: 0, look: {skin: 0, hair: 0, top: 0}, movedIn: false,
-          tiers: {ACCESS: 1, ACTIVITY: 1, SOCIAL: 1}, missionDay: {}, missionTier: {}, stageSeen: "sealed"};
+  return {day, seed: 20261028, care, home: {owned: [], placed: {}, me: null}, rungs: 0, look: {skin: 0, hair: 0, top: 0, hat: 0}, movedIn: false,
+          tiers: {ACCESS: 1, ACTIVITY: 1, SOCIAL: 1}, missionDay: {}, missionTier: {}, stageSeen: "sealed",
+          xp: 0, friction: 0, reminders: [], forecasts: [], journal: [], trips: [], tips: []};
 }
 const KEY = "debubble-room-v3";
 let S;
 try { S = JSON.parse(localStorage.getItem(KEY)) || fresh(); } catch (e) { S = fresh(); }
+S = {...fresh(), ...S};      // a save from before reminders, sparks and postcards gets them empty
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
 const levels = () => Object.fromEntries(DOMS.map(d => [d, dirt(d, S.care[d], S.day)]));
 const careDone = d => S.care[d].lastDoneDay === S.day;
 const daysSinceCare = () => { const last = Math.max(...DOMS.map(d => S.care[d].lastDoneDay)); return last === 0 ? 0 : S.day - last; };
 
 function doCare(d, size) {
+  if (!careDone(d)) S.xp = (S.xp || 0) + XP_CARE;
+  doneWith("care:" + d);
   const before = dirt(d, S.care[d], S.day);
   S.care[d] = afterCare(d, S.care[d], size, S.day);
   const granted = settle(S.home, d, S.care[d].reps, S.seed);
   return {before, after: dirt(d, S.care[d], S.day), granted};
 }
 function doMission(p) {
+  S.xp = (S.xp || 0) + XP_MISSION;
+  doneWith(`tier:${p}:${S.tiers[p]}`);
+  (S.trips = S.trips || []).push({p, tier: S.tiers[p], title: mission(p, S.tiers[p]).do, day: S.day});
   S.missionDay[p] = S.day;
   S.missionTier[p] = S.tiers[p];
   S.tiers[p] = Math.min(100, S.tiers[p] + 1);
@@ -569,24 +644,130 @@ function renderStatus() {
   document.querySelectorAll("[data-seen]").forEach(b => b.onclick = () => { S.stageSeen = st.key; save(); renderStatus(); });
 }
 
+/* ---------------- progress: levels, hats, sparks, guesses, postcards ---------------- */
+const XP_PER_LEVEL = 120, XP_CARE = 10, XP_MISSION = 20, XP_FRICTION = 15, HOLD = 3000;
+const level = () => 1 + Math.floor((S.xp || 0) / XP_PER_LEVEL);
+const HATS = CAT.hats || [];
+const jarLevel = f => f <= 0 ? 0 : f <= 2 ? 1 : f <= 5 ? 2 : f <= 9 ? 3 : 4;
+const toNextSpark = f => f <= 0 ? 1 : f <= 2 ? 3 - f : f <= 5 ? 6 - f : f <= 9 ? 10 - f : null;
+const ROAD_ICON = {ACCESS: "icon_access", ACTIVITY: "icon_activity", SOCIAL: "icon_social"};
+const ROAD_NAME = {ACCESS: "Somewhere new", ACTIVITY: "Something new", SOCIAL: "Someone new"};
+const DID = {ACCESS: "You went somewhere new", ACTIVITY: "You did something new", SOCIAL: "You spoke to someone"};
+const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+const forecastFor = key => (S.forecasts || []).find(f => f.key === key && f.actual === undefined);
+const NERVE = n => n <= 0 ? "Nothing at all" : n <= 2 ? "Barely noticeable" : n <= 4 ? "Uncomfortable" : n <= 6 ? "Difficult" : n <= 8 ? "Very hard" : "The worst I get";
+
+/* ---------------- reminders: a transcription of engine/Reminder.kt ---------------- */
+const clock = m => `${String(Math.floor(m / 60) % 24).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+const SLOTS = [["Lunchtime", 750], ["This afternoon", 900], ["This evening", 1140], ["Before bed", 1290]];
+function remindChoices() {
+  const now = new Date(), minute = now.getHours() * 60 + now.getMinutes(), out = [];
+  let hour = Math.floor((minute + 64) / 5) * 5, hourDay = 0;
+  if (hour >= 1440) { hour -= 1440; hourDay = 1; }
+  out.push({label: `In an hour · ${clock(hour)}`, day: hourDay, minute: hour});
+  SLOTS.filter(([, at]) => at >= minute + 15 && (hourDay !== 0 || at > hour + 15)).slice(0, 2)
+    .forEach(([n, at]) => out.push({label: `${n} · ${clock(at)}`, day: 0, minute: at}));
+  out.push({label: `Tomorrow morning · ${clock(480)}`, day: 1, minute: 480});
+  return out;
+}
+const reminderFor = link => (S.reminders || []).find(r => r.link === link);
+const linkOf = q => q.kind === "CARE" ? "care:" + q.d : `tier:${q.p}:${S.tiers[q.p]}`;
+const reminderOf = q => q.done ? null : reminderFor(linkOf(q)) || (q.kind === "OUTSIDE" ? reminderFor("outside") : null);
+const remindLabel = r => r.daily || r.day === S.day ? clock(r.minute) : r.day === S.day + 1 ? `Tomorrow ${clock(r.minute)}` : `Day ${r.day} ${clock(r.minute)}`;
+function doneWith(link) {
+  const ladder = link.startsWith("tier:") ? link.split(":").slice(0, 2).join(":") : null;
+  S.reminders = (S.reminders || []).filter(r => r.daily || !(r.link === link || (ladder && (r.link.startsWith(ladder + ":") || r.link === "outside"))));
+}
+
+/* The bell's sheet: four quick times, every day where it makes sense, or any time. */
+let remind = null;
+function openRemind(o) {
+  const cur = reminderFor(o.link) || reminderFor(o.dailyLink);
+  remind = {...o, daily: o.dailyLabel ? (cur ? cur.daily : !!o.dailyFirst) : false};
+  renderRemind();
+}
+function renderRemind() {
+  let el = $("remind");
+  if (!el) { el = document.createElement("div"); el.id = "remind"; document.body.appendChild(el); }
+  if (!remind) { el.innerHTML = ""; document.querySelector(".wrap").inert = false; return; }
+  const cur = reminderFor(remind.link) || reminderFor(remind.dailyLink);
+  const choices = remindChoices(), shown = remind.daily ? [...new Map(choices.map(c => [c.minute, c])).values()].sort((a, b) => a.minute - b.minute) : choices;
+  el.innerHTML = `<div class="sheet-back" data-rclose></div>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="rtitle">
+      <div class="row" style="justify-content:flex-start;gap:12px">${icon("icon_bell", 3)}<div><h3 id="rtitle">When will you do it?</h3><span class="small">${esc(remind.title)}</span></div></div>
+      ${cur ? `<div class="setrow"><b>Set for ${cur.daily ? "every day " : ""}${remindLabel(cur)}</b><button class="link" data-rremove>Remove</button></div>` : ""}
+      ${remind.dailyLabel ? `<button class="opt ${remind.daily ? "sel" : ""}" style="--c:var(--glow)" data-rdaily><span class="dot"></span><span><b>${esc(remind.dailyLabel)}</b><span>${remind.daily ? "At the same time, until you turn it off" : "Just this once"}</span></span></button>` : ""}
+      ${shown.map((c, i) => `<button class="choice" data-rpick="${i}">${esc(remind.daily ? `Every day · ${clock(c.minute)}` : c.label)}<span>›</span></button>`).join("")}
+      <label class="choice" style="cursor:default">Pick a time <input type="time" data-rtime value="${clock((new Date().getHours() + 1) % 24 * 60)}"></label>
+      <p class="small">On your phone you get a notification then. Tap it to open this; "In 30 min" puts it off once.</p>
+    </div>`;
+  document.querySelector(".wrap").inert = true;
+  const close = () => { remind = null; renderRemind(); };
+  const set = (dayOff, minute) => {
+    const target = remind.daily ? remind.dailyLink : remind.link;
+    S.reminders = (S.reminders || []).filter(r => r.link !== remind.link && r.link !== remind.dailyLink);
+    S.reminders.push({link: target, title: remind.title, text: remind.text, minute, daily: remind.daily, day: S.day + dayOff});
+    const r = S.reminders[S.reminders.length - 1];
+    save(); close(); renderAll();
+    toast(`Reminder set: ${r.daily ? "every day at " + clock(minute) : remindLabel(r)}. On your phone, a notification comes then.`);
+  };
+  el.querySelectorAll("[data-rclose]").forEach(b => b.onclick = close);
+  el.querySelectorAll("[data-rpick]").forEach(b => b.onclick = () => { const c = shown[+b.dataset.rpick]; set(remind.daily ? 0 : c.day, c.minute); });
+  el.querySelectorAll("[data-rdaily]").forEach(b => b.onclick = () => { remind.daily = !remind.daily; renderRemind(); });
+  el.querySelectorAll("[data-rremove]").forEach(b => b.onclick = () => {
+    S.reminders = (S.reminders || []).filter(r => r.link !== remind.link && r.link !== remind.dailyLink); save(); close(); renderAll();
+  });
+  el.querySelectorAll("[data-rtime]").forEach(inp => inp.onchange = () => {
+    const [h, m] = inp.value.split(":").map(Number); if (isNaN(h)) return;
+    const now = new Date(), minute = h * 60 + m;
+    set(remind.daily || minute > now.getHours() * 60 + now.getMinutes() ? 0 : 1, minute);
+  });
+  drawSprites();
+  el.querySelector(".sheet button, .sheet input").focus();
+}
+addEventListener("keydown", e => { if (e.key === "Escape" && remind) { remind = null; renderRemind(); } });
+
+/* Remind me, beside a hold for "I did it": the bottom of every task. */
+const doneBar = (c, cur, holdLabel) => `<div class="donebar">
+  <button class="bell ${cur ? "set" : ""}" data-remind aria-label="${cur ? "Reminder at " + remindLabel(cur) + ". Change it." : "Remind me later"}">${icon("icon_bell", 2)}<span>${cur ? remindLabel(cur) : "Remind me"}</span></button>
+  <button class="hold" style="--c:${c}" data-hold aria-label="${esc(holdLabel)}. Press and hold for three seconds."><i></i><span><b>✓ ${esc(holdLabel)}</b><small>Press and hold</small></span></button></div>`;
+function wireHold(btn, onDone) {
+  let raf = 0, start = 0, fired = false;
+  const fill = btn.querySelector("i"), lab = btn.querySelector("small");
+  const stop = () => { cancelAnimationFrame(raf); raf = 0; fill.style.width = "0%"; lab.textContent = "Press and hold"; };
+  const tick = t => {
+    const p = Math.min(1, (t - start) / HOLD);
+    fill.style.width = (p * 100) + "%";
+    lab.textContent = p < 1 ? `Keep holding… ${Math.ceil((1 - p) * HOLD / 1000)}` : "Done";
+    if (p >= 1) { raf = 0; if (!fired) { fired = true; onDone(); } } else raf = requestAnimationFrame(tick);
+  };
+  btn.onpointerdown = e => { e.preventDefault(); start = performance.now(); raf = requestAnimationFrame(tick); };
+  btn.onpointerup = btn.onpointerleave = btn.onpointercancel = () => { if (raf) stop(); };
+  btn.onkeydown = e => { if ((e.key === "Enter" || e.key === " ") && !fired) { e.preventDefault(); fired = true; onDone(); } };
+}
+
+/* ---------------- the side panel: one place per tab ---------------- */
 let side = {view: S.movedIn ? "today" : "look"}, extras = false;
+const TABS = [["today", "tab_home", "Home"], ["outside", "tab_out", "Outside"], ["journal", "tab_journal", "Journal"], ["you", null, "You"]];
+const sideNav = cur => `<nav class="sidenav" id="sidenav" aria-label="Places">${TABS.map(([v, ic, l]) =>
+  `<button data-nav="${v}" aria-current="${cur === v}">${ic ? icon(ic, 1.6) : `<canvas class="px" data-mehead="1.3"></canvas>`}<span>${l}</span></button>`).join("")}</nav>`;
 function renderSide() {
   const el = $("side");
-  if (side.view === "today") el.innerHTML = todayView();
-  else if (side.view === "task") el.innerHTML = taskView(side.d);
-  else if (side.view === "mission") el.innerHTML = missionView(side.p);
-  else if (side.view === "done") el.innerHTML = doneView();
-  else if (side.view === "checkin") el.innerHTML = checkinView();
-  else if (side.view === "look") el.innerHTML = lookView();
+  const v = side.view;
+  el.innerHTML = v === "today" ? todayView() : v === "task" ? taskView(side.d) : v === "mission" ? missionView(side.p)
+    : v === "done" ? doneView() : v === "checkin" ? checkinView() : v === "look" ? lookView()
+    : v === "outside" ? outsideView() : v === "journal" ? journalView() : v === "you" ? youView()
+    : v === "postcard" ? postcardView() : v === "courage" ? courageView() : todayView();
   wireSide();
 }
 function questRow(q, next) {
+  const r = reminderOf(q);
   return `<button class="quest ${q.done ? "done" : next ? "next" : ""}" data-quest="${q.kind === "CARE" ? q.d : "OUT:" + q.p}" style="--c:${q.c}">
     <span class="qicon">${icon(q.icon, 2.6)}</span>
     <span class="qin"><span class="row" style="justify-content:flex-start"><span class="qname">${esc(q.name)}</span><span class="small">${esc(q.status)}</span></span>
       <span class="qt">${esc(q.title)}</span>
       ${q.done ? `<span class="qfoot"><b>Done today</b></span>` : `<span class="qline">${esc(line(q))}</span>
-      <span class="qfoot">${next ? "<b>Up next</b>" : ""}<span class="small">Smallest: ${q.minutes} min</span></span>`}</span>
+      <span class="qfoot">${next ? "<b>Up next</b>" : ""}${r ? `<span class="chip">${icon("icon_bell", 1.2)}${remindLabel(r)}</span>` : ""}<span class="small">Smallest: ${q.minutes} min</span></span>`}</span>
     ${icon(q.done ? "icon_done" : "icon_todo", 2.6)}</button>`;
 }
 function todayView() {
@@ -594,12 +775,14 @@ function todayView() {
   const out = q[q.length - 1];
   const more = PILLARS.filter(p => p !== out.p && S.missionDay[p] !== S.day);
   const extra = !more.length ? "" : extras
-    ? `<p class="small">Extra missions. Optional — today's one is the one that counts.</p>` + more.map(p => {
+    ? `<p class="small">Extras. Optional — today's four are what count.</p>` + more.map(p => {
         const m = mission(p, S.tiers[p]);
-        return questRow({kind: "OUTSIDE", p, icon: "icon_out", name: PILLAR_NAME[p], title: m.do, cue: m.when, first: m.open || m.do, minutes: m.min, status: `level ${S.tiers[p]}`, done: false, c: COLOR[p]}, false);
+        return questRow({kind: "OUTSIDE", p, icon: ROAD_ICON[p], name: ROAD_NAME[p], title: m.do, cue: m.when, first: m.open || m.do, minutes: m.min, status: `level ${S.tiers[p]}`, done: false, c: COLOR[p]}, false);
       }).join("")
-    : `<button class="link" data-extras>${out.done ? "Want more? " : ""}${more.length} more missions outside${out.done ? "" : ", if you want them"}</button>`;
-  return `<div id="todayHead" style="display:flex;flex-direction:column;gap:10px"><div class="section-h"><h2>Today</h2><span class="small" style="color:${done === q.length ? "var(--glow)" : "var(--dim)"};font-weight:800">${done} of ${q.length}</span></div>
+    : `<button class="link" data-extras>${out.done ? "Want more? " : ""}${more.length} more for today${out.done ? "" : ", if you want them"}</button>`;
+  const mail = (S.forecasts || []).filter(f => f.actual === undefined && f.day < S.day).slice(0, 2).map(f =>
+    `<button class="mail" data-mail="${esc(f.key)}">${icon("icon_postcard", 2.2)}<span><b>You have mail</b><span>How did "${esc(f.title.slice(0, 60))}" really go?</span></span><span>›</span></button>`).join("");
+  return `${sideNav("today")}${mail}<div id="todayHead" style="display:flex;flex-direction:column;gap:10px"><div class="section-h"><h2>Today</h2><span class="small" style="color:${done === q.length ? "var(--glow)" : "var(--dim)"};font-weight:800">${done} of ${q.length}</span></div>
     <div class="segs">${q.map(x => `<i class="${x.done ? "on" : ""}" style="--c:${x.c}"></i>`).join("")}</div>
     <p class="small">${esc(headline(q))}</p></div>
     ${q.map(x => questRow(x, x === next)).join("")}${extra}`;
@@ -625,27 +808,104 @@ function taskView(d) {
     <p class="src">About ${Math.round(auto * 100)}%, estimated from the typical curve in Lally et al. (2010). Most people were near automatic by day 66; the range was 18 to 254 days.</p>
     <h3>Or a different routine</h3>
     ${routinesOf(d).map(x => `<button class="opt ${x.id === r.id ? "sel" : ""}" data-routine="${x.id}"><span class="dot"></span><span><b>${esc(x.title)}</b><span>${esc(x.tiny)}</span></span></button>`).join("")}
-    <button class="btn primary" style="--a:${c};margin-top:4px" data-do="${d}">${careDone(d) ? "I did it again" : "I did it"}</button>
+    ${doneBar(c, reminderFor("care:" + d), careDone(d) ? "I did it again" : "I did it")}
   </div>`;
 }
+/* A mission, as the letter you were holding. */
 function missionView(p) {
-  const tier = S.tiers[p], m = mission(p, tier), c = COLOR[p];
+  const tier = S.tiers[p], m = mission(p, tier), c = COLOR[p], key = `tier:${p}:${tier}`;
+  const steps = [["When", m.when ? `When ${m.when}.` : ""], ["First two minutes", m.open], ["Done when", cap(m.done)], ["Leave this behind", m.stop]].filter(([, t]) => t);
+  const todays = outsidePillar() === p;
   return `<div class="panel" style="--c:${c}">
     <button class="btn ghost back" data-back>← Today</button>
-    <span class="pill">Outside · ${PILLAR_NAME[p]} · level ${tier}</span>
-    <div class="big">${esc(m.do)}</div>
     ${neverOut() ? howTo(OUTSIDE_HOW) : ""}
-    <div class="kv">
-      <div><b>When</b>When ${esc(m.when)}.</div>
-      <div><b>The first two minutes</b>${esc(m.open)}</div>
-      <div><b>Done when</b>${esc(m.done.charAt(0).toUpperCase() + m.done.slice(1))}</div>
-      <div><b>Leave this behind</b>${esc(m.stop)}</div>
-    </div>
-    <h3>Why this one</h3><p class="why">${esc(m.why)}</p>
-    <p class="src">In the app this is the full mission screen: a prediction to write down first and check afterwards, an easier rung if this one is too big today, and a way to say it got hard without losing anything.</p>
-    <button class="btn primary" style="--a:${c}" data-mdo="${p}">I did it</button>
+    <div class="letter"><div class="flap"><i style="background:${c}"></i></div><div class="lin">
+      <span class="pk">${todays ? "Today's letter · " : ""}${ROAD_NAME[p]} · level ${tier}</span>
+      <div class="big pt">${esc(m.do)}</div>
+      <div class="tags"><span>${m.min} min</span><span>${PILLAR_NAME[p]}</span></div>
+      <p class="pw">${esc(m.why)}</p></div></div>
+    <div class="steps"><h3>How to do it</h3>${steps.map(([l, t], i) => `<div class="st"><b class="n ${l === "Leave this behind" ? "amb" : ""}">${i + 1}</b><div><span class="${l === "Leave this behind" ? "amb" : ""}">${l}</span><p>${esc(t)}</p></div></div>`).join("")}</div>
+    ${guessBlock(key, m)}
+    <button class="friction" data-friction>${icon("icon_spark", 2.2)}<span><b>It didn't go to plan</b><small>A no, a silence, turning back. It still counts.</small></span><span>›</span></button>
+    ${doneBar(c, reminderFor(key) || (todays ? reminderFor("outside") : null), "I did it")}
   </div>`;
 }
+/* The guess, before: writing the fear down is what lets the trip disprove it. */
+function guessBlock(key, m) {
+  const f = forecastFor(key);
+  if (f) return `<div class="guess"><b class="amb">Before you go</b><h3>Your guess</h3><p>"${esc(f.predicted)}"</p><span class="small">${f.distress}/10 · ${NERVE(f.distress)} · when you're back, you'll see how close it was.</span></div>`;
+  return `<div class="guess"><b class="amb">Before you go</b><h3>What do you think will happen?</h3>
+    <span class="small">Write the bad version. You'll check it against what really happens, which is how a fear gets smaller.</span>
+    <textarea data-gtext rows="2" placeholder="They'll think I'm strange and I'll have to leave."></textarea>
+    <label class="small">How hard will it be? <b data-gval>6/10 · Difficult</b><input type="range" min="0" max="10" value="6" data-grange></label>
+    <button class="btn" data-gsave>Save my guess</button></div>`;
+}
+/* Back from a mission: the room celebrates, the guess is checked, a postcard if you like. */
+function postcardView() {
+  const r = side.result, c = COLOR[r.p], f = forecastFor(r.key);
+  return `<div class="panel" style="--c:${c}">
+    <span class="pill">${icon(ROAD_ICON[r.p], 1.4)} ${ROAD_NAME[r.p]} · level ${r.tier}</span>
+    <div class="big">${DID[r.p]}</div>
+    <p class="why">Your bubble is bigger than it was this morning.</p>
+    <div class="paper"><b>Say this out loud</b><div class="pt" style="font-size:19px">"${DID[r.p]} today."</div><span>Three seconds. It's what makes the next one easier.</span></div>
+    ${r.granted.map(g => `<div class="arrive"><canvas class="px" data-sprite="${g.id}"></canvas><div><b style="color:var(--glow)">Sent back from out there</b><div class="qt">${esc(g.label)}</div><span class="small">It's already in your room.</span></div></div>`).join("")}
+    ${f ? `<div class="guess"><b class="amb">Your guess, before</b><p>"${esc(f.predicted)}"</p><span class="small">${f.distress}/10 · ${NERVE(f.distress)}</span>
+      <label class="small">How hard was it really? <b data-aval>${f.distress}/10 · ${NERVE(f.distress)}</b><input type="range" min="0" max="10" value="${f.distress}" data-arange></label>
+      <p class="small" data-gap></p></div>` : ""}
+    <div class="paper shade">${icon("icon_postcard", 2)} <b>A postcard for your journal (optional)</b><input data-pc maxlength="90" placeholder="One line about how it went"></div>
+    <button class="btn primary" style="--a:${c}" data-home>Back home</button></div>`;
+}
+function courageView() {
+  return `<div class="panel" style="--c:var(--glow);align-items:center;text-align:center">
+    <canvas class="px pop" data-icon="jar${jarLevel(S.friction)}" data-dp="7"></canvas>
+    <div class="big" style="color:#FFB020">+1 spark of courage</div>
+    ${side.reason ? `<p class="qt">"${esc(side.reason)}." That took nerve.</p>` : ""}
+    <p class="why">You went to the edge of your bubble, and that's the part that changes it, whatever came back. The next one will be the same size or smaller, never bigger.</p>
+    <span class="small">${S.friction === 1 ? "Your first spark. Nobody who stays inside earns one." : `${S.friction} sparks in your jar now.`}</span>
+    <button class="btn primary" style="--a:#FFB020" data-home>Back home</button></div>`;
+}
+/* Outside: the three roads out of your bubble, the room's stages, the jar, the guesses, the trips. */
+function outsideView() {
+  const st = stageFor(S.rungs), f = S.friction || 0, done = (S.forecasts || []).filter(x => x.actual !== undefined);
+  const easier = done.filter(x => x.distress - x.actual >= 2).length;
+  return `${sideNav("outside")}<div class="section-h"><h2>Outside</h2><span class="small">everything past your walls</span></div>
+    ${tip("outside", "This is your bubble, from outside", "Every mission walks you a little further down one of three roads. The further you go, the more your room opens: a window, a door, then the street.")}
+    <h3>Your bubble · ${S.rungs} missions</h3>
+    <div class="stages">${D.stages.map(s => `<div class="stg ${s.key === st.key ? "here" : S.rungs >= s.threshold ? "" : "locked"}"><img src="${s.img}" alt=""><b>${esc(s.label)}</b><span class="small">${s.key === st.key ? "You are here" : S.rungs >= s.threshold ? "Been here" : `At ${s.threshold} missions`}</span></div>`).join("")}</div>
+    <h3>Three roads out</h3>
+    ${PILLARS.map(p => { const t = S.tiers[p], doneT = S.missionDay[p] === S.day, today = outsidePillar() === p;
+      return `<button class="road ${today && !doneT ? "today" : ""}" style="--c:${COLOR[p]}" data-road="${p}" ${doneT ? "disabled" : ""}>
+        <span class="qicon">${icon(ROAD_ICON[p], 2)}</span><span class="qin"><b>${ROAD_NAME[p]}</b><span class="small" style="color:${COLOR[p]}">${PILLAR_NAME[p]} · level ${t} of 100</span>
+        <span class="roadtrack"><i style="width:${t}%"></i>${[1,2,3,4,5,6,7,8,9].map(k => `<em style="left:${k * 10}%"></em>`).join("")}</span>
+        ${doneT ? `<span class="small">Done today</span>` : `<span class="small">${esc(mission(p, t).do)}</span>`}</span>${today && !doneT ? `<b class="small" style="color:${COLOR[p]}">Today's</b>` : ""}</button>`; }).join("")}
+    <h3>Courage</h3>
+    <div class="jar">${icon("jar" + jarLevel(f), 4)}<div><b class="amb">${f === 1 ? "1 spark" : f + " sparks"} of courage</b><p class="why">One for every time something didn't go to plan and you said so: a no, a silence, turning back. Each is proof you went to the edge.</p>${toNextSpark(f) ? `<span class="small">${toNextSpark(f)} more and the jar fills up a bit.</span>` : ""}</div></div>
+    <h3>What your guesses showed</h3>
+    <div class="panel" style="gap:6px">${done.length ? `<b>${easier} of ${done.length} were easier than you feared.</b><span class="small">The fear was wrong in the way fear usually is, and now it's written down.</span>` : `<span class="small">Before a mission, write what you think will happen. When you're back, check it. Nothing checked yet.</span>`}</div>
+    <h3>Recent trips</h3>
+    ${(S.trips || []).length ? `<div class="panel" style="gap:10px">${S.trips.slice(-10).reverse().map(t => `<div class="row" style="justify-content:flex-start;align-items:flex-start;gap:10px">${icon(t.friction ? "icon_spark" : ROAD_ICON[t.p], 1.6)}<div><b>${esc(t.title)}</b>${t.note ? `<div class="small">"${esc(t.note)}"</div>` : ""}<div class="small" style="color:${t.friction ? "#FFB020" : "var(--faint)"}">${t.friction ? "A spark · " : ""}${ROAD_NAME[t.p]} · level ${t.tier} · day ${t.day}</div></div></div>`).join("")}</div>` : `<p class="small">Nothing yet. Today's letter is the first trip.</p>`}`;
+}
+function journalView() {
+  const j = S.journal || [];
+  return `${sideNav("journal")}<div class="section-h"><h2>Journal</h2><span class="small">${j.length} postcard${j.length === 1 ? "" : "s"}</span></div>
+    ${tip("journal", "Your postcards", "Everything you write lands here: after a mission, after a no, or for no reason. Read it on a bad day to see how far you've come.")}
+    ${j.length ? j.slice().reverse().map(n => `<div class="paper">${icon("icon_postcard", 1.6)} <b>${esc(n.title)}</b><div>"${esc(n.text)}"</div><span>Day ${n.day}</span></div>`).join("") : `<p class="small">No postcards yet. After your first mission, write one line about how it went.</p>`}`;
+}
+function youView() {
+  const lv = level(), into = (S.xp || 0) % XP_PER_LEVEL, next = HATS.find(h => h.level > lv);
+  return `${sideNav("you")}${tip("you", "This is you", "Levels come from everything you do, and new levels bring hats. Your look and the tour are here too.")}
+    <div class="you"><canvas class="px" data-mefig="5"></canvas><div><div class="big">Level ${lv}</div><div class="track"><i style="width:${Math.round(100 * into / XP_PER_LEVEL)}%"></i></div>
+      <span class="small">${into} / ${XP_PER_LEVEL} to level ${lv + 1}</span>${next ? `<span class="small">${icon(next.id, 1.2)} ${esc(next.label)} at level ${next.level}</span>` : ""}</div></div>
+    <div class="stats"><div><span class="small">Day</span><b>${S.day}</b></div><div><span class="small">Sparks</span><b style="color:#FFB020">${S.friction || 0}</b></div><div><span class="small">Missions</span><b>${S.rungs}</b></div></div>
+    <h3>Hats</h3>
+    <div class="hats">${[{id: null, level: 1, label: "None"}, ...HATS].map((h, i) => { const open = h.level <= lv, on = (S.look.hat || 0) === i;
+      return `<button class="hat ${on ? "on" : ""}" data-hat="${i}" ${open ? "" : "disabled"} aria-pressed="${on}">${h.id ? icon(h.id, 2.4) : "<b>None</b>"}<span class="small">${h.id ? (open ? esc(h.label) : "Level " + h.level) : ""}</span></button>`; }).join("")}</div>
+    <span class="small">Levels come from looking after yourself, missions, and every spark of courage.</span>
+    <button class="btn" data-lookbtn>Change how you look</button>
+    <button class="btn ghost" data-tour>How it works: take the tour again</button>`;
+}
+const tip = (id, title, body) => (S.tips || []).includes(id) ? "" :
+  `<div class="tip">${icon("buddy0", 2.4)}<div><b>${esc(title)}</b><p class="why">${esc(body)}</p><button class="link" data-tip="${id}">Got it</button></div></div>`;
 function doneView() {
   const r = side.result, d = r.d, c = COLOR[d], n = info(d);
   const next = nextRewardIn(S.care[d].reps);
@@ -694,7 +954,18 @@ function drawSprites() {
   if (!atlas.complete) return;
   document.querySelectorAll("canvas[data-sprite]").forEach(c => put(c, c.dataset.sprite, itemDef(c.dataset.sprite).w > 24 ? 3 : 5, atlas));
   document.querySelectorAll("canvas[data-icon]").forEach(c => put(c, c.dataset.icon, +c.dataset.dp, atlas));
-  document.querySelectorAll("canvas[data-me]").forEach(c => put(c, "me0", 5, sheetFor(S.look)));
+  document.querySelectorAll("canvas[data-me]").forEach(c => putMe(c, 5, 23));
+  document.querySelectorAll("canvas[data-mefig]").forEach(c => putMe(c, +c.dataset.mefig, 23));
+  document.querySelectorAll("canvas[data-mehead]").forEach(c => putMe(c, +c.dataset.mehead, 16));
+}
+/* You, in your look and hat: the whole figure, or just the head (hair and face, 16 rows). */
+function putMe(c, z, rows) {
+  const dpr = devicePixelRatio || 1, r = fxDef("me0"), k = Math.max(1, Math.round(z * dpr));
+  c.width = r.w * k; c.height = rows * k; c.style.width = (r.w * k / dpr) + "px"; c.style.height = (rows * k / dpr) + "px";
+  const g = c.getContext("2d"); g.imageSmoothingEnabled = false;
+  g.drawImage(sheetFor(S.look), r.x, r.y, r.w, rows, 0, 0, r.w * k, rows * k);
+  const hat = S.look.hat ? (CAT.hats || [])[S.look.hat - 1] : null, h = hat && fxDef(hat.id);
+  if (h) { const hh = Math.min(h.h, rows); g.drawImage(atlas, h.x, h.y, h.w, hh, 0, 0, h.w * k, hh * k); }
 }
 function wireSide() {
   const q = s => document.querySelectorAll(s);
@@ -708,12 +979,51 @@ function wireSide() {
     if (chosen(d, s).id !== b.dataset.routine) S.care[d] = {...s, routine: b.dataset.routine, anchor: "", routineFrom: s.reps};
     side.size = null; save(); renderAll();
   });
-  q("[data-do]").forEach(b => b.onclick = () => finish(b.dataset.do));
-  q("[data-mdo]").forEach(b => b.onclick = () => {
-    const granted = doMission(b.dataset.mdo); save(); side = {view: "today"}; view.burst = true; renderAll();
-    setTimeout(() => { view.burst = false; paint(); }, reduced ? 0 : 2200);
-    toast(granted.length ? `Mission done. New from out there: ${granted.map(g => g.label).join(", ")}.` : "Mission done. The walls are a little further out.");
+  q("[data-hold]").forEach(b => wireHold(b, () => side.view === "task" ? finish(side.d) : missionDone(side.p)));
+  q("[data-remind]").forEach(b => b.onclick = () => {
+    if (side.view === "task") {
+      const quest = quests().find(x => x.d === side.d);
+      openRemind({link: "care:" + side.d, dailyLink: "care:" + side.d, title: quest.title, text: line(quest), dailyLabel: "Every day", dailyFirst: true});
+    } else {
+      const p = side.p, todays = outsidePillar() === p, key = `tier:${p}:${S.tiers[p]}`;
+      openRemind({link: key, dailyLink: todays ? "outside" : key, title: (todays ? "Today's letter · " : "") + ROAD_NAME[p], text: mission(p, S.tiers[p]).do,
+                  dailyLabel: todays ? "Every day, for that day's letter" : null});
+    }
   });
+  q("[data-friction]").forEach(b => b.onclick = () => openFriction(side.p));
+  q("[data-grange]").forEach(r => r.oninput = () => { q("[data-gval]").forEach(v => v.textContent = `${r.value}/10 · ${NERVE(+r.value)}`); });
+  q("[data-gsave]").forEach(b => b.onclick = () => {
+    const t = (document.querySelector("[data-gtext]").value || "").trim();
+    if (!t) { toast("Write the guess first, in a line."); return; }
+    const p = side.p, key = `tier:${p}:${S.tiers[p]}`;
+    S.forecasts = (S.forecasts || []).filter(f => !(f.key === key && f.actual === undefined));
+    S.forecasts.push({key, title: mission(p, S.tiers[p]).do, predicted: t, distress: +document.querySelector("[data-grange]").value, day: S.day});
+    save(); renderSide(); toast("Guess saved. You'll check it when you're back.");
+  });
+  q("[data-arange]").forEach(r => r.oninput = () => {
+    const f = forecastFor(side.result.key), a = +r.value, gap = f.distress - a;
+    q("[data-aval]").forEach(v => v.textContent = `${a}/10 · ${NERVE(a)}`);
+    q("[data-gap]").forEach(v => v.textContent = gap >= 2 ? `${gap} easier than you thought. That gap is the whole point.` : gap <= -2 ? `${-gap} harder than you thought. That usually means the step was too big, not that you are.` : "About what you expected.");
+    side.checked = a;
+  });
+  q("[data-home]").forEach(b => b.onclick = () => {
+    if (side.view === "postcard") {
+      const r = side.result, f = forecastFor(r.key), pc = (document.querySelector("[data-pc]") || {}).value || "";
+      if (f && side.checked !== undefined) f.actual = side.checked;
+      if (pc.trim()) (S.journal = S.journal || []).push({day: S.day, title: r.title, text: pc.trim()});
+    }
+    save(); side = {view: "today"}; renderAll();
+  });
+  q("[data-mail]").forEach(b => b.onclick = () => {
+    const f = forecastFor(b.dataset.mail); const [, p, tier] = f.key.split(":");
+    side = {view: "postcard", result: {p, tier: +tier, key: f.key, title: f.title, granted: []}}; renderSide(); scrollSide();
+  });
+  q("[data-nav]").forEach(b => b.onclick = () => { side = {view: b.dataset.nav}; renderSide(); });
+  q("[data-road]").forEach(b => b.onclick = () => openMission(b.dataset.road));
+  q("[data-hat]").forEach(b => b.onclick = () => { S.look = {...S.look, hat: +b.dataset.hat}; save(); renderSide(); paint(); renderWidgets(); });
+  q("[data-lookbtn]").forEach(b => b.onclick = () => { side = {view: "look"}; renderSide(); });
+  q("[data-tour]").forEach(b => b.onclick = () => startTour());
+  q("[data-tip]").forEach(b => b.onclick = () => { (S.tips = S.tips || []).push(b.dataset.tip); save(); renderSide(); });
   q("[data-feel]").forEach(b => b.onclick = () => {
     const k = b.dataset.feel, d = side.result.d;
     if (k) S.care[d] = {...S.care[d], [k]: S.care[d][k] + 1};
@@ -728,6 +1038,33 @@ function wireSide() {
     if (first && !S.tourSeen) startTour();
   });
   drawSprites();
+}
+function openFriction(p) {
+  let el = $("remind");
+  if (!el) { el = document.createElement("div"); el.id = "remind"; document.body.appendChild(el); }
+  const reasons = ["I asked and got a no", "It got awkward", "I turned back", "I couldn't make myself start", "It was too big today"];
+  el.innerHTML = `<div class="sheet-back" data-fclose></div><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="ftitle">
+    <div class="row" style="justify-content:flex-start;gap:14px">${icon("jar1", 3.4)}<div><h3 id="ftitle" class="amb">That still counts</h3><p class="why">You went to the edge. It goes in your courage jar, and the next one gets easier, not harder.</p></div></div>
+    <b>What happened?</b>${reasons.map((r, i) => `<button class="choice" data-reason="${i}">${r}<span>›</span></button>`).join("")}</div>`;
+  document.querySelector(".wrap").inert = true;
+  drawSprites();
+  const close = () => { el.innerHTML = ""; document.querySelector(".wrap").inert = false; };
+  el.querySelectorAll("[data-fclose]").forEach(b => b.onclick = close);
+  el.querySelectorAll("[data-reason]").forEach(b => b.onclick = () => {
+    close();
+    S.friction = (S.friction || 0) + 1; S.xp = (S.xp || 0) + XP_FRICTION;
+    (S.trips = S.trips || []).push({p, tier: S.tiers[p], title: mission(p, S.tiers[p]).do, note: reasons[+b.dataset.reason], friction: true, day: S.day});
+    save(); side = {view: "courage", reason: reasons[+b.dataset.reason]}; renderAll(); scrollSide();
+  });
+  el.querySelector(".choice").focus();
+}
+function missionDone(p) {
+  const tier = S.tiers[p], key = `tier:${p}:${tier}`, title = mission(p, tier).do;
+  const granted = doMission(p); save();
+  side = {view: "postcard", result: {p, tier, key, title, granted}};
+  view.burst = true; renderAll(); scrollSide();
+  if (innerWidth <= 820) $("roombox").scrollIntoView({behavior: reduced ? "auto" : "smooth", block: "center"});
+  setTimeout(() => { view.burst = false; paint(); }, reduced ? 0 : 2200);
 }
 function scrollSide() { if (innerWidth <= 820) $("side").scrollIntoView({behavior: reduced ? "auto" : "smooth"}); }
 function openTask(d) { side = {view: "task", d, size: null}; view.lv = null; renderSide(); scrollSide(); }
@@ -773,7 +1110,7 @@ function renderWidgets() {
       <canvas class="wroom px" data-wroom="1" role="img" aria-label="Your room"></canvas>
       <div class="whead"><b>${done === q.length ? "All done today" : "Today"}</b><span>${done} of ${q.length}</span></div>
       ${q.map(x => `<button class="wrow ${x.done ? "done" : ""}" data-w="${target(x)}" style="--c:${x.c}"><span class="wico">${icon(x.icon, 1.6)}</span>
-        <span class="wt"><span class="wn">${esc(name(x))}</span><span class="wx">${esc(x.done ? "Done today" : line(x))}</span></span>
+        <span class="wt"><span class="wn">${esc(name(x))}</span><span class="wx">${esc(x.done ? "Done today" : (reminderOf(x) ? "\u{1F514} " + remindLabel(reminderOf(x)) + " · " : "") + line(x))}</span></span>
         ${icon(x.done ? "icon_done" : "icon_todo", 1.3)}</button>`).join("")}
     </div>
     <div class="widget compact" aria-label="The widget, short">
@@ -799,7 +1136,7 @@ $("editBtn").onclick = () => { edit = !edit; selected = null; refreshEdit(); pai
 $("putAway").onclick = () => { if (selected && selected !== "me") { delete S.home.placed[selected]; toast("Put away. It is still yours, waiting below."); selected = null; save(); refreshEdit(); paint(); renderWidgets(); } };
 $("lookBtn").onclick = () => { side = {view: "look"}; renderSide(); scrollSide(); };
 $("checkinBtn").onclick = () => { side = {view: "checkin", lv: levels()}; view.lv = side.lv; renderSide(); };
-$("nextDay").onclick = () => { S.day += 1; extras = false; side = {view: "today"}; view.lv = null; save(); renderAll(); };
+$("nextDay").onclick = () => { S.day += 1; S.reminders = (S.reminders || []).filter(r => r.daily || r.day >= S.day); extras = false; side = {view: "today"}; view.lv = null; save(); renderAll(); };
 $("skip3").onclick = () => { S.day += 3; extras = false; side = {view: "today"}; view.lv = null; save(); renderAll(); toast("Three days with nothing done. Notice what did not happen: nothing you earned went anywhere."); };
 $("month").onclick = () => {
   let got = 0;
@@ -820,12 +1157,12 @@ const CARE_HOW = [
   "Pick when. The same moment every day is what makes it stick.",
   "Pick how much you have got. Tiny counts in full.",
   "Put the phone down and do it for real.",
-  "Come back and tap I did it. (In the app you press and hold until it fills.)"];
+  "Come back and hold \"I did it\" until it fills. Not now? Tap the bell beside it and pick a time."];
 const OUTSIDE_HOW = [
-  "Read what it is: when, the first two minutes, and when it counts as done.",
-  "Pick the moment you will go.",
+  "Read the letter, then write down what you think will happen.",
+  "Tap the bell at the bottom and pick when you'll go.",
   "Go and do it.",
-  "Back here, tap I did it. In the app, if it went wrong you tap Log friction instead: that counts too."];
+  "Back here, hold \"I did it\". If it went wrong, tap \"It didn't go to plan\": that's a spark of courage, and it counts too."];
 const neverCared = () => DOMS.every(d => S.care[d].reps === 0);
 const neverOut = () => S.rungs === 0;
 const howTo = steps => `<div class="howto"><b>First time? Here's how</b><ol>${steps.map(x => `<li><span>${esc(x)}</span></li>`).join("")}</ol></div>`;
@@ -852,6 +1189,7 @@ function spotEl(spot) {
   if (spot === "WORLD") return $("world");
   if (spot === "WIDGET") return document.querySelector("#homescreen .widget");
   if (spot === "DAYBAR") return document.querySelector(".daybar");
+  if (spot === "SIDENAV") return $("sidenav");
   return null;
 }
 function spotRect(spot) {
@@ -877,10 +1215,11 @@ function tourSteps() {
     {spot: "LETTER", icon: "icon_out", c: q[3].c, title: "The letter is today's mission", body: "One small step outside your bubble, new every day: somewhere new (Access), something new (Activity) or someone new (Social). Tap the letter to read it.",
      absent: "On days you have not been out yet, you hold a letter: that day's mission outside your bubble. Today's is already done."},
     {spot: "TODAY", icon: "icon_todo", title: "Today: four things", body: "The same four, as a list. Do them in any order. Each one says when to do it and its smallest version, and the smallest version counts in full."},
-    how && {spot: rowOf(how), icon: how.icon, c: how.c, title: "How to do one", body: "Tap it. Pick how much you have got; Tiny is fine. Do it for real, then tap I did it (in the app, you press and hold). Your room changes right then."},
-    {spot: "ROW_OUTSIDE", icon: "icon_out", c: q[3].c, title: "Going out works a bit differently", body: "Read it: when, the first two minutes, when it counts as done. Then go. Back home, say you did it. In the app, if it went wrong (a no, an awkward silence, you turned back) you tap Log friction. That still counts: it means you reached the edge."},
+    how && {spot: rowOf(how), icon: how.icon, c: how.c, title: "How to do one", body: "Tap it. Pick how much you have got; Tiny is fine. Do it for real, then hold \"I did it\". Your room changes right then. Not now? The bell beside it reminds you at a time you pick."},
+    {spot: "ROW_OUTSIDE", icon: "icon_out", c: q[3].c, title: "Going out works a bit differently", body: "Open the letter, write what you think will happen, then go. Back home, hold \"I did it\". If it went wrong (a no, a silence, you turned back) that's a spark in your courage jar. It still counts."},
     {spot: "WORLD", icon: "icon_done", title: "Your room fills up", body: "You start with nothing. Looking after yourself brings things for inside. Missions outside open the walls: first a window, then a door, then the street. Arrange room moves things around."},
     {spot: "WIDGET", icon: "me", title: "Keep it on your home screen", body: "On a phone, the widget shows your room and today's four, so they are in front of you when the moment comes, not only when you remember to open the app. This is it, from the same state."},
+    {spot: "SIDENAV", icon: "tab_out", title: "Everything else", body: "Outside has the three roads out of your bubble, every stage your room can reach, and your courage jar. Journal keeps your postcards. You has your look and the hats your levels earn."},
     {spot: "DAYBAR", title: "Try a few days", body: "This preview can move time. Next day starts a new one. Skip 3 days shows what a gap does: things get messy, nothing you earned goes. Do a month fills the room and opens the walls."},
     next ? {spot: rowOf(next), icon: next.icon, c: next.c, title: "Start with one now", button: "Do it now", action: "START", quest: next,
             body: `${next.name}: ${next.first.replace(/\.$/, "")}. ${next.minutes > 0 ? `About ${next.minutes} min. ` : ""}Doing one now, before you close this, is what makes tomorrow easier.`}
