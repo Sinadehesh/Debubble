@@ -3,6 +3,7 @@ package com.debubble.app
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -89,7 +90,12 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        // The app is always dark, so the clock and battery are always drawn light. Left to
+        // follow the phone's own setting, a phone in light mode drew them dark on our dark.
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
+        )
         widgetLink = linkOf(intent)
         addOnNewIntentListener { next -> widgetLink = linkOf(next) }
         setContent {

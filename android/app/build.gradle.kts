@@ -26,6 +26,8 @@ android {
         targetSdk = 36
         versionCode = build ?: 1
         versionName = if (build != null) "0.1.$build" else "0.1"
+        // Only the Play screenshots run on a device (androidTest/StoreShots.kt).
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     signingConfigs {
@@ -95,4 +97,9 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.serialization.json)
+
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.ui.test.junit4)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.test.runner)
 }
