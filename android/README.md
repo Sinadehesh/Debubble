@@ -9,7 +9,7 @@ everything lives on the device.
 ./gradlew :app:installDebug      # install on a connected device
 ```
 
-Requires JDK 17+, an Android SDK with API 35, and network access to Google's Maven repo.
+Requires JDK 17+, an Android SDK with API 36, and network access to Google's Maven repo.
 
 > **Build status:** the authoring environment has no Android SDK and no route to
 > `dl.google.com`, so nothing here is compiled locally. `.github/workflows/android.yml` builds

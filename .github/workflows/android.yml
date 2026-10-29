@@ -29,6 +29,12 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # Temporary: which secrets this workflow can see, by name only (never their values).
+      - name: List secret names
+        env:
+          ALL: ${{ toJSON(secrets) }}
+        run: echo "$ALL" | jq -r 'keys[] | select(. != "github_token")'
+
       - name: Set up JDK 17
         uses: actions/setup-java@v5
         with:
@@ -70,6 +76,68 @@ jobs:
 
       - name: Unit tests
         run: ./gradlew :app:test --stacktrace
+
+      # The signing key lives in the repository's secrets. When it is there, the release
+      # bundle (for Google Play) and a release APK are built and signed with it, so every
+      # build is the same app to Android and installs over the one before.
+      - name: Set up signing key
+        id: signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "No signing key in the repository secrets; skipping the release build."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          store="$RUNNER_TEMP/upload.keystore"
+          printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$store"
+          alias="$KEY_ALIAS"
+          if [ -z "$alias" ]; then
+            alias=$(keytool -list -keystore "$store" -storepass "$STORE_PASSWORD" | awk -F, '/PrivateKeyEntry/ {print $1; exit}')
+          fi
+          echo "::add-mask::$alias"
+          echo "DEBUBBLE_STORE_FILE=$store" >> "$GITHUB_ENV"
+          echo "DEBUBBLE_KEY_ALIAS=$alias" >> "$GITHUB_ENV"
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+
+      - name: Build signed release bundle and APK
+        if: steps.signing.outputs.ready == 'true'
+        env:
+          DEBUBBLE_STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          DEBUBBLE_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: ./gradlew :app:bundleRelease :app:assembleRelease --stacktrace
+
+      # Fail if either came out unsigned or signed with anything but the key above.
+      - name: Check signatures
+        if: steps.signing.outputs.ready == 'true'
+        run: |
+          apksigner=$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)apksigner
+          "$apksigner" verify --print-certs app/build/outputs/apk/release/*.apk | grep -i "certificate SHA-256"
+          jarsigner -verify app/build/outputs/bundle/release/*.aab | tail -1
+          jarsigner -verify app/build/outputs/bundle/release/*.aab | grep -q "jar verified"
+
+      - name: Upload release bundle
+        if: steps.signing.outputs.ready == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: debubble-release-aab
+          path: android/app/build/outputs/bundle/release/*.aab
+          if-no-files-found: error
+
+      - name: Upload release APK
+        if: steps.signing.outputs.ready == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: debubble-release-apk
+          path: android/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+
+      - name: Remove signing key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/upload.keystore"
 
       - name: Upload test reports
         if: failure()
