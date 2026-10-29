@@ -31,12 +31,14 @@ import com.debubble.app.engine.Tour
 import com.debubble.app.ui.components.Glyph
 import com.debubble.app.ui.components.Glyphs
 import com.debubble.app.ui.components.FirstTimeSteps
-import com.debubble.app.ui.components.HoldToCommit
 import com.debubble.app.ui.components.Label
 import com.debubble.app.ui.components.Pill
 import com.debubble.app.ui.components.ProgressTrack
+import com.debubble.app.ui.components.RemindHost
+import com.debubble.app.ui.components.RoomArt
 import com.debubble.app.ui.components.SectionHeader
 import com.debubble.app.ui.components.SelectRow
+import com.debubble.app.ui.components.TaskFooter
 import com.debubble.app.ui.components.TopBar
 import com.debubble.app.ui.components.VSpace
 import com.debubble.app.ui.components.panel
@@ -69,6 +71,8 @@ fun CareScreen(
     onSetAnchor: (String) -> Unit,
     onDone: (Size) -> Unit,
     onBack: () -> Unit,
+    art: RoomArt,
+    remind: RemindHost,
     /** Nothing looked after yet: say how this screen works, in order. */
     firstTime: Boolean = false
 ) {
@@ -229,22 +233,19 @@ fun CareScreen(
             VSpace(10)
         }
 
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = Space.gutter, vertical = 12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            HoldToCommit(
-                accent = accent,
-                label = if (doneToday) "Hold to log another" else "Hold when it is done",
-                modifier = Modifier.fillMaxWidth()
-            ) {
+        // "I did it", and beside it the bell for "not now — then when?".
+        TaskFooter(
+            art = art,
+            accent = accent,
+            host = remind,
+            holdLabel = if (doneToday) "I did it again" else "I did it",
+            onDone = {
                 if (!committed) {
                     committed = true
                     onDone(size)
                 }
-            }
-        }
+            },
+            modifier = Modifier.padding(horizontal = Space.gutter, vertical = 12.dp)
+        )
     }
 }

@@ -119,7 +119,17 @@ data class Looks(
 
 /** How you look: an index into each of [Looks]' ramps. Chosen on moving in. */
 @Serializable
-data class Look(val skin: Int = 0, val hair: Int = 0, val top: Int = 0)
+data class Look(
+    val skin: Int = 0,
+    val hair: Int = 0,
+    val top: Int = 0,
+    /** 0 for none, else 1 + an index into [ItemCatalogue.hats]. */
+    val hat: Int = 0
+)
+
+/** A hat you can wear, and the level it arrives at. Drawn in your frame from its top row. */
+@Serializable
+data class HatDef(val id: String, val level: Int, val label: String)
 
 @Serializable
 data class RoomGeometry(val w: Int, val h: Int, val floorY: Int, val skirt: Int)
@@ -139,8 +149,12 @@ data class ItemCatalogue(
     val sparkles: List<SparkleDef>,
     val me: MeDef,
     val looks: Looks,
-    val maxDirt: Int
+    val maxDirt: Int,
+    val hats: List<HatDef> = emptyList()
 ) {
+    /** The hat [look] is wearing, if it is one that exists. */
+    fun hat(look: Look): HatDef? = hats.getOrNull(look.hat - 1)
+
     fun item(id: String): ItemDef? = items.firstOrNull { it.id == id }
 
     fun fx(id: String): FxDef? = fx.firstOrNull { it.id == id }
@@ -270,7 +284,7 @@ enum class RoomTap {
  *
  *  1. wall items, then the cobweb in the corner over them
  *  2. flat things on the floor (a rug, a mat), under everything that stands
- *  3. everything standing — furniture, mess and you — sorted by baseline, so whatever is
+ *  3. everything standing — furniture, mess, you and your hat — sorted by baseline, so whatever is
  *     nearer the viewer is drawn over whatever is further back
  *  4. today's letter in your hand, with its "!", while a mission outside is still open
  *  5. your heart buddy at your shoulder, a beat out of step with you
@@ -360,6 +374,11 @@ object Scene {
         val me = spotOf(ME, Home.meSpot(home, cat))
         val bob = if (frame % 2 == 1) 1 else 0
         standing += Triple(me.b, 2, Draw(meFrame(body), me.x, me.b - bob))
+        // Your hat, on your head: drawn from the top of your frame, straight after you, so
+        // anything standing in front of you covers it the way it covers you.
+        cat.hat(home.look)?.let { h ->
+            cat.fx(h.id)?.let { f -> standing += Triple(me.b, 3, Draw(h.id, me.x, me.b - cat.me.h + f.h - bob)) }
+        }
         standing.sortedWith(compareBy({ it.first }, { it.second })).forEach { out += it.third }
 
         val (bx, lx) = sides(cat, me)

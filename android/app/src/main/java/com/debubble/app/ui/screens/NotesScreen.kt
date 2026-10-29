@@ -34,17 +34,22 @@ import androidx.compose.ui.unit.dp
 import com.debubble.app.data.Note
 import com.debubble.app.data.NoteFilter
 import com.debubble.app.data.Notes
+import com.debubble.app.engine.World
 import com.debubble.app.ui.components.Glyph
 import com.debubble.app.ui.components.Glyphs
 import com.debubble.app.ui.components.Label
 import com.debubble.app.ui.components.Markdown
+import com.debubble.app.ui.components.PageTip
 import com.debubble.app.ui.components.Pill
 import com.debubble.app.ui.components.PrimaryButton
+import com.debubble.app.ui.components.RoomArt
 import com.debubble.app.ui.components.SecondaryButton
+import com.debubble.app.ui.components.SpriteIcon
 import com.debubble.app.ui.components.TextAction
 import com.debubble.app.ui.components.TopBar
 import com.debubble.app.ui.components.VSpace
 import com.debubble.app.ui.components.panel
+import com.debubble.app.ui.components.pixelScale
 import com.debubble.app.ui.theme.Ink
 import com.debubble.app.ui.theme.Space
 import com.debubble.app.ui.theme.roomGround
@@ -62,8 +67,11 @@ import com.debubble.app.ui.theme.roomGround
  */
 @Composable
 fun NotesScreen(
+    art: RoomArt,
     notes: List<Note>,
     dayIndexOf: (Note) -> Long,
+    showTip: Boolean,
+    onTipSeen: () -> Unit,
     onOpen: (Long) -> Unit,
     onNew: () -> Unit
 ) {
@@ -77,13 +85,36 @@ fun NotesScreen(
             .fillMaxSize()
             .background(roomGround())
     ) {
-        TopBar(
-            title = "Notes",
-            subtitle = if (notes.isEmpty()) "Nothing written yet"
-            else "${notes.size} entr${if (notes.size == 1) "y" else "ies"}"
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = Space.gutter)
+                .padding(top = 18.dp, bottom = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            SpriteIcon(art, World.TAB_JOURNAL, pixelScale = pixelScale(2.6f))
+            Column {
+                Text("Journal", color = Ink.Primary, style = MaterialTheme.typography.headlineMedium)
+                Label(
+                    if (notes.isEmpty()) "Nothing written yet"
+                    else "${notes.size} postcard${if (notes.size == 1) "" else "s"}"
+                )
+            }
+        }
 
         Column(modifier = Modifier.padding(horizontal = Space.gutter)) {
+            if (showTip) {
+                PageTip(
+                    art = art,
+                    title = "Your postcards",
+                    body = "Everything you write lands here: after a mission, after a no, about " +
+                        "something you read, or for no reason. Search it on a bad day to see " +
+                        "how far you've come.",
+                    onDismiss = onTipSeen
+                )
+                VSpace(10)
+            }
             OutlinedTextField(
                 value = query,
                 onValueChange = { query = it },
@@ -167,7 +198,7 @@ fun NotesScreen(
 
                 else -> Column(verticalArrangement = Arrangement.spacedBy(Space.gap)) {
                     shown.forEach { note ->
-                        NoteCard(note, dayIndexOf(note)) { onOpen(note.id) }
+                        NoteCard(art, note, dayIndexOf(note)) { onOpen(note.id) }
                     }
                 }
             }
@@ -175,7 +206,7 @@ fun NotesScreen(
         }
 
         Column(modifier = Modifier.padding(start = Space.gutter, end = Space.gutter, bottom = Space.gutter)) {
-            PrimaryButton("Write something", onClick = onNew)
+            PrimaryButton("Write a postcard", onClick = onNew)
         }
     }
 }
@@ -195,7 +226,7 @@ private fun EmptyState(title: String, body: String) {
 }
 
 @Composable
-private fun NoteCard(note: Note, dayIndex: Long, onOpen: () -> Unit) {
+private fun NoteCard(art: RoomArt, note: Note, dayIndex: Long, onOpen: () -> Unit) {
     val accent = if (note.isFriction) Ink.Ember else Ink.Access
     Column(
         modifier = Modifier
@@ -205,11 +236,15 @@ private fun NoteCard(note: Note, dayIndex: Long, onOpen: () -> Unit) {
             .padding(15.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text(
-            text = note.title,
-            color = Ink.Primary,
-            style = MaterialTheme.typography.titleMedium
-        )
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+            SpriteIcon(art, if (note.isFriction) World.SPARK else World.POSTCARD, pixelScale = pixelScale(1.6f))
+            Text(
+                text = note.title,
+                modifier = Modifier.weight(1f),
+                color = Ink.Primary,
+                style = MaterialTheme.typography.titleMedium
+            )
+        }
         if (note.preview.isNotBlank()) {
             Text(
                 text = note.preview,
@@ -223,7 +258,7 @@ private fun NoteCard(note: Note, dayIndex: Long, onOpen: () -> Unit) {
         ) {
             Pill("Day $dayIndex", Ink.Muted)
             if (note.isFriction) {
-                Pill("Friction", Ink.Ember)
+                Pill("A spark", Ink.Ember)
             } else if (note.isLinked) {
                 Pill(linkLabel(note), accent)
             }

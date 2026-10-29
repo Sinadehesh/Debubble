@@ -86,16 +86,16 @@ object Tour {
         "Pick when. The same moment every day is what makes it stick.",
         "Pick how much you have got. Tiny counts in full.",
         "Put the phone down and do it for real.",
-        "Come back, then press and hold the button at the bottom until it fills."
+        "Come back and hold \"I did it\" until it fills. Not now? Tap the bell beside it and pick a time."
     )
 
     /** The first time on a mission: likewise. */
     val OUTSIDE_HOW = listOf(
-        "Read what it is, and why it is this one.",
-        "Tap Plan it and pick the moment you will go.",
+        "Read the letter, then write down what you think will happen.",
+        "Tap the bell at the bottom and pick when you'll go.",
         "Go and do it.",
-        "Back here, press and hold the button until it fills. If it went wrong, tap Log " +
-            "friction instead: that counts too."
+        "Back here, hold \"I did it\". If it went wrong, tap \"It didn't go to plan\": " +
+            "that's a spark of courage, and it counts too."
     )
 
     /**
@@ -184,8 +184,8 @@ object Tour {
                         icon = howTo.icon,
                         title = "How to do one",
                         body = "Tap it. Pick how much you have got — Tiny is fine. Do it for " +
-                            "real, then press and hold the button until it fills. Your room " +
-                            "changes right then."
+                            "real, then hold \"I did it\". Your room changes right then. Not " +
+                            "now? The bell beside it reminds you at a time you pick."
                     )
                 )
             }
@@ -194,10 +194,9 @@ object Tour {
                     spot = TourSpot.ROW_OUTSIDE,
                     icon = Today.ICON_OUT,
                     title = "Going out works a bit differently",
-                    body = "Read it, plan the moment you will do it, then go. Back home, hold " +
-                        "the button to say you did it. If it went wrong — a no, an awkward " +
-                        "silence, you turned back — tap Log friction. That still counts: it " +
-                        "means you reached the edge."
+                    body = "Open the letter, write what you think will happen, then go. Back " +
+                        "home, hold \"I did it\". If it went wrong — a no, a silence, you " +
+                        "turned back — that's a spark in your courage jar. It still counts."
                 )
             )
             add(
@@ -235,9 +234,9 @@ object Tour {
                     spot = TourSpot.TABS,
                     icon = null,
                     title = "Everything else",
-                    body = "Learn explains why each part works. Notes is your journal. You " +
-                        "has your goal, your look and your settings — and this tour, if you " +
-                        "want it again."
+                    body = "Outside has the three roads out of your bubble, your courage jar " +
+                        "and your journey. Journal keeps your postcards. Library says why it " +
+                        "works. You has your look, your hats, and this tour."
                 )
             )
             add(

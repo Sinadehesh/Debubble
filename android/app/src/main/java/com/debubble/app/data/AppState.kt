@@ -15,6 +15,7 @@ import com.debubble.app.engine.Intention
 import com.debubble.app.engine.Pillar
 import com.debubble.app.engine.PillarState
 import com.debubble.app.engine.Progress
+import com.debubble.app.engine.Reminder
 import com.debubble.app.engine.Stage
 import kotlinx.serialization.Serializable
 
@@ -37,6 +38,9 @@ data class LogEntry(
 ) {
     val pillarEnum: Pillar get() = runCatching { Pillar.valueOf(pillar) }.getOrDefault(Pillar.ACCESS)
 
+    /** Something done or tried outside: a mission, a journey stop, a focus challenge. */
+    val isOutside: Boolean get() = kind in OUT_KINDS
+
     /** The care domain, for a CARE entry. Null for everything else. */
     val domainEnum: Domain? get() = if (kind == "CARE") Domain.from(pillar) else null
 }
@@ -55,6 +59,8 @@ data class AppState(
     val introSeen: Boolean = false,
     /** The tour of the home screen has been finished or skipped. Replayable from You. */
     val tourSeen: Boolean = false,
+    /** First-visit tips already dismissed, by place: "outside", "journal", and so on. */
+    val tipsSeen: Set<String> = emptySet(),
     val onboarded: Boolean = false,
     val baseline: Baseline = Baseline(),
     val pillars: Map<String, PillarState> = Pillar.order.associate { it.name to PillarState() },
@@ -131,6 +137,8 @@ data class AppState(
     val intentions: List<Intention> = emptyList(),
     /** Every prediction ever made, resolved or not. This is the evidence file. */
     val forecasts: List<Forecast> = emptyList(),
+    /** Times you asked to be nudged, one per thing. See [Reminder]. */
+    val reminders: List<Reminder> = emptyList(),
 
     /** One-shot feedback on deliberate actions. Expected, so it is on. */
     val soundOn: Boolean = true,
@@ -212,8 +220,11 @@ data class AppState(
     /** Nothing looked after yet, so the care screen says how it works. */
     val neverCared: Boolean get() = log.none { it.kind == "CARE" }
 
+    /** Different days anything was done. Never goes down: a missed week is not a reset. */
+    val daysShowedUp: Int get() = log.map { it.epochDay }.distinct().size
+
     /** No mission tried yet, done or not, so the mission screen says how it works. */
-    val neverOut: Boolean get() = log.none { it.kind == "PILLAR" || it.kind == "MISSION" || it.kind == "AUDIT" }
+    val neverOut: Boolean get() = log.none { it.kind in OUT_KINDS }
 
     fun withCare(d: Domain, s: CareState): AppState = copy(care = care + (d.name to s))
 
@@ -304,3 +315,6 @@ data class AppState(
             intentions = intentions.filterNot { it.isStale(today) }
         )
 }
+
+/** Log kinds that are something done outside, done or tried. */
+private val OUT_KINDS = setOf("PILLAR", "MISSION", "AUDIT", "CAMPAIGN")

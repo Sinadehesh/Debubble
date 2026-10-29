@@ -12,9 +12,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -26,54 +27,56 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.debubble.app.data.AppState
 import com.debubble.app.engine.CareLibrary
 import com.debubble.app.engine.Domain
 import com.debubble.app.engine.Forecast
 import com.debubble.app.engine.Goal
+import com.debubble.app.engine.Goals
 import com.debubble.app.engine.Habitat
-import com.debubble.app.engine.Intention
+import com.debubble.app.engine.Look
 import com.debubble.app.engine.Pillar
-import com.debubble.app.engine.Principle
 import com.debubble.app.engine.Progress
 import com.debubble.app.engine.Quest
 import com.debubble.app.engine.QuestKind
-import com.debubble.app.engine.RepType
 import com.debubble.app.engine.RoomTap
 import com.debubble.app.engine.Routed
 import com.debubble.app.engine.Served
 import com.debubble.app.engine.Today
 import com.debubble.app.engine.Tour
 import com.debubble.app.engine.TourSpot
-import com.debubble.app.ui.components.ChallengeCard
-import com.debubble.app.ui.components.Dot
+import com.debubble.app.engine.World
 import com.debubble.app.ui.components.Glyph
 import com.debubble.app.ui.components.Glyphs
 import com.debubble.app.ui.components.HabitatAnnouncement
 import com.debubble.app.ui.components.HouseScene
 import com.debubble.app.ui.components.Label
-import com.debubble.app.ui.components.Pill
+import com.debubble.app.ui.components.MeHead
+import com.debubble.app.ui.components.PaperLabel
+import com.debubble.app.ui.components.PaperText
 import com.debubble.app.ui.components.PrimaryButton
 import com.debubble.app.ui.components.ProgressTrack
 import com.debubble.app.ui.components.QuestRow
-import com.debubble.app.ui.components.RepTracker
 import com.debubble.app.ui.components.RoomArt
 import com.debubble.app.ui.components.SecondaryButton
-import com.debubble.app.ui.components.SectionHeader
 import com.debubble.app.ui.components.SpriteIcon
 import com.debubble.app.ui.components.TextAction
 import com.debubble.app.ui.components.TodayHeader
-import com.debubble.app.ui.components.tourSpot
-import com.debubble.app.ui.components.tourViewport
 import com.debubble.app.ui.components.VSpace
 import com.debubble.app.ui.components.panel
+import com.debubble.app.ui.components.paper
 import com.debubble.app.ui.components.pixelScale
+import com.debubble.app.ui.components.tourSpot
+import com.debubble.app.ui.components.tourViewport
 import com.debubble.app.ui.theme.Ink
 import com.debubble.app.ui.theme.Space
 import com.debubble.app.ui.theme.accent
@@ -83,18 +86,20 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 /**
- * Home.
+ * Home: your room, and today.
  *
- * Top to bottom: the day, your room, today's four, how far the room has opened, then your
- * plans, the focus from your audit, and your goal. Every section is a labelled block with a
- * visible boundary, so the screen can be scanned rather than decoded.
+ * Top to bottom: the day and you, your room, any mail (a guess waiting to be checked), today's
+ * four, anything extra folded away, how far the room has opened, and your journey. One list
+ * for the day, in one visual language: what used to be four extra sections in the old
+ * dashboard style — focus, goal, reps, reading — is now one card for the journey and one
+ * fold for extras, so the day has a clear end.
  *
  * The room and the list are one thing. Each of today's four lives somewhere in the room — you
  * are your body, the floor is your room, the heart at your shoulder is your heart, and the
  * letter in your hand is today's mission outside — and tapping it there opens it, the same as
- * tapping its row. Care comes first in the list because the foundation is what makes the
- * stretch possible: behavioural activation restores routine activities before harder ones for
- * the same reason. Three are the same every day; the fourth is new every day.
+ * tapping its row. Care comes first because the foundation is what makes the stretch
+ * possible: behavioural activation restores routine activities before harder ones for the
+ * same reason.
  */
 @Composable
 fun DashboardScreen(
@@ -102,27 +107,21 @@ fun DashboardScreen(
     dayIndex: Long,
     served: Map<Pillar, Served>,
     quests: List<Quest>,
+    /** "19:00" for a row with a reminder set. */
+    reminderChip: (Quest) -> String?,
     mission: Served?,
-    reps: List<RepType>,
-    principles: List<Principle>,
     routed: Routed,
     routedDone: Set<String>,
     openForecasts: List<Forecast>,
-    livePlans: List<Intention>,
     debuffLabel: (String) -> String,
     onOpenQuest: (Quest) -> Unit,
     onOpen: (Pillar) -> Unit,
-    onOpenMission: () -> Unit,
-    onLogRep: (RepType) -> Unit,
-    onUndoRep: (RepType) -> Unit,
     onReview: (Long) -> Unit,
     onOpenRoutedCampaign: () -> Unit,
     onOpenRoutedRemediation: () -> Unit,
-    onOpenPrinciple: (Int) -> Unit,
-    onAllPrinciples: () -> Unit,
     onPickGoal: () -> Unit,
-    onOpenCampaign: () -> Unit,
-    onOpenAvatar: () -> Unit,
+    onOpenJourney: () -> Unit,
+    onOpenWardrobe: () -> Unit,
     /** Whether to offer the home-screen widget. See [WidgetOffer]. */
     offerWidget: Boolean,
     onAddWidget: () -> Unit,
@@ -142,10 +141,7 @@ fun DashboardScreen(
     val stage = state.stage
     val next = Today.next(quests)
     val outside = quests.firstOrNull { it.kind == QuestKind.OUTSIDE }
-    // The other two ladders, for anyone who wants more than one mission today. Optional,
-    // folded away, and never counted against the day.
-    val extras = Pillar.order.filter { it != outside?.pillar && !state.isDoneToday(it) }
-    var showExtras by remember { mutableStateOf(false) }
+    val letter = Today.letter(quests)
 
     Column(
         modifier = Modifier
@@ -154,7 +150,7 @@ fun DashboardScreen(
             .tourViewport(scroll)
             .verticalScroll(scroll)
     ) {
-        TopLine(state = state, dayIndex = dayIndex, onOpenAvatar = onOpenAvatar)
+        TopLine(art = art, state = state, dayIndex = dayIndex, onOpenWardrobe = onOpenWardrobe)
 
         if (welcomeBack != null) {
             Text(
@@ -179,7 +175,7 @@ fun DashboardScreen(
             stage = stage,
             home = state.home,
             dirt = dirt,
-            letter = Today.letter(quests),
+            letter = letter,
             onTap = { tap -> if (tap == null) onOpenRoom() else onRoomTap(tap) },
             modifier = Modifier.padding(horizontal = 8.dp),
             description = "Your room. " + Domain.order.joinToString(". ") { d ->
@@ -187,7 +183,7 @@ fun DashboardScreen(
             } + ". Tap yourself, your heart, the mess or the letter to start that task."
         )
         Text(
-            text = if (Today.letter(quests)) "Tap you, your heart, the mess, or the letter in your hand."
+            text = if (letter) "Tap you, your heart, the mess, or the letter in your hand."
             else "Tap you, your heart or the mess. Anywhere else to rearrange.",
             modifier = Modifier
                 .fillMaxWidth()
@@ -206,10 +202,9 @@ fun DashboardScreen(
                 HabitatAnnouncement(stage = stage, onDismiss = onAcknowledgeHabitat)
             }
 
-            if (openForecasts.isNotEmpty()) {
-                VSpace(10)
-                SectionHeader("Waiting on you", trailing = "${openForecasts.size}")
-                openForecasts.take(2).forEach { f -> ForecastPrompt(f) { onReview(f.id) } }
+            openForecasts.take(2).forEach { f ->
+                VSpace(4)
+                Mail(art = art, forecast = f, onOpen = { onReview(f.id) })
             }
 
             VSpace(12)
@@ -219,29 +214,28 @@ fun DashboardScreen(
                     art = art,
                     quest = q,
                     next = q == next,
+                    reminder = reminderChip(q),
                     onClick = { onOpenQuest(q) },
                     modifier = Modifier.tourSpot(Tour.spotOf(q))
                 )
             }
 
-            if (extras.isNotEmpty()) {
-                if (showExtras) {
-                    Label("Extra missions. Optional — today's one is the one that counts.")
-                    extras.forEach { p ->
-                        served[p]?.let { s -> ChallengeCard(served = s, done = false, onClick = { onOpen(p) }) }
-                    }
-                } else {
-                    TextAction(
-                        text = if (outside?.done == true) "Want more? ${extras.size} more missions outside"
-                        else "${extras.size} more missions outside, if you want them",
-                        colour = Ink.Secondary,
-                        onClick = { showExtras = true }
-                    )
-                }
-            }
+            MoreForToday(
+                art = art,
+                state = state,
+                served = served,
+                outside = outside,
+                routed = routed,
+                routedDone = routedDone,
+                debuffLabel = debuffLabel,
+                onOpen = onOpen,
+                onOpenRoutedCampaign = onOpenRoutedCampaign,
+                onOpenRoutedRemediation = onOpenRoutedRemediation
+            )
 
             VSpace(6)
             WorldStrip(
+                art = art,
                 state = state,
                 owned = state.home.owned.size,
                 total = art.catalogue.items.size,
@@ -250,101 +244,22 @@ fun DashboardScreen(
                 modifier = Modifier.tourSpot(TourSpot.WORLD)
             )
 
-            if (livePlans.isNotEmpty()) {
-                VSpace(10)
-                SectionHeader("Your plans")
-                livePlans.take(3).forEach { PlanRow(it) }
-            }
-
             // After the list it puts on the home screen, because that adjacency is the
             // argument. Offering it on an empty dashboard on day one would be asking for
             // home-screen space before the app has earned any.
             if (offerWidget) {
                 VSpace(10)
-                WidgetOffer(onAdd = onAddWidget, onDismiss = onDismissWidget)
+                WidgetOffer(art = art, onAdd = onAddWidget, onDismiss = onDismissWidget)
             }
 
-            if (!routed.isEmpty) {
-                VSpace(14)
-                SectionHeader("Focus", trailing = routed.rationale.ifBlank { null })
-                routed.campaign?.let { c ->
-                    ChallengeCard(
-                        served = c.toServed(),
-                        done = c.id in routedDone,
-                        onClick = onOpenRoutedCampaign
-                    )
-                }
-                routed.remediation?.let { r ->
-                    ChallengeCard(
-                        served = r.toServed(debuffLabel(r.debuff)),
-                        done = r.id in routedDone,
-                        onClick = onOpenRoutedRemediation
-                    )
-                }
-            }
-
-            val goal = state.primaryGoal
             VSpace(14)
-
-            if (goal == null) {
-                NoGoalCard(onPickGoal)
-            } else {
-                SectionHeader(
-                    title = "Your goal",
-                    trailing = if (mission == null) "Finished" else "Step ${mission.tier} of 30"
-                )
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = Space.tap)
-                        .panel(fill = Ink.Surface)
-                        .clickable(role = Role.Button, onClick = onOpenCampaign)
-                        .padding(horizontal = 14.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    SpriteIcon(art, Today.ICON_GOAL, pixelScale = pixelScale(2.6f))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = goal.display,
-                            color = Ink.Primary,
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        Label("See the whole plan")
-                    }
-                    Glyph(Glyphs.ArrowRight, colour = Ink.Muted, size = 18)
-                }
-
-                when {
-                    mission == null -> CampaignComplete(goal, onPickGoal)
-                    else -> ChallengeCard(
-                        served = mission,
-                        done = state.missionDoneToday,
-                        onClick = onOpenMission
-                    )
-                }
-
-                VSpace(14)
-                RepTracker(
-                    reps = reps,
-                    today = state.repsToday,
-                    target = mission?.repTarget ?: 0,
-                    lifetime = state.repsOnGoal(goal),
-                    accent = goal.homePillar.accent,
-                    onLog = onLogRep,
-                    onUndo = onUndoRep
-                )
-
-                VSpace(18)
-                MindsetSection(
-                    principles = principles,
-                    step = state.goalState(goal).step,
-                    read = state.goalState(goal).read,
-                    accent = goal.homePillar.accent,
-                    onOpen = onOpenPrinciple,
-                    onSeeAll = onAllPrinciples
-                )
-            }
+            JourneyCard(
+                art = art,
+                state = state,
+                mission = mission,
+                onOpen = onOpenJourney,
+                onPick = onPickGoal
+            )
 
             VSpace(24)
         }
@@ -352,11 +267,11 @@ fun DashboardScreen(
 }
 
 /**
- * The day, and your level, in one line. Slim on purpose: the room is the hero of this
- * screen, and a header that competed with it would be saying the number matters more.
+ * The day, and you. Your own head in the corner, wearing whatever you have earned, with your
+ * level under it — tapping it opens the wardrobe, which is where a level means something.
  */
 @Composable
-private fun TopLine(state: AppState, dayIndex: Long, onOpenAvatar: () -> Unit) {
+private fun TopLine(art: RoomArt, state: AppState, dayIndex: Long, onOpenWardrobe: () -> Unit) {
     val today = remember { LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE d MMMM")) }
     Row(
         modifier = Modifier
@@ -370,26 +285,154 @@ private fun TopLine(state: AppState, dayIndex: Long, onOpenAvatar: () -> Unit) {
             Text("Day $dayIndex", color = Ink.Primary, style = MaterialTheme.typography.headlineMedium)
             Label(today)
         }
-        Column(
+        Row(
             modifier = Modifier
-                .width(132.dp)
                 .heightIn(min = Space.tap)
                 .panel(fill = Ink.Surface, shape = RoundedCornerShape(Space.radius))
-                .clickable(role = Role.Button, onClick = onOpenAvatar)
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+                .clickable(role = Role.Button, onClick = onOpenWardrobe)
+                .padding(horizontal = 10.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            MeHead(art = art, look = state.home.look, pixelScale = pixelScale(1.6f))
+            Column(modifier = Modifier.width(76.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                 Text("Level ${state.level}", color = Ink.Primary, style = MaterialTheme.typography.labelLarge)
-                if (state.plates > 0) Label("${state.plates}", color = Ink.Ember, strong = true)
+                ProgressTrack(fraction = state.levelProgress, accent = Ink.Gold, height = 6)
+                Label("${Progress.xpIntoLevel(state.xp)}/${Progress.XP_PER_LEVEL}")
             }
-            ProgressTrack(fraction = state.levelProgress, accent = Ink.Gold, height = 6)
-            Label("${Progress.xpIntoLevel(state.xp)} / ${Progress.XP_PER_LEVEL} XP")
         }
+    }
+}
+
+/**
+ * A guess written before a mission and never checked: mail. It is the one thing the app
+ * nags about, because the comparison is where the learning is.
+ */
+@Composable
+private fun Mail(art: RoomArt, forecast: Forecast, onOpen: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .paper()
+            .clickable(role = Role.Button, onClick = onOpen)
+            .padding(14.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        SpriteIcon(art, World.POSTCARD, pixelScale = pixelScale(2.4f))
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            PaperLabel("You have mail", color = Ink.PaperText)
+            PaperText("How did \"${forecast.challengeTitle.take(60)}\" really go?", muted = true)
+        }
+        Glyph(Glyphs.ArrowRight, colour = Ink.PaperText, size = 16)
+    }
+}
+
+/**
+ * Everything optional, folded into one place: the other two roads, and the two picked from
+ * your audit and your journey. Optional is the important word — the day is the four above,
+ * and a list that grows extra sections every week is a list nobody finishes.
+ */
+@Composable
+private fun MoreForToday(
+    art: RoomArt,
+    state: AppState,
+    served: Map<Pillar, Served>,
+    outside: Quest?,
+    routed: Routed,
+    routedDone: Set<String>,
+    debuffLabel: (String) -> String,
+    onOpen: (Pillar) -> Unit,
+    onOpenRoutedCampaign: () -> Unit,
+    onOpenRoutedRemediation: () -> Unit
+) {
+    val roads = Pillar.order.filter { it != outside?.pillar && !state.isDoneToday(it) }
+    val focus = buildList {
+        routed.campaign?.let { c -> add(Triple(c.toServed(), c.id in routedDone, onOpenRoutedCampaign)) }
+        routed.remediation?.let { r -> add(Triple(r.toServed(debuffLabel(r.debuff)), r.id in routedDone, onOpenRoutedRemediation)) }
+    }
+    val count = roads.size + focus.count { !it.second }
+    if (count == 0 && focus.isEmpty()) return
+    var open by remember { mutableStateOf(false) }
+
+    if (!open) {
+        TextAction(
+            text = if (outside?.done == true) "Want more? $count more for today" else "$count more for today, if you want them",
+            colour = Ink.Secondary,
+            onClick = { open = true }
+        )
+        return
+    }
+    Label("Extras. Optional — today's four are what count.")
+    roads.forEach { p ->
+        served[p]?.let { s ->
+            LetterRow(
+                art = art,
+                icon = World.road(p),
+                accent = p.accent,
+                kicker = "${World.roadName(p)} · level ${s.tier}",
+                title = s.directive,
+                done = false,
+                onClick = { onOpen(p) }
+            )
+        }
+    }
+    if (focus.isNotEmpty()) {
+        Label(routed.rationale.ifBlank { "Picked for you" })
+        focus.forEach { (s, done, open1) ->
+            LetterRow(
+                art = art,
+                icon = World.road(s.pillar),
+                accent = s.pillar.accent,
+                kicker = s.phase ?: World.roadName(s.pillar),
+                title = s.directive,
+                done = done,
+                onClick = open1
+            )
+        }
+    }
+}
+
+/** An extra letter: its road's sign, what it is, and whether it is done. */
+@Composable
+private fun LetterRow(
+    art: RoomArt,
+    icon: String,
+    accent: Color,
+    kicker: String,
+    title: String,
+    done: Boolean,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = Space.tap)
+            .panel(fill = if (done) Ink.Void else Ink.Surface, border = if (done) Ink.Faint else Ink.Border)
+            .clickable(role = Role.Button, enabled = !done, onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(RoundedCornerShape(Space.radius))
+                .background(accent.copy(alpha = 0.16f)),
+            contentAlignment = Alignment.Center
+        ) {
+            SpriteIcon(art, icon, pixelScale = pixelScale(1.8f))
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Label(kicker, color = if (done) Ink.Muted else accent, strong = true)
+            Text(
+                text = title,
+                color = if (done) Ink.Secondary else Ink.Primary,
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 2
+            )
+        }
+        SpriteIcon(art, if (done) Today.ICON_DONE else Today.ICON_TODO, pixelScale = pixelScale(2f))
     }
 }
 
@@ -399,6 +442,7 @@ private fun TopLine(state: AppState, dayIndex: Long, onOpenAvatar: () -> Unit) {
  */
 @Composable
 private fun WorldStrip(
+    art: RoomArt,
     state: AppState,
     owned: Int,
     total: Int,
@@ -416,10 +460,11 @@ private fun WorldStrip(
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(stage.label, color = Ink.Primary, style = MaterialTheme.typography.titleMedium)
+            SpriteIcon(art, World.TAB_HOME, pixelScale = pixelScale(1.8f))
+            Text(stage.label, color = Ink.Primary, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
             Label("$owned of $total things")
         }
         ProgressTrack(Habitat.progress(state.clearedRungs), Ink.Gold, height = 6)
@@ -436,340 +481,108 @@ private fun WorldStrip(
 }
 
 /**
- * A prediction that was made and never checked.
- *
- * Deliberately the first thing on the screen. An unresolved forecast is the one piece of state
- * in this app with a deadline on its usefulness — the memory of what you expected decays fast,
- * and once it has gone the challenge is remembered as "it was fine" with the catastrophic
- * prediction quietly edited out. Which is exactly the edit this whole mechanic exists to stop.
+ * Your goal, as one card: where the journey goes, how far along you are, and today's stop.
+ * Everything else about it — the whole trail, your tries, the reading — is one tap away on
+ * the journey itself, rather than four sections stacked under the day.
  */
 @Composable
-private fun ForecastPrompt(forecast: Forecast, onReview: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .panel(fill = Ink.SurfaceHigh, border = Ink.Ember)
-            .clickable(role = Role.Button, onClick = onReview)
-            .padding(15.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(9.dp)
-        ) {
-            Glyph(Glyphs.Spark, colour = Ink.Ember, size = 18)
-            Text(
-                text = "How did it actually go?",
-                modifier = Modifier.weight(1f),
-                color = Ink.Primary,
-                style = MaterialTheme.typography.titleMedium
-            )
-            Pill("${forecast.predictedDistress}/10 expected", Ink.Ember)
-        }
-        Text(
-            text = forecast.challengeTitle,
-            color = Ink.Secondary,
-            style = MaterialTheme.typography.bodyMedium
-        )
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(7.dp)
-        ) {
-            Label("Check your prediction", color = Ink.Ember, strong = true)
-            Glyph(Glyphs.ArrowRight, colour = Ink.Ember, size = 15)
-        }
-    }
-}
-
-/** A live if-then plan, shown as the sentence it is. */
-@Composable
-private fun PlanRow(plan: Intention) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .panel(border = Ink.Activity.copy(alpha = 0.55f))
-            .padding(horizontal = 14.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.Top
-    ) {
-        Glyph(Glyphs.Check, colour = Ink.Activity, size = 17)
-        Text(
-            text = plan.sentence,
-            color = Ink.Primary,
-            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium)
-        )
-    }
-}
-
-/**
- * The ideas behind the app, promoted from a single link into a real list.
- *
- * Unlocked ideas look like something you would want to read. Locked ones state exactly what
- * unlocks them and how close you are, rather than being invisible until they appear.
- */
-@Composable
-private fun MindsetSection(
-    principles: List<Principle>,
-    step: Int,
-    read: Set<Int>,
-    accent: androidx.compose.ui.graphics.Color,
-    onOpen: (Int) -> Unit,
-    onSeeAll: () -> Unit
+internal fun JourneyCard(
+    art: RoomArt,
+    state: AppState,
+    mission: Served?,
+    onOpen: () -> Unit,
+    onPick: () -> Unit
 ) {
-    if (principles.isEmpty()) return
-    val unlocked = principles.count { it.unlocksAt <= step }
-
-    Column(verticalArrangement = Arrangement.spacedBy(Space.gap)) {
-        SectionHeader(
-            title = "The ideas underneath",
-            trailing = "$unlocked of ${principles.size} unlocked"
-        )
-        Text(
-            text = "Short reads on why any of this works. One unlocks every few steps.",
-            color = Ink.Secondary,
-            style = MaterialTheme.typography.bodyMedium
-        )
-
-        // Two cards, chosen to always give the reader something: whatever is unlocked and
-        // still unread, then the next thing to look forward to.
-        val unreadUnlocked = principles.indices
-            .filter { principles[it].unlocksAt <= step && it !in read }
-        val nextLocked = principles.indexOfFirst { it.unlocksAt > step }
-        val featured = buildList {
-            addAll(unreadUnlocked.take(2))
-            if (size < 2 && nextLocked >= 0) add(nextLocked)
-            // Everything read and everything unlocked: show the last one rather than nothing.
-            if (isEmpty()) {
-                principles.indices.lastOrNull { principles[it].unlocksAt <= step }?.let { add(it) }
-            }
-        }
-
-        featured.forEach { i ->
-            PrincipleCard(
-                principle = principles[i],
-                index = i,
-                step = step,
-                isRead = i in read,
-                accent = accent,
-                onOpen = { onOpen(i) }
-            )
-        }
-
+    val goal: Goal? = state.primaryGoal
+    if (goal == null) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = Space.tap)
-                .panel()
-                .clickable(role = Role.Button, onClick = onSeeAll)
-                .padding(horizontal = 14.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
+                .panel(fill = Ink.Surface, border = Ink.Gold.copy(alpha = 0.6f))
+                .clickable(role = Role.Button, onClick = onPick)
+                .padding(14.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Label("See all ${principles.size} ideas", color = Ink.Primary, strong = true)
-            Glyph(Glyphs.ArrowRight, colour = Ink.Muted, size = 18)
+            SpriteIcon(art, World.landmark(Goal.INTERESTING), pixelScale = pixelScale(2.4f))
+            Column(modifier = Modifier.weight(1f)) {
+                Text("Pick a journey", color = Ink.Primary, style = MaterialTheme.typography.titleMedium)
+                Label("Thirty small steps towards something you actually want.")
+            }
+            Glyph(Glyphs.ArrowRight, colour = Ink.Muted, size = 16)
         }
+        return
     }
-}
-
-@Composable
-private fun PrincipleCard(
-    principle: Principle,
-    index: Int,
-    step: Int,
-    isRead: Boolean,
-    accent: androidx.compose.ui.graphics.Color,
-    onOpen: () -> Unit
-) {
-    val locked = principle.unlocksAt > step
-
+    val gs = state.goalState(goal)
+    val accent = goal.homePillar.accent
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .panel(
-                fill = if (locked) Ink.Void else Ink.Surface,
-                border = if (locked) Ink.Faint else accent.copy(alpha = 0.55f)
-            )
-            .then(
-                if (locked) Modifier
-                else Modifier.clickable(role = Role.Button, onClick = onOpen)
-            )
+            .panel(fill = Ink.Surface, border = accent.copy(alpha = 0.7f))
+            .clickable(role = Role.Button, onClick = onOpen)
             .padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(9.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            if (locked) {
-                Glyph(Glyphs.Lock, colour = Ink.Muted, size = 17)
-            } else {
-                Glyph(Glyphs.Spark, colour = accent, size = 17)
+            SpriteIcon(art, World.landmark(goal), pixelScale = pixelScale(2.4f))
+            Column(modifier = Modifier.weight(1f)) {
+                Label("Your journey", color = accent, strong = true)
+                Text(goal.display, color = Ink.Primary, style = MaterialTheme.typography.titleMedium)
             }
-            Text(
-                text = principle.title,
-                modifier = Modifier.weight(1f),
-                color = if (locked) Ink.Muted else Ink.Primary,
-                style = MaterialTheme.typography.titleMedium
-            )
-            if (!locked && isRead) Pill("Read", Ink.Activity)
+            Label(if (mission == null) "Arrived" else "Stop ${gs.step} of ${Goals.CAMPAIGN_LENGTH}")
         }
-
-        if (locked) {
-            Label("Unlocks at step ${principle.unlocksAt}. You are on step $step.")
-            ProgressTrack(
-                fraction = step.toFloat() / principle.unlocksAt,
-                accent = Ink.Faint,
-                height = 6
+        Trail(stops = Goals.CAMPAIGN_LENGTH, done = gs.completed, accent = accent)
+        if (mission != null) {
+            Text(
+                text = if (state.missionDoneToday) "Today's stop is done." else mission.directive,
+                color = if (state.missionDoneToday) Ink.Secondary else Ink.Primary,
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 3
             )
         } else {
-            Text(
-                text = principle.body.take(110).trimEnd().let {
-                    if (principle.body.length > 110) "$it…" else it
-                },
-                color = Ink.Secondary,
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Label(if (isRead) "Read it again" else "Read this", color = accent, strong = true)
-                Glyph(Glyphs.ArrowRight, colour = accent, size = 15)
-            }
+            Text("All thirty stops. This ground stays yours.", color = Ink.Secondary, style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
 
+/** Thirty stops as a dotted path, filled as far as you have walked it. */
 @Composable
-private fun NoGoalCard(onPick: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .panel(shape = RoundedCornerShape(Space.radiusLarge), border = Ink.Access)
-            .clickable(role = Role.Button, onClick = onPick)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(9.dp)
-    ) {
-        Label("No goal picked yet")
-        Text(
-            text = "What do you actually want?",
-            color = Ink.Primary,
-            style = MaterialTheme.typography.headlineMedium
-        )
-        Text(
-            text = "More friends. Someone to date. A hobby you are good at. Pick one and " +
-                "you get a 30-step plan, daily attempt targets and short reads of its own.",
-            color = Ink.Secondary,
-            style = MaterialTheme.typography.bodyMedium
-        )
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(7.dp)
-        ) {
-            Label("Pick a goal", color = Ink.Access, strong = true)
-            Glyph(Glyphs.ArrowRight, colour = Ink.Access, size = 16)
-        }
-    }
-}
-
-@Composable
-private fun CampaignComplete(goal: Goal, onPick: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .panel(
-                shape = RoundedCornerShape(Space.radiusLarge),
-                border = goal.homePillar.accent
-            )
-            .clickable(role = Role.Button, onClick = onPick)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(9.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(9.dp)
-        ) {
-            Glyph(Glyphs.Check, colour = goal.homePillar.accent, size = 22)
-            Text(
-                text = "All 30 steps done",
-                color = goal.homePillar.accent,
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
-            )
-        }
-        Text(
-            text = "Keep logging your attempts — those never stop. When you are ready, " +
-                "point the next 30 steps at something else.",
-            color = Ink.Secondary,
-            style = MaterialTheme.typography.bodyMedium
-        )
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(7.dp)
-        ) {
-            Label("Pick the next goal", color = Ink.Primary, strong = true)
-            Glyph(Glyphs.ArrowRight, colour = Ink.Primary, size = 16)
-        }
-    }
-}
-
-/** Bottom navigation. Two destinations, both labelled. */
-@Composable
-fun TabBar(
-    current: Tab,
-    onSelect: (Tab) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Row(
+fun Trail(stops: Int, done: Int, accent: Color, modifier: Modifier = Modifier) {
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .background(Ink.Surface)
-            .padding(top = 8.dp, bottom = 10.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly
-    ) {
-        Tab.entries.forEach { tab ->
-            Column(
-                modifier = Modifier
-                    .clickable(role = Role.Tab) { onSelect(tab) }
-                    .semantics { selected = tab == current }
-                    .weight(1f)
-                    .heightIn(min = Space.tap)
-                    .wrapContentSize(Alignment.Center)
-                    .padding(vertical = 4.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(5.dp)
-            ) {
-                Dot(if (tab == current) Ink.Access else Ink.Faint, size = 7)
-                Text(
-                    text = tab.label,
-                    color = if (tab == current) Ink.Primary else Ink.Muted,
-                    style = MaterialTheme.typography.labelMedium
-                )
+            .height(14.dp)
+            .drawBehind {
+                val gap = size.width / stops
+                val r = (gap * 0.32f).coerceAtMost(size.height / 2f)
+                for (i in 0 until stops) {
+                    val c = Offset(gap * i + gap / 2f, size.height / 2f)
+                    drawCircle(
+                        color = if (i < done) accent else Ink.Faint,
+                        radius = if (i % 10 == 9) r * 1.4f else r,
+                        center = c
+                    )
+                }
             }
-        }
-    }
-}
-
-enum class Tab(val label: String) {
-    TODAY("Today"),
-    LEARN("Learn"),
-    NOTES("Notes"),
-    PROFILE("You")
+    )
 }
 
 /**
- * The offer to put today's cue on the home screen.
+ * The offer to put your room and today on the home screen.
  *
  * This is the one piece of promotion in the app, and it is here because the mechanism needs
- * it rather than because growth does. An if-then plan works by being retrieved at the moment
- * it names; a plan filed inside an app that has to be opened is retrieved by someone who
- * already remembered, which is the group that did not need the plan. On the home screen it is
- * in front of them at the moment the cue arrives.
+ * it rather than because growth does. A plan works by being remembered at the moment it
+ * names; a plan filed inside an app that has to be opened is remembered by someone who
+ * already remembered. On the home screen it is there when the moment is.
  *
  * Shown once. The launcher never reports back whether the user accepted, so a card that
  * reappeared until it detected a widget would reappear forever for everyone who said no.
  */
 @Composable
-private fun WidgetOffer(onAdd: () -> Unit, onDismiss: () -> Unit) {
+private fun WidgetOffer(art: RoomArt, onAdd: () -> Unit, onDismiss: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -778,16 +591,15 @@ private fun WidgetOffer(onAdd: () -> Unit, onDismiss: () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Row(
-            horizontalArrangement = Arrangement.spacedBy(9.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Glyph(Glyphs.Spark, colour = Ink.Gold, size = 18)
+            SpriteIcon(art, World.TAB_HOME, pixelScale = pixelScale(1.8f))
             Label("Put your room on your home screen", color = Ink.Gold, strong = true)
         }
         Text(
-            text = "Your room and today's four, where you will see them. A plan you have to " +
-                "open an app to read gets read by people who already remembered; on your " +
-                "home screen it is there when the moment is.",
+            text = "Your room and today's four, where you will see them, with the times you " +
+                "picked. On your home screen it is there when the moment is.",
             color = Ink.Secondary,
             style = MaterialTheme.typography.bodyMedium
         )
@@ -800,4 +612,79 @@ private fun WidgetOffer(onAdd: () -> Unit, onDismiss: () -> Unit) {
             }
         }
     }
+}
+
+/* ==================================================================== the tab bar */
+
+/** Five places: your room, the world outside it, your journal, the library, and you. */
+enum class Tab(val label: String) {
+    HOME("Home"),
+    OUTSIDE("Outside"),
+    JOURNAL("Journal"),
+    LIBRARY("Library"),
+    YOU("You")
+}
+
+/**
+ * The tab bar, in pixels: a house, a signpost, a notebook, a stack of books, and your own
+ * face. The same art as the room, so moving between tabs never feels like leaving it.
+ */
+@Composable
+fun TabBar(
+    art: RoomArt,
+    look: Look,
+    current: Tab,
+    onSelect: (Tab) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(Ink.Surface)
+            .drawBehind { drawRect(Ink.Faint, size = size.copy(height = 1.dp.toPx())) }
+            .padding(top = 6.dp, bottom = 8.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        Tab.entries.forEach { tab ->
+            val on = tab == current
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .heightIn(min = Space.tap)
+                    .clip(RoundedCornerShape(Space.radius))
+                    .clickable(role = Role.Tab) { onSelect(tab) }
+                    .semantics { selected = on }
+                    .padding(vertical = 4.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(3.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(width = 52.dp, height = 30.dp)
+                        .clip(CircleShape)
+                        .background(if (on) Ink.SurfaceHigh else Color.Transparent)
+                        .alpha(if (on) 1f else 0.62f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    when (tab) {
+                        Tab.YOU -> MeHead(art = art, look = look, pixelScale = pixelScale(1.25f))
+                        else -> SpriteIcon(art, iconOf(tab), pixelScale = pixelScale(1.6f))
+                    }
+                }
+                Text(
+                    text = tab.label,
+                    color = if (on) Ink.Primary else Ink.Muted,
+                    style = MaterialTheme.typography.labelMedium
+                )
+            }
+        }
+    }
+}
+
+private fun iconOf(tab: Tab): String = when (tab) {
+    Tab.HOME -> World.TAB_HOME
+    Tab.OUTSIDE -> World.TAB_OUT
+    Tab.JOURNAL -> World.TAB_JOURNAL
+    Tab.LIBRARY -> World.TAB_LIBRARY
+    Tab.YOU -> World.TAB_HOME
 }

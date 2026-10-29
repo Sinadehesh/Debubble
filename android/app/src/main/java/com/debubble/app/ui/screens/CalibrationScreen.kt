@@ -44,7 +44,9 @@ import com.debubble.app.ui.components.Dot
 import com.debubble.app.ui.components.Figure
 import com.debubble.app.ui.components.Label
 import com.debubble.app.ui.components.PrimaryButton
+import com.debubble.app.ui.components.RoomArt
 import com.debubble.app.ui.components.SelectRow
+import com.debubble.app.ui.components.SetupSteps
 import com.debubble.app.ui.components.TextAction
 import com.debubble.app.ui.components.TopBar
 import com.debubble.app.ui.components.VSpace
@@ -62,6 +64,7 @@ import com.debubble.app.ui.theme.accent
  */
 @Composable
 fun CalibrationScreen(
+    art: RoomArt,
     initial: Baseline,
     initialTier: BudgetTier,
     isRecalibration: Boolean,
@@ -109,6 +112,7 @@ fun CalibrationScreen(
             // once it is unified with onCancel. Assignment keeps it Unit.
             onBack = if (step > 0) ({ step = step - 1 }) else onCancel
         )
+        if (!isRecalibration) SetupSteps(art, 1)
 
         Row(
             modifier = Modifier

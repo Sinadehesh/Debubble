@@ -1,6 +1,7 @@
 package com.debubble.app
 
 import android.app.Application
+import android.text.format.DateFormat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.debubble.app.data.AppState
@@ -39,7 +40,6 @@ import com.debubble.app.engine.Calibration
 import com.debubble.app.engine.Copy
 import com.debubble.app.engine.Curriculum
 import com.debubble.app.engine.Engine
-import com.debubble.app.engine.AvatarState
 import com.debubble.app.engine.Goal
 import com.debubble.app.engine.GoalState
 import com.debubble.app.engine.GoalTrack
@@ -51,9 +51,13 @@ import com.debubble.app.engine.Quest
 import com.debubble.app.engine.RoomTap
 import com.debubble.app.engine.Today
 import com.debubble.app.engine.Look
+import com.debubble.app.engine.QuestKind
+import com.debubble.app.engine.Reminder
+import com.debubble.app.engine.ReminderChoice
+import com.debubble.app.engine.Reminders
 import com.debubble.app.engine.Served
+import com.debubble.app.notify.Reminding
 import com.debubble.app.widget.DayWidget
-import com.debubble.app.ui.components.RingState
 import com.debubble.app.ui.screens.Tab
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -62,6 +66,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 /** Which surface is on screen. Five screens, so an explicit route beats a nav graph. */
 sealed interface Route {
@@ -71,23 +76,33 @@ sealed interface Route {
     data object Calibration : Route
     data object Dashboard : Route
     data class Challenge(val pillar: Pillar) : Route
-    /** [reward] names the WORLD item a mission just earned, if one arrived. */
-    data class Completion(val pillar: Pillar, val tierCleared: Int, val reward: String? = null) : Route
+    /**
+     * Back from a mission. [reward] is the id of a WORLD item it earned, if one arrived;
+     * [key] is the challenge, so the guess written before going can be checked.
+     */
+    data class Completion(
+        val pillar: Pillar,
+        val tierCleared: Int,
+        val reward: String? = null,
+        val key: String = ""
+    ) : Route
+    /** Right after "it didn't go to plan": a spark goes in the jar. */
+    data class Courage(val friction: Int, val reason: String) : Route
+    /** The world past your walls: the three roads, the jar, what the guesses showed. */
+    data object Outside : Route
     data object Profile : Route
 
     /** Choosing or changing the campaign. */
     data class GoalPicker(val firstRun: Boolean) : Route
     /** The day's mission — same Action Screen, different source. */
     data object Mission : Route
-    /** The reading list for the active campaign, and a single principle. */
-    data object Principles : Route
-    /** The campaign rendered as terrain. */
-    data object Campaign : Route
+    /** Your goal, as a journey: the trail, today's stop, your tries, and what to read. */
+    data object Journey : Route
     data class ReadPrinciple(val index: Int) : Route
     /** The end of one ladder. Shown once, then never again. */
     data class Transcendence(val pillar: Pillar) : Route
-    /** Dressing the avatar. */
-    data object AvatarStudio : Route
+    /** How you look, and the hats your levels have earned. Back goes where it came from. */
+    data class Wardrobe(val fromYou: Boolean) : Route
     /** The Systems Audit — flagging behaviours to work on. */
     data class Audit(val firstRun: Boolean) : Route
     /** The knowledge base. */
@@ -98,15 +113,6 @@ sealed interface Route {
     data class EditNote(val id: Long?, val linkLogId: Long?, val linkLessonId: String?) : Route
     /** A routed extra — a campaign challenge or a remediation. */
     data class Routed(val remediation: Boolean) : Route
-    /** Writing the if-then plan and the prediction, before doing the thing. */
-    data class Plan(
-        val challengeId: String,
-        val title: String,
-        /** The challenge's own anchor, opener and prediction, carried through to pre-fill. */
-        val cue: String = "",
-        val response: String = "",
-        val prediction: String = ""
-    ) : Route
     /** Checking the prediction against what happened, after doing it. */
     data class Review(val forecastId: Long) : Route
 
@@ -133,6 +139,10 @@ const val WIDGET_REVIEW = "review"
 
 /** A widget link that opens the room to arrange it. */
 const val LINK_ROOM = "room"
+
+/** Reminder links for the two routed extras, which change identity daily. */
+const val FOCUS_CAMPAIGN = "focus:campaign"
+const val FOCUS_FIX = "focus:fix"
 
 // `app` is a property, not just a constructor argument: the widget helpers below need a
 // context after construction, and a stored application reference is the one kind that is
@@ -188,7 +198,11 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
                 // no-op every launch after.
                 settleWorld(seen).first
             }
+            // Alarms do not survive a force-stop or an update; setting them again is cheap.
+            Reminding.ensureChannel(app)
+            repo.update { it.copy(reminders = Reminders.live(it.reminders, LocalDateTime.now())) }
             val loaded = repo.state.first()
+            Reminding.scheduleAll(app, loaded.reminders)
             _route.value = when {
                 !loaded.introSeen -> Route.Intro
                 !loaded.onboarded -> Route.Calibration
@@ -236,13 +250,6 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
         )
     }
 
-    /** Everything the bubble ring reads. */
-    fun ring(s: AppState): RingState =
-        RingState.from(
-            tiers = Pillar.order.associateWith { s.state(it).tier },
-            daysSinceActive = s.daysSinceActive(today())
-        )
-
     /**
      * Rep types available today.
      *
@@ -278,21 +285,23 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
     // ------------------------------------------------------------------ navigation
 
     fun goDashboard() { _route.value = Route.Dashboard }
-    fun goAvatar() { _route.value = Route.AvatarStudio }
+    fun goWardrobe(fromYou: Boolean) { _route.value = Route.Wardrobe(fromYou) }
+
+    /** The road today's one mission outside comes from. */
+    fun todaysRoad(s: AppState): Pillar = s.outsidePillar(today())
     fun goAudit() { _route.value = Route.Audit(firstRun = false) }
 
     /** The four-tab bar. One entry point rather than four near-identical lambdas. */
     fun selectTab(tab: Tab) {
         _route.value = when (tab) {
-            Tab.TODAY -> Route.Dashboard
-            Tab.LEARN -> Route.Learn
-            Tab.NOTES -> Route.Notes
-            Tab.PROFILE -> Route.Profile
+            Tab.HOME -> Route.Dashboard
+            Tab.OUTSIDE -> Route.Outside
+            Tab.JOURNAL -> Route.Notes
+            Tab.LIBRARY -> Route.Learn
+            Tab.YOU -> Route.Profile
         }
     }
 
-    /** If-then plans whose moment has not yet passed. */
-    fun livePlans(s: AppState): List<Intention> = s.liveIntentions(today())
 
     /** Which day of the user's run a given epoch day was. Used by the Notes list. */
     fun dayIndexOfDay(s: AppState, epochDay: Long): Long =
@@ -300,8 +309,7 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
     fun goProfile() { _route.value = Route.Profile }
     fun goRecalibrate() { _route.value = Route.Calibration }
     fun goGoalPicker() { _route.value = Route.GoalPicker(firstRun = false) }
-    fun goPrinciples() { _route.value = Route.Principles }
-    fun goCampaign() { _route.value = Route.Campaign }
+    fun goJourney() { _route.value = Route.Journey }
     fun openPrinciple(index: Int) { _route.value = Route.ReadPrinciple(index) }
     fun openMission() { _route.value = Route.Mission }
 
@@ -338,7 +346,82 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
                 if (pillar != null && !s.isDoneToday(pillar)) openChallenge(pillar)
             }
             link.startsWith("mission:") -> if (!s.missionDoneToday) _route.value = Route.Mission
+            link == Reminders.OUTSIDE ->
+                quests(s).lastOrNull { it.kind == QuestKind.OUTSIDE && !it.done }?.let { openLink(it.link) }
+            link == FOCUS_CAMPAIGN -> openRoutedCampaign()
+            link == FOCUS_FIX -> openRoutedRemediation()
         }
+    }
+
+    // ------------------------------------------------------------------ reminders
+
+    /** Whether the phone shows 19:00 rather than 7:00 pm. */
+    fun h24(): Boolean = DateFormat.is24HourFormat(app)
+
+    fun todayDay(): Long = today()
+
+    /** The four quick times to offer right now. */
+    fun reminderChoices(): List<ReminderChoice> = Reminders.choices(LocalDateTime.now(), h24())
+
+    fun reminderFor(s: AppState, link: String): Reminder? = Reminders.forLink(s.reminders, link)
+
+    /** What a row shows: "19:00", "Tomorrow 08:00", or null. */
+    fun reminderChip(s: AppState, q: Quest): String? =
+        if (q.done) null else Reminders.forQuest(s.reminders, q)?.let { Reminders.short(it, today(), h24()) }
+
+    /**
+     * Set a reminder, replacing any listed in [replaces] — switching a mission's reminder from
+     * "just today" to "every day" is one reminder changing, not a second one appearing.
+     */
+    fun setReminder(
+        link: String,
+        title: String,
+        text: String,
+        day: Long,
+        minute: Int,
+        daily: Boolean,
+        replaces: List<String> = emptyList()
+    ) {
+        val r = Reminder(link = link, title = title, text = text, minute = minute, daily = daily, day = day)
+        viewModelScope.launch {
+            repo.update { s ->
+                val cleared = replaces.fold(s.reminders) { acc, l -> Reminders.remove(acc, l) }
+                s.copy(reminders = Reminders.upsert(cleared, r))
+            }
+            replaces.filter { it != link }.forEach { Reminding.cancel(app, it) }
+            Reminding.schedule(app, r)
+            DayWidget.refresh(app)
+        }
+    }
+
+    fun removeReminder(vararg links: String) {
+        viewModelScope.launch {
+            repo.update { s -> s.copy(reminders = links.fold(s.reminders) { acc, l -> Reminders.remove(acc, l) }) }
+            links.forEach { Reminding.cancel(app, it) }
+            DayWidget.refresh(app)
+        }
+    }
+
+    /** It was done: one-off reminders for it have done their job, and its notification goes. */
+    private suspend fun doneWith(link: String) {
+        var gone: List<Reminder> = emptyList()
+        repo.update { s ->
+            val kept = Reminders.afterDone(s.reminders, link)
+            gone = s.reminders.filterNot { it in kept }
+            s.copy(reminders = kept)
+        }
+        gone.forEach { Reminding.cancel(app, it.link) }
+        Reminding.dismiss(app, link)
+        if (link.startsWith(Today.TIER)) Reminding.dismiss(app, Reminders.OUTSIDE)
+        DayWidget.refresh(app)
+    }
+
+    // ------------------------------------------------------------------ first-visit tips
+
+    fun showTip(s: AppState, place: String): Boolean = place !in s.tipsSeen
+
+    fun tipSeen(place: String) {
+        viewModelScope.launch { repo.update { it.copy(tipsSeen = it.tipsSeen + place) } }
     }
 
     // ------------------------------------------------------------------ the tour
@@ -441,9 +524,10 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
                         ) + rolled.log
                     )
                 val (settled, granted) = settleWorld(updated)
-                arrived = granted.lastOrNull()?.label
+                arrived = granted.lastOrNull()?.id
                 settled
             }
+            doneWith("${Today.TIER}${pillar.name}:$tier")
             _pulse.value = pillar
             // Reaching the summit outranks the ordinary completion beat.
             val reached = repo.state.first()
@@ -453,8 +537,36 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
                 ) {
                     Route.Transcendence(pillar)
                 } else {
-                    Route.Completion(pillar, tier, arrived)
+                    Route.Completion(pillar, tier, arrived, "${Today.TIER}${pillar.name}:$tier")
                 }
+        }
+    }
+
+    /**
+     * Leaving the postcard: the line for the journal, and — if the guess was checked — what it
+     * was really like. Both land on the entry just written and the guess for [key].
+     */
+    fun finishMission(key: String, note: String, actual: String, distress: Int?) {
+        viewModelScope.launch {
+            repo.update { s ->
+                val trimmed = note.trim().take(90)
+                val head = s.log.firstOrNull()
+                val log = if (trimmed.isEmpty() || head == null) s.log
+                else listOf(head.copy(note = trimmed)) + s.log.drop(1)
+                val f = s.forecastFor(key)
+                if (distress == null || f == null) s.copy(log = log)
+                else s.copy(
+                    log = log,
+                    forecasts = s.forecasts.map {
+                        if (it.id == f.id) it.copy(
+                            actual = actual.trim(),
+                            actualDistress = distress.coerceIn(0, Forecasts.SCALE),
+                            resolvedDay = today()
+                        ) else it
+                    }
+                )
+            }
+            goDashboard()
         }
     }
 
@@ -475,7 +587,7 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
      * The second exit. Logs a point of contact with the edge and holds — or steps back — the
      * tier. Nothing here is scored as a failure.
      */
-    fun logFriction(pillar: Pillar, tier: Int, title: String) {
+    fun logFriction(pillar: Pillar, tier: Int, title: String, reason: String = "") {
         viewModelScope.launch {
             repo.update { s ->
                 val rolled = s.rolledTo(today())
@@ -495,14 +607,20 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
                                 pillar = pillar.name,
                                 tier = tier,
                                 title = title,
+                                note = reason,
                                 friction = true,
                                 epochDay = today()
                             )
                         ) + rolled.log
                     )
             }
-            goDashboard()
+            toCourage(reason)
         }
+    }
+
+    /** The jar, with the spark that just went in. */
+    private suspend fun toCourage(reason: String) {
+        _route.value = Route.Courage(repo.state.first().friction, reason)
     }
 
     // ------------------------------------------------------------------ the goal layer
@@ -552,12 +670,13 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
                     ) + rolled.log
                 )
             }
+            doneWith("mission:$step")
             _pulse.value = goal.homePillar
-            _route.value = Route.Completion(goal.homePillar, step)
+            _route.value = Route.Completion(goal.homePillar, step, key = "mission:$step")
         }
     }
 
-    fun missionFriction(step: Int, title: String) {
+    fun missionFriction(step: Int, title: String, reason: String = "") {
         val goal = state.value.goalEnum ?: return
         viewModelScope.launch {
             repo.update { s ->
@@ -575,6 +694,7 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
                             pillar = goal.homePillar.name,
                             tier = step,
                             title = title,
+                            note = reason,
                             friction = true,
                             epochDay = today(),
                             kind = "MISSION"
@@ -582,7 +702,7 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
                     ) + rolled.log
                 )
             }
-            goDashboard()
+            toCourage(reason)
         }
     }
 
@@ -670,12 +790,7 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
         }
     }
 
-    /** Dress the avatar. Nothing here is validated against level — the studio only offers
-     *  what is already unlocked, and a saved choice is never taken away. */
-    fun setAvatar(avatar: AvatarState) {
-        viewModelScope.launch { repo.update { it.copy(avatar = avatar) } }
-    }
-
+    
     // ------------------------------------------------------------ the Systems Audit
 
     /**
@@ -775,13 +890,14 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
                     ) + rolled.log
                 )
             }
+            doneWith(if (remediation) FOCUS_FIX else FOCUS_CAMPAIGN)
             _pulse.value = pillar
             goDashboard()
         }
     }
 
     /** Friction on a routed extra. Does not mark it cleared — it comes back around. */
-    fun frictionRouted(id: String, pillar: Pillar, title: String) {
+    fun frictionRouted(id: String, pillar: Pillar, title: String, reason: String = "") {
         viewModelScope.launch {
             repo.update { s ->
                 val rolled = s.rolledTo(today())
@@ -799,6 +915,7 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
                             pillar = pillar.name,
                             tier = 0,
                             title = title,
+                            note = reason,
                             friction = true,
                             epochDay = today(),
                             kind = "AUDIT"
@@ -806,69 +923,29 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
                     ) + rolled.log
                 )
             }
-            goDashboard()
+            toCourage(reason)
         }
     }
 
     // --------------------------------------------------------- plans and predictions
 
-    fun goPlan(challengeId: String, served: Served) {
-        _route.value = Route.Plan(
-            challengeId = challengeId,
-            title = served.directive,
-            cue = served.anchor,
-            response = served.opener,
-            prediction = served.test
-        )
-    }
-
     /**
-     * Save the plan and the prediction together.
-     *
-     * One screen, because they belong to the same moment and splitting them would mean two
-     * interruptions before a challenge someone is already reluctant to start. The plan is
-     * what gets it done; the prediction is what makes the doing teach something.
+     * Save the guess written on the letter before going. Replaces an unchecked one for the
+     * same thing: guessing again about the same act is an edit, not a second prediction.
      */
-    fun savePlan(
-        challengeId: String,
-        title: String,
-        cue: String,
-        response: String,
-        predicted: String,
-        predictedDistress: Int
-    ) {
+    fun savePrediction(challengeId: String, title: String, predicted: String, distress: Int) {
         viewModelScope.launch {
             repo.update { s ->
-                val now = System.currentTimeMillis()
-                val plan = Intention(
-                    id = now,
-                    challengeId = challengeId,
-                    challengeTitle = title,
-                    cue = cue.trim(),
-                    response = response.trim(),
-                    createdDay = today(),
-                    dueDay = today() + Cues.WINDOW_DAYS
-                )
                 val forecast = Forecast(
-                    id = now + 1,
+                    id = System.currentTimeMillis(),
                     challengeId = challengeId,
                     challengeTitle = title,
                     predicted = predicted.trim(),
-                    predictedDistress = predictedDistress.coerceIn(0, Forecasts.SCALE),
+                    predictedDistress = distress.coerceIn(0, Forecasts.SCALE),
                     createdDay = today()
                 )
-                s.copy(
-                    // Replacing rather than appending: re-planning the same challenge is an
-                    // edit, not a second commitment to the same act.
-                    intentions = s.intentions.filterNot {
-                        it.challengeId == challengeId && !it.resolved
-                    } + plan,
-                    forecasts = s.forecasts.filterNot {
-                        it.challengeId == challengeId && !it.isResolved
-                    } + forecast
-                )
+                s.copy(forecasts = s.forecasts.filterNot { it.challengeId == challengeId && !it.isResolved } + forecast)
             }
-            goDashboard()
         }
     }
 
@@ -1160,6 +1237,7 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
                     ) + rolled.log
                 )
             }
+            doneWith("${Today.CARE}${domain.name}")
             _route.value = Route.CareDone(domain, before, after, granted, celebrate)
         }
     }

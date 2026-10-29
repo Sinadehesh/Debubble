@@ -270,6 +270,378 @@ fx("icon_todo", [
 ])
 
 
+# ----------------------------------------------------------------- hats, worn over you
+#
+# Each one is drawn in your 20-wide frame from its top row down, so it sits on your head
+# whichever state you are in. They come with levels, the way the old avatar's wardrobe did:
+# a level now means something you can see on yourself in your own room. No look keys, so
+# your hat stays its own colour whatever you picked for your hair and top.
+
+fx("hat_beanie", [
+    ".........kk.........",
+    "........kyyk........",
+    ".......kkkkkk.......",
+    ".....kkTTTTTTkk.....",
+    "....kTtTTTTTTTTk....",
+    "...ktTTTTTTTTTTTk...",
+    "..krrrrrrrrrrrrrrk..",
+    "..krTrTrTrTrTrTrrk..",
+])
+
+fx("hat_flower", [
+    "....................",
+    "....................",
+    ".............kkk....",
+    "............kpPpk...",
+    "...........kpPyPpk..",
+    "............kpPpk...",
+    ".............kgk....",
+    "............kgk.....",
+])
+
+fx("hat_cap", [
+    "....................",
+    ".......kkkkkk.......",
+    ".....kkCCCCCCkk.....",
+    "....kCcCCCCCCCCk....",
+    "...kCcCCiCCCCCCCk...",
+    "...kCCCCCCCCCCCCkkkk",
+    "..knnnnnnnnnnnnnnnnk",
+])
+
+fx("hat_bucket", [
+    "....................",
+    ".......kkkkkk.......",
+    ".....kkYYYYYYkk.....",
+    "....kYyYYYYYYYYk....",
+    "....kYyYYYYYYYYk....",
+    "..kkoooooooooooookk.",
+    ".kYYYYYYYYYYYYYYYYk.",
+    "..kkkkkkkkkkkkkkkk..",
+])
+
+fx("hat_phones", [
+    "....................",
+    ".......kkkkkk.......",
+    ".....kkKKKKKKkk.....",
+    "....kKk......kKk....",
+    "...kKk........kKk...",
+    "...kKk........kKk...",
+    "..kKk..........kKk..",
+    "..kKk..........kKk..",
+    ".kPPk..........kPPk.",
+    "kPpPPk........kPpPPk",
+    "kPPPPk........kPPPPk",
+    ".kPPk..........kPPk.",
+    "..kk............kk..",
+])
+
+fx("hat_crown", [
+    "....................",
+    ".....k...k...k......",
+    "....kyk.kyk.kyk.....",
+    "....kYYkYYYkYYk.....",
+    "....kYiYYYYYYiYk....",
+    "....kYYYYPYYYYYk....",
+    "....kooooooooook....",
+    ".....kkkkkkkkkk.....",
+])
+
+# In unlock order, with the level each arrives at. Index 0 is no hat.
+HATS = [("hat_beanie", 2, "Beanie"), ("hat_flower", 3, "Flower clip"), ("hat_cap", 4, "Cap"),
+        ("hat_bucket", 6, "Bucket hat"), ("hat_phones", 8, "Headphones"), ("hat_crown", 12, "Crown")]
+
+
+# ----------------------------------------------------------------- the world outside
+#
+# The three ladders as three roads out of your bubble, each with its own sign: a pin for
+# somewhere new, a trainer for something new, two speech bubbles for someone new.
+
+fx("icon_access", [
+    "...kkkkk...",
+    "..kSSSSSk..",
+    ".kSsiSSSbk.",
+    "kSsiiiSSSbk",
+    "kSSiiiSSSbk",
+    "kSSSiSSSSbk",
+    ".kSSSSSSbk.",
+    ".kSSSSSSbk.",
+    "..kSSSSbk..",
+    "..kSSSbbk..",
+    "...kSbbk...",
+    "....kbk....",
+    ".....k.....",
+])
+
+fx("icon_activity", [
+    "...kkkk........",
+    "..kGGGGk.......",
+    "..kGiGGGk......",
+    "..kGGiGGGkk....",
+    "..kGiGGiGGGkk..",
+    ".kGGGGGGGGGGGk.",
+    ".kGGGggggGGGGGk",
+    "kGGGgGGGGGGGGhk",
+    "kiiiiiiiiiiiiik",
+    "kKKKKKKKKKKKKKk",
+    ".kkkkkkkkkkkkk.",
+])
+
+fx("icon_social", [
+    ".kkkkkkkk......",
+    "kppppppppk.....",
+    "kpkkpkkppk.....",
+    "kpppppppPkkkkk.",
+    ".kkpPPPPkcccck.",
+    "..kpk.kkcCcCck.",
+    "..kk..kccccccCk",
+    "......kcCCCCCk.",
+    ".......kkkCnk..",
+    ".........knk...",
+    "..........k....",
+])
+
+# Courage. Every time something did not go to plan and you said so, a spark goes in the jar.
+# Friction used to be armour plates on a different avatar in a different style; it is the
+# same idea — evidence you went to the edge — kept somewhere you can see it filling up.
+
+fx("icon_spark", [
+    ".....k.....",
+    "....kYk....",
+    "....kYk....",
+    "...kYyYk...",
+    ".kkYyiyYkk.",
+    "kYYyiiiyYYk",
+    ".kkYyiyYkk.",
+    "...kYyYk...",
+    "....kYk....",
+    "....kYk....",
+    ".....k.....",
+])
+
+_JAR = [
+    "...kkkkkkk...",
+    "..kTttttTTk..",
+    "..kkkkkkkkk..",
+    "...kiqqqqk...",
+    "..kiqqqqqqk..",
+    ".kiqqqqqqqqk.",
+    ".kiqqqqqqqqk.",
+    ".kiqqqqqqqqk.",
+    ".kiqqqqqqqqk.",
+    ".kiqqqqqqqqk.",
+    ".kqqqqqqqqQk.",
+    ".kqqqqqqqQQk.",
+    "..kQQQQQQQk..",
+    "...kkkkkkk...",
+]
+
+
+def _star(cx, cy):
+    return {(cx, cy - 1): "Y", (cx - 1, cy): "Y", (cx, cy): "i", (cx + 1, cy): "Y", (cx, cy + 1): "Y"}
+
+
+_SPARKS = [_star(5, 10), _star(8, 9), _star(4, 7), _star(8, 5)]
+for _n in range(5):
+    _marks = {}
+    for _s in _SPARKS[:_n]:
+        _marks.update(_s)
+    if _n == 4:
+        _marks.update({(6, 4): "y", (3, 11): "y", (9, 11): "y"})
+    fx(f"jar{_n}", _patch(_JAR, _marks))
+
+# A reminder.
+fx("icon_bell", [
+    ".....k.....",
+    "....kok....",
+    "...kYYYk...",
+    "..kyiYYok..",
+    "..kyYYYok..",
+    ".kyiYYYYok.",
+    ".kyYYYYYok.",
+    ".kyYYYYYok.",
+    "kyYYYYYYYok",
+    "kkkkkkkkkkk",
+    "....kook...",
+    ".....kk....",
+])
+
+# A postcard home: what you write after a mission, and every note in your journal.
+fx("icon_postcard", [
+    "kkkkkkkkkkkkkk",
+    "kiiiiiiivkkkkk",
+    "kiKKKKiivkPpPk",
+    "kiiiiiiivkpPpk",
+    "kiKKKKKivkPpPk",
+    "kiiiiiiivkkkkk",
+    "kiKKKiiiviiiik",
+    "kiiiiiiivKKKik",
+    "kkkkkkkkkkkkkk",
+])
+
+# A book, for Learn.
+fx("icon_book", [
+    ".kkkkkkkkkk.",
+    "kCCCCCCCCCik",
+    "kCcCCCCCCCik",
+    "kCcCkkkkCCik",
+    "kCcCkiikCCik",
+    "kCcCkkkkCCik",
+    "kCcCCCCCCCik",
+    "kCcCCCCCCCik",
+    "kCcCCCCCCCik",
+    "knnnnnnnnnik",
+    "kkkkkkkkkkik",
+    ".kiiiiiiiiik",
+    "..kkkkkkkkk.",
+])
+
+# ----------------------------------------------------------------- where a journey goes
+#
+# Each goal is a destination at the end of a thirty-stop trail.
+
+fx("goal_interesting", [
+    ".kk.........kk.",
+    "kWWkkkkkkkkkWWk",
+    "kWvwwwwwwwwwWvk",
+    "kWvwgwwwwrwrWvk",
+    "kWvwGwwwwwrwWvk",
+    "kWvwwTwwwrwrWvk",
+    "kWvwwwTwwwwwWvk",
+    "kWvwwwwTTwwwWvk",
+    "kWvwwwwwwTwwWvk",
+    "kWWkkkkkkkkkWWk",
+    ".kk.........kk.",
+])
+
+fx("goal_friends", [
+    ".......k........",
+    "......kYk.......",
+    ".....kYyk..k....",
+    "....kYyYk.kYk...",
+    "...kYyiyYkkYk...",
+    "...kYyiiyYYyYk..",
+    "..kYyiiiiyYyYk..",
+    "..kYYyiiyYYYok..",
+    "..koYYyyYYYook..",
+    ".kTkkoooooookTk.",
+    "kTtTTkkkkkkTTtTk",
+    "krrTtTTTTTTtTrrk",
+    ".kkrrrrrrrrrrkk.",
+    "..kkkkkkkkkkkk..",
+])
+
+fx("goal_partner", [
+    ".kkk.kkk.......",
+    "kPpPkPPPk......",
+    "kpPPPPPPk......",
+    "kPPPPPPPkkk.kk.",
+    ".kPPPPPkkppkppk",
+    "..kPPPk.kpppppk",
+    "...kPk...kpppk.",
+    "....k.....kpk..",
+    "...........k...",
+])
+
+fx("goal_intimacy", [
+    "....k....",
+    "...kYk...",
+    "...kyk...",
+    "..kYiYk..",
+    "...kok...",
+    "..kkkkk..",
+    ".kiwwwvk.",
+    ".kiwwwvk.",
+    ".kiwwwvk.",
+    ".kiwwwvk.",
+    ".kiwwwvk.",
+    "kkkkkkkkk",
+    "kTTTTTTTk",
+    ".kkkkkkk.",
+])
+
+fx("goal_craft", [
+    "....kkkkkkk....",
+    "..kkfffffffkk..",
+    ".kfYYffPPffffk.",
+    "kfYyYfPpPffffFk",
+    "kffYffPPffkkfFk",
+    "kfCCfffffk..kFk",
+    "kfCcCffGGfkkFFk",
+    ".kfCffGgGfFFFk.",
+    "..kkFFFGFFFkk..",
+    "....kkkkkkk....",
+])
+
+# ----------------------------------------------------------------- the tab bar
+
+fx("tab_home", [
+    "......kk......",
+    ".....kTTk.....",
+    "....kTttTk....",
+    "...kTtTTTTk...",
+    "..kTtTTTTTTk..",
+    ".kTTTTTTTTTTk.",
+    "kkkkkkkkkkkkkk",
+    ".kwwwwwwwwwwk.",
+    ".kwkkkwwkkkwk.",
+    ".kwkYkwwkSkwk.",
+    ".kwkYkwwkkkwk.",
+    ".kwkYkwwwwwvk.",
+    ".kkkkkkkkkkkk.",
+])
+
+fx("tab_out", [
+    "......kk......",
+    ".kkkkkkFkkkk..",
+    ".kYYYYYYYYYYk.",
+    ".kyYYYYYYYYYYk",
+    ".kYYYYYYYYYYk.",
+    ".kkkkkkFkkkk..",
+    "..kkkkkFkkkkk.",
+    ".kCCCCCCCCCCk.",
+    "kCcCCCCCCCCCk.",
+    ".kCCCCCCCCCCk.",
+    "..kkkkkFkkkkk.",
+    "......kFk.....",
+    "....kgkFkgk...",
+    "...kgGGGGGgk..",
+])
+
+fx("tab_journal", [
+    ".kkkkkkkkkk...",
+    ".kTttttttTkk..",
+    ".kTwwwwwwTkik.",
+    ".kTwKKKKwTkik.",
+    ".kTwwwwwwTkik.",
+    ".kTwKKKKwTkik.",
+    ".kTwwwwwwTkik.",
+    ".kTwKKKwwTkik.",
+    ".kTwwwwwwTkik.",
+    ".kTTTTTTTTkik.",
+    ".kkkkkkkkkkkk.",
+    "....kPk.......",
+    "....kPk.......",
+    ".....k........",
+])
+
+fx("tab_library", [
+    "..kkkkkkkkk...",
+    "..kCCCCCCCck..",
+    "..kCiiiiiiCk..",
+    "..knnnnnnnnk..",
+    ".kkkkkkkkkkkk.",
+    ".kPPPPPPPPPPk.",
+    ".kPiiiiiiiiPk.",
+    ".kPPPPPPPPPPk.",
+    "..kkkkkkkkkkk.",
+    "..kYYYYYYYYYk.",
+    "..kYiiiiiiiYk.",
+    "..koooooooook.",
+    "..kkkkkkkkkkk.",
+])
+
+
 # ----------------------------------------------------------------- Room, as mess
 
 fx("sock", [

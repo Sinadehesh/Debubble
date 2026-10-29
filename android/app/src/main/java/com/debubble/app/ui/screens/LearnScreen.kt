@@ -28,18 +28,23 @@ import androidx.compose.ui.unit.dp
 import com.debubble.app.engine.AuditCatalogue
 import com.debubble.app.engine.LearnCurriculum
 import com.debubble.app.engine.Lesson
+import com.debubble.app.engine.World
 import com.debubble.app.ui.components.Glyph
 import com.debubble.app.ui.components.Glyphs
 import com.debubble.app.ui.components.Label
 import com.debubble.app.ui.components.Markdown
+import com.debubble.app.ui.components.PageTip
 import com.debubble.app.ui.components.Pill
 import com.debubble.app.ui.components.PrimaryButton
 import com.debubble.app.ui.components.ProgressTrack
+import com.debubble.app.ui.components.RoomArt
 import com.debubble.app.ui.components.SecondaryButton
 import com.debubble.app.ui.components.SectionHeader
+import com.debubble.app.ui.components.SpriteIcon
 import com.debubble.app.ui.components.TopBar
 import com.debubble.app.ui.components.VSpace
 import com.debubble.app.ui.components.panel
+import com.debubble.app.ui.components.pixelScale
 import com.debubble.app.ui.theme.Ink
 import com.debubble.app.ui.theme.Space
 import com.debubble.app.ui.theme.roomGround
@@ -54,6 +59,9 @@ import com.debubble.app.ui.theme.roomGround
  */
 @Composable
 fun LearnScreen(
+    art: RoomArt,
+    showTip: Boolean,
+    onTipSeen: () -> Unit,
     curriculum: LearnCurriculum,
     catalogue: AuditCatalogue,
     dayIndex: Long,
@@ -72,9 +80,32 @@ fun LearnScreen(
             .background(roomGround())
             .verticalScroll(rememberScrollState())
     ) {
-        TopBar(title = "Learn", subtitle = "$readCount read")
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = Space.gutter)
+                .padding(top = 18.dp, bottom = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            SpriteIcon(art, World.TAB_LIBRARY, pixelScale = pixelScale(2.6f))
+            Column {
+                Text("Library", color = Ink.Primary, style = MaterialTheme.typography.headlineMedium)
+                Label("$readCount read")
+            }
+        }
 
         Column(modifier = Modifier.padding(horizontal = Space.gutter)) {
+            if (showTip) {
+                PageTip(
+                    art = art,
+                    title = "Why any of this works",
+                    body = "A short lesson opens each day for thirty days, and anything you " +
+                        "marked in your audit gets its own reading. Five minutes, standing up.",
+                    onDismiss = onTipSeen
+                )
+                VSpace(10)
+            }
             Column(
                 modifier = Modifier
                     .fillMaxWidth()

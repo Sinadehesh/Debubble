@@ -33,7 +33,9 @@ import com.debubble.app.ui.components.Glyphs
 import com.debubble.app.ui.components.Label
 import com.debubble.app.ui.components.Pill
 import com.debubble.app.ui.components.PrimaryButton
+import com.debubble.app.ui.components.RoomArt
 import com.debubble.app.ui.components.SelectRow
+import com.debubble.app.ui.components.SetupSteps
 import com.debubble.app.ui.components.TextAction
 import com.debubble.app.ui.components.TopBar
 import com.debubble.app.ui.components.VSpace
@@ -59,6 +61,7 @@ import com.debubble.app.ui.theme.Space
  */
 @Composable
 fun AuditScreen(
+    art: RoomArt,
     catalogue: AuditCatalogue,
     initial: Set<String>,
     firstRun: Boolean,
@@ -81,6 +84,7 @@ fun AuditScreen(
             else "${marked.size} marked",
             onBack = onBack
         )
+        if (firstRun) SetupSteps(art, 2)
 
         Column(
             modifier = Modifier

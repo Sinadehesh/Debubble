@@ -37,6 +37,7 @@ import com.debubble.app.engine.Looks
 import com.debubble.app.engine.Quest
 import com.debubble.app.engine.Scene
 import com.debubble.app.engine.Today
+import com.debubble.app.engine.World
 import com.debubble.app.ui.theme.Ink
 import com.debubble.app.ui.theme.Space
 import com.debubble.app.ui.theme.accent
@@ -106,7 +107,9 @@ fun QuestRow(
     quest: Quest,
     next: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** "19:00" when a reminder is set for it. */
+    reminder: String? = null
 ) {
     val accent = quest.accent
     val scale = pixelScale(2.6f)
@@ -164,8 +167,20 @@ fun QuestRow(
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     if (next) Label("Up next", color = accent, strong = true)
+                    if (reminder != null) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            SpriteIcon(art, World.BELL, pixelScale = pixelScale(1.2f))
+                            Label(reminder, color = Ink.Gold, strong = true)
+                        }
+                    }
                     if (quest.minutes > 0) Label("Smallest: ${quest.minutes} min")
                 }
             } else {
@@ -187,18 +202,22 @@ fun LookPicker(
     art: RoomArt,
     look: Look,
     onChange: (Look) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** Draw you above the swatches; off where you are already drawn on the same screen. */
+    preview: Boolean = true
 ) {
     val looks = art.catalogue.looks
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .panel(fill = Ink.Room.copy(alpha = 0.14f), border = Ink.Room.copy(alpha = 0.5f))
-                .padding(vertical = 12.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            SpriteIcon(art, Scene.meFrame(0), pixelScale = pixelScale(4f), look = look)
+        if (preview) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .panel(fill = Ink.Room.copy(alpha = 0.14f), border = Ink.Room.copy(alpha = 0.5f))
+                    .padding(vertical = 12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                MeFigure(art, look, pixelScale = pixelScale(4f))
+            }
         }
         Swatches("Skin", looks.skin, look.skin) { onChange(look.copy(skin = it)) }
         Swatches("Hair", looks.hair, look.hair) { onChange(look.copy(hair = it)) }

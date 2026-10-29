@@ -5,6 +5,7 @@ import com.debubble.app.engine.Domain
 import com.debubble.app.engine.Pillar
 import com.debubble.app.engine.Quest
 import com.debubble.app.engine.QuestKind
+import com.debubble.app.engine.Reminders
 import com.debubble.app.engine.Today
 
 /**
@@ -65,7 +66,10 @@ object WidgetCues {
         ready = false
     )
 
-    fun of(state: AppState, today: Long, quests: List<Quest>): WidgetCue {
+    /**
+     * @param h24 whether the phone shows 19:00 rather than 7:00 pm, for reminder times.
+     */
+    fun of(state: AppState, today: Long, quests: List<Quest>, h24: Boolean = true): WidgetCue {
         if (!state.onboarded || !state.movedIn || quests.isEmpty()) return unavailable
 
         val done = Today.doneCount(quests)
@@ -82,7 +86,13 @@ object WidgetCues {
                 WidgetCue.Row(
                     icon = q.icon,
                     name = "${q.name} · ${q.status}",
-                    text = if (q.done) "Done today" else q.line,
+                    // A time you picked comes first: it is the most specific thing about it.
+                    text = when {
+                        q.done -> "Done today"
+                        else -> Reminders.forQuest(state.reminders, q)
+                            ?.let { "\uD83D\uDD14 ${Reminders.short(it, today, h24)} · ${q.line}" }
+                            ?: q.line
+                    },
                     done = q.done,
                     tone = toneOf(q),
                     link = if (q.done && q.kind == QuestKind.OUTSIDE) "" else q.link

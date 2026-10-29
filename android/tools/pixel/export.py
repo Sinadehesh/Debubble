@@ -30,7 +30,7 @@ from PIL import Image                      # noqa: E402
 from palette import PALETTE, rgb           # noqa: E402
 from room import STAGES, shell, to_image, W, H, FLOOR_Y, SKIRT   # noqa: E402
 from sprites import SPRITES, FAMILIES, check as check_sprites   # noqa: E402
-from fx import (FX, ROOM_MESS, ROOM_SPARKLES, ME_SPOT, ME_W, ME_H, MAX_DIRT,  # noqa: E402
+from fx import (FX, HATS, ROOM_MESS, ROOM_SPARKLES, ME_SPOT, ME_W, ME_H, MAX_DIRT,  # noqa: E402
                 BUDDY_DX, BUDDY_DY, LETTER_DX, LETTER_DY, BANG_GAP, check as check_fx)
 from palette import LOOKS, LOOK_KEYS       # noqa: E402
 
@@ -142,6 +142,8 @@ def main():
         # The ramps a character can be drawn in. Entry 0 is what the atlas holds; the app
         # swaps by exact colour inside the "me" frames. See palette.LOOKS.
         "looks": {k: [list(r) for r in v] for k, v in LOOKS.items()},
+        # Hats you can wear, in unlock order, each drawn in your frame from its top row.
+        "hats": [{"id": i, "level": lvl, "label": label} for i, lvl, label in HATS],
         "maxDirt": MAX_DIRT,
     }
     jpath = ASSETS / "items.json"

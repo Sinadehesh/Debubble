@@ -30,6 +30,7 @@ import com.debubble.app.ui.components.LookPicker
 import com.debubble.app.ui.components.PrimaryButton
 import com.debubble.app.ui.components.RoomArt
 import com.debubble.app.ui.components.SelectRow
+import com.debubble.app.ui.components.SetupSteps
 import com.debubble.app.ui.components.TopBar
 import com.debubble.app.ui.components.VSpace
 import com.debubble.app.ui.theme.Ink
@@ -69,6 +70,7 @@ fun CheckInScreen(
             subtitle = if (firstRun) "Last step" else "Only you see this",
             onBack = onBack
         )
+        if (firstRun) SetupSteps(art, 4)
         Column(
             modifier = Modifier
                 .weight(1f)

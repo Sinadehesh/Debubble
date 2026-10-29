@@ -185,6 +185,10 @@ def draws(stage, home, dirt, frame=0, moving=None, burst=False, letter=False):
     me = spot_of("me", home.get("me") or (ME["x"], ME["b"]))
     bob = 1 if frame % 2 == 1 else 0
     standing.append((me[1], 2, (f"me{body}", me[0], me[1] - bob)))
+    hat = home.get("hat", 0)
+    if 0 < hat <= len(CAT["hats"]):
+        hid = CAT["hats"][hat - 1]["id"]
+        standing.append((me[1], 3, (hid, me[0], me[1] - ME["h"] + FXD[hid]["h"] - bob)))
     out += [t[2] for t in sorted(standing, key=lambda t: (t[0], t[1]))]
     bx, lx = sides(me)
     if letter:
@@ -259,6 +263,26 @@ def spots(stage, home, dirt, letter):
         if pick:
             out[kind] = pick
     return out
+
+
+def check_hats(ok):
+    """Every hat sits on your head, in your frame, and never gets in the way of a tap."""
+    ok(len(CAT["hats"]) >= 1, "hats exported")
+    levels = [h["level"] for h in CAT["hats"]]
+    ok(levels == sorted(levels) and levels[0] > 1, f"hats unlock in level order, none at 1: {levels}")
+    for n, h in enumerate(CAT["hats"], start=1):
+        f = FXD[h["id"]]
+        ok(f["w"] == ME["w"] and f["h"] < ME["h"], f"{h['id']} is drawn in your frame")
+        home = dict(home_with("bed"), hat=n)
+        dr = draws("window", home, (1, 1, 1))
+        ids = [d[0] for d in dr]
+        ok(ids.index(h["id"]) == ids.index("me1") + 1, f"{h['id']} straight after you")
+        top = next(d for d in dr if d[0] == "me1")
+        hat = next(d for d in dr if d[0] == h["id"])
+        ok(hat[2] - f["h"] == top[2] - ME["h"], f"{h['id']} top aligned with yours")
+        me = (ME["x"], ME["b"])
+        ok(tap("window", home, (1, 1, 1), False, me[0] + ME["w"] // 2, me[1] - ME["h"] + 3) == "BODY",
+           f"tapping {h['id']} is tapping you")
 
 
 def check_spots(ok):
@@ -440,6 +464,7 @@ def main():
 
     counts = check_scene(ok)
     check_spots(ok)
+    check_hats(ok)
 
     if fails:
         for f in fails:

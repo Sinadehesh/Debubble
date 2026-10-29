@@ -17,6 +17,7 @@ import com.debubble.app.engine.LearnCurriculum
 import com.debubble.app.engine.RemediationPool
 import com.debubble.app.engine.Scene
 import com.debubble.app.engine.Today
+import com.debubble.app.engine.World
 import com.debubble.app.engine.Goal
 import com.debubble.app.engine.GoalTrack
 import com.debubble.app.engine.Goals
@@ -142,6 +143,8 @@ class Repository(private val context: Context) {
         (0..Care.MAX_DIRT).flatMap { listOf(Scene.meFrame(it), Scene.buddy(it)) }
             .plus(listOf(Scene.LETTER, Scene.BANG, "sparkle"))
             .plus(Today.ICONS)
+            .plus(World.ICONS)
+            .plus(cat.hats.map { it.id })
             .forEach { require(cat.fx(it) != null) { "missing sprite $it" } }
         require(cat.fx(Scene.meFrame(0))?.let { it.w == cat.me.w && it.h == cat.me.h } == true) {
             "the me frames are not ${cat.me.w}x${cat.me.h}"

@@ -7,6 +7,7 @@ import com.debubble.app.engine.Domain
 import com.debubble.app.engine.Engine
 import com.debubble.app.engine.Pillar
 import com.debubble.app.engine.Quest
+import com.debubble.app.engine.Reminders
 import com.debubble.app.engine.Served
 import com.debubble.app.engine.Today
 
@@ -49,4 +50,18 @@ fun AppState.quests(today: Long, library: CareLibrary, curriculum: Curriculum): 
         Today.outside(served, intentionFor("${Today.TIER}${p.name}:${served.tier}"))
     }
     return inside + outside
+}
+
+/**
+ * Whether a reminder for [link] still has something to remind about today. A nudge for
+ * something already done is the fastest way to teach someone to swipe them all away.
+ */
+fun AppState.stillToDo(link: String, today: Long): Boolean = when {
+    link.startsWith(Today.CARE) ->
+        Domain.from(link.removePrefix(Today.CARE))?.let { !Care.doneToday(care(it), today) } ?: false
+    link == Reminders.OUTSIDE -> !isDoneToday(outsidePillar(today))
+    link.startsWith(Today.TIER) ->
+        Pillar.order.firstOrNull { it.name == link.split(':').getOrNull(1) }?.let { !isDoneToday(it) } ?: false
+    link.startsWith("mission:") -> !missionDoneToday
+    else -> false
 }

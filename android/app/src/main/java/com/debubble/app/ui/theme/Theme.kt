@@ -106,6 +106,18 @@ object Ink {
 
     /** The frame around the room: its own darkest outline colour, so the edge belongs to it. */
     val RoomFrame = Color(0xFF33243A)
+
+    /*
+     * Paper: letters, postcards, the plan you wrote. The one light surface in the app, in the
+     * room's own wall cream with the room's plum outline, so a mission reads as something
+     * that arrived from the same world rather than another dark card. Text on it is the
+     * outline plum: 13.1:1 on Paper; PaperMuted is 5.7:1 on Paper and 4.8:1 on PaperShade.
+     */
+    val Paper = Color(0xFFFFF3DC)
+    val PaperShade = Color(0xFFF3DFBB)
+    val PaperEdge = Color(0xFFD7BE95)
+    val PaperText = Color(0xFF33243A)
+    val PaperMuted = Color(0xFF6E5A73)
 }
 
 val Domain.accent: Color

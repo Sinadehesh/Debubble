@@ -2,6 +2,7 @@ package com.debubble.app.widget
 
 import android.app.AlarmManager
 import android.app.PendingIntent
+import android.text.format.DateFormat
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
@@ -95,7 +96,7 @@ class DayWidget : AppWidgetProvider() {
             val drawn = runCatching {
                 val state = Repository(app).state.first().rolledTo(today)
                 val quests = state.quests(today, care(app), curriculum(app))
-                val cue = WidgetCues.of(state, today, quests)
+                val cue = WidgetCues.of(state, today, quests, DateFormat.is24HourFormat(app))
                 val room = if (!cue.ready) null else RoomPainter.paint(
                     context = app,
                     atlas = atlas(app),
@@ -235,6 +236,12 @@ class DayWidget : AppWidgetProvider() {
             cachedAtlas ?: synchronized(this) {
                 cachedAtlas ?: PixelAtlas.load(context, Repository(context).loadItems()).also { cachedAtlas = it }
             }
+
+        /** A sprite drawn large enough for a notification's picture, or null if it is missing. */
+        fun iconFor(context: Context, id: String): Bitmap? =
+            runCatching { RoomPainter.icon(atlas(context.applicationContext), id, NOTIFY_SCALE) }.getOrNull()
+
+        private const val NOTIFY_SCALE = 12
 
         private fun icon(context: Context, id: String): Bitmap? = synchronized(icons) {
             icons[id] ?: RoomPainter.icon(atlas(context), id, ICON_SCALE)?.also { icons[id] = it }
