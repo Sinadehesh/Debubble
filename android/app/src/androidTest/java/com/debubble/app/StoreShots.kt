@@ -3,6 +3,7 @@ package com.debubble.app
 import android.graphics.Bitmap
 import android.os.ParcelFileDescriptor
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.performClick
 import androidx.lifecycle.ViewModelProvider
@@ -60,7 +61,10 @@ class StoreShots {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             lateinit var vm: DeBubbleViewModel
             scenario.onActivity { vm = ViewModelProvider(it)[DeBubbleViewModel::class.java] }
-            settle(4000)                                  // the day roll and the first route
+            // A first launch on a fresh emulator is slow: wait for home to be on screen, then
+            // a little longer for the room's pictures.
+            waitFor("Journal")
+            settle(3000)
 
             shot("1-home")
 
@@ -201,9 +205,13 @@ class StoreShots {
 
     /** Demo mode: a fixed clock, full bars and battery, no notification icons, gesture bar. */
     private fun tidyStatusBar() {
+        // SystemUI ignores demo commands until it has seen the setting and entered demo mode,
+        // so the first two get a moment each.
+        sh("settings put global sysui_demo_allowed 1")
+        Thread.sleep(1500)
+        sh("am broadcast -a com.android.systemui.demo -e command enter")
+        Thread.sleep(1000)
         listOf(
-            "settings put global sysui_demo_allowed 1",
-            "am broadcast -a com.android.systemui.demo -e command enter",
             "am broadcast -a com.android.systemui.demo -e command clock -e hhmm 0930",
             "am broadcast -a com.android.systemui.demo -e command battery -e level 100 -e plugged false",
             "am broadcast -a com.android.systemui.demo -e command network -e wifi show -e level 4 -e fully true",
@@ -212,6 +220,12 @@ class StoreShots {
             "cmd overlay enable com.android.internal.systemui.navbar.gestural",
             "mkdir -p $OUT"
         ).forEach(::sh)
+    }
+
+    private fun waitFor(text: String) {
+        compose.waitUntil(timeoutMillis = 60_000) {
+            compose.onAllNodes(hasText(text)).fetchSemanticsNodes().isNotEmpty()
+        }
     }
 
     private fun settle(millis: Long = 2000) {

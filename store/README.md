@@ -54,7 +54,7 @@ the "Store screenshots" workflow and captioned by `store.py screenshots <folder>
 
 ## App content answers
 
-- **Privacy policy:** https://sinadehesh.github.io/privacy-policy-/debubble/
+- **Privacy policy:** https://www.sinadehesh.com/debubble/privacy/
 - **Data safety:** no data collected, no data shared. The app has no internet permission, so
   nothing can leave the device; Android's own backup is Google's, not the app's.
 - **Ads:** no ads.
