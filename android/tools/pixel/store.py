@@ -15,8 +15,13 @@ so no pixel lands on a half and blurs. A launcher shows the middle 72dp, which i
   res/drawable/ic_launcher_monochrome.xml   the same two as one colour, for themed icons
   store/icon-512.png                        the Play listing icon (Play adds its own corners)
   store/feature-graphic.png                 1024x500, the banner at the top of the listing
+  store/screenshots/*.png                   the real app's screens, captioned (see below)
 
 Run:  python3 android/tools/pixel/store.py
+      python3 android/tools/pixel/store.py screenshots <raw folder>
+
+The raw screenshots come from the "Store screenshots" workflow, which photographs the real
+app on an emulator (androidTest/StoreShots.kt); this only adds the captions.
 """
 
 import pathlib
@@ -255,6 +260,67 @@ def feature_graphic():
     return big
 
 
+# ---------------------------------------------------------------------------- screenshots
+
+SHOT_W, SHOT_H = 1080, 1920          # Play's phone shape: no more than twice as tall as wide
+
+CAPTIONS = {
+    "1-home": ("Four tiny things a day", "and your room comes alive"),
+    "2-remind": ("Not now? Pick a time.", "A nudge, only if you want one"),
+    "3-letter": ("One brave step a day", "sized just right for you"),
+    "4-outside": ("Three roads out", "of your bubble"),
+    "5-journey": ("Pick a journey.", "Walk it one stop at a time."),
+    "6-wardrobe": ("Level up,", "and dress your little you"),
+    "7-journal": ("Keep a postcard", "from every step"),
+}
+
+
+def wallpaper(w, h, z):
+    """The room's papered wall at zoom z: cream, with its little diamonds."""
+    g = Grid(-(-w // z), -(-h // z))
+    g.rect(0, 0, g.w, g.h, "w")
+    for y in range(3, g.h, 6):
+        for x in range((y // 6) % 2 * 4 + 1, g.w, 8):
+            g.set(x, y, "W")
+            g.set(x - 1, y + 1, "W"); g.set(x, y + 1, "W"); g.set(x + 1, y + 1, "W")
+            g.set(x, y + 2, "W")
+    return g.image().resize((g.w * z, g.h * z), Image.NEAREST).crop((0, 0, w, h))
+
+
+def framed(shot, caption):
+    """A real screenshot under a two-line caption, on the room's wallpaper."""
+    out = wallpaper(SHOT_W, SHOT_H, 6)
+    top, bottom = caption
+    for words, y, size, key in ((top, 70, 100, "k"), (bottom, 175, 70, "K")):
+        font = ImageFont.truetype(str(FONTS / "Jersey10-Regular.ttf"), size)
+        width = ImageDraw.Draw(out).textbbox((0, 0), words, font=font)[2]
+        text(out, words, (SHOT_W - width) // 2, y, size, key, shadow="v" if key == "k" else None)
+
+    # The phone: the screenshot scaled to fit, with rounded corners and a plum outline,
+    # running off the bottom edge so it reads as a phone held up rather than a postcard.
+    w = 920
+    h = round(shot.height * w / shot.width)
+    phone = shot.convert("RGBA").resize((w, h), Image.LANCZOS)
+    x, y, r, edge = (SHOT_W - w) // 2, 300, 48, 12
+    mask = Image.new("L", (w, h), 0)
+    ImageDraw.Draw(mask).rounded_rectangle((0, 0, w - 1, h + r), radius=r, fill=255)
+    ImageDraw.Draw(out).rounded_rectangle(
+        (x - edge, y - edge, x + w + edge - 1, SHOT_H + r), radius=r + edge, fill=rgb("k") + (255,))
+    out.paste(phone, (x, y), mask)
+    return out.convert("RGB")
+
+
+def screenshots(raw_dir):
+    """store/screenshots/<name>.png for every raw screenshot that has a caption."""
+    dest = STORE / "screenshots"
+    dest.mkdir(parents=True, exist_ok=True)
+    for name, caption in CAPTIONS.items():
+        src = pathlib.Path(raw_dir) / f"{name}.png"
+        if src.exists():
+            framed(Image.open(src), caption).save(dest / f"{name}.png")
+            print("wrote", dest / f"{name}.png")
+
+
 def main():
     bg, fg = background(), foreground()
     RES.mkdir(parents=True, exist_ok=True)
@@ -269,4 +335,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) > 2 and sys.argv[1] == "screenshots":
+        screenshots(sys.argv[2])       # store.py screenshots <folder of raw emulator shots>
+    else:
+        main()
