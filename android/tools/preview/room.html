@@ -140,30 +140,58 @@ details .body{display:flex;flex-direction:column;gap:8px;margin-top:8px}
 .rule h3{color:var(--glow)}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--glow);color:var(--ink-on);font-weight:800;border-radius:12px;padding:10px 16px;max-width:calc(100% - 32px);box-shadow:0 6px 24px #0008;z-index:5}
 canvas.px{image-rendering:pixelated}
-@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+
+/* The tour: the page dimmed by one huge shadow around a hole, and a card beside the hole. */
+.tour-block{position:fixed;inset:0;z-index:20}
+.tour-hole{position:fixed;z-index:21;border-radius:12px;pointer-events:none;box-shadow:0 0 0 200vmax rgba(20,14,22,.86);outline:2.5px solid var(--c)}
+.tour-hole::after{content:"";position:absolute;inset:-3px;border-radius:14px;border:2px solid var(--c);animation:tourpulse 1.4s ease-out infinite}
+.tour-hole.none{outline:none;width:0!important;height:0!important}
+.tour-hole.none::after{display:none}
+@keyframes tourpulse{from{opacity:.65;inset:-3px}to{opacity:0;inset:-14px}}
+.tour-card{position:fixed;z-index:22;left:16px;right:16px;max-width:440px;margin:0 auto;background:var(--panel-2);border:2px solid var(--c);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px;box-shadow:0 12px 40px #000a}
+.tour-card h3{font-size:19px;line-height:1.25}
+.tour-card .tbody{color:var(--dim);font-size:15px}
+.tour-card .thead{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.tour-card .tnum{font-weight:800;font-size:13px;color:var(--c)}
+.tour-card .tsegs{display:flex;gap:3px}
+.tour-card .tsegs i{flex:1;height:4px;border-radius:4px;background:#5E4D63}
+.tour-card .tsegs i.on{background:var(--c)}
+.tour-card .ttitle{display:flex;gap:12px;align-items:center}
+.tour-card .tico{width:48px;height:48px;border-radius:12px;flex:none;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 16%,transparent)}
+.tour-card .tbtns{display:grid;grid-template-columns:1fr 2fr;gap:8px}
+.tour-card .tbtns.solo{grid-template-columns:1fr}
+.howto{border:1px solid color-mix(in srgb,var(--c) 60%,transparent);background:color-mix(in srgb,var(--c) 10%,transparent);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.howto b{color:var(--c);font-size:14px}
+.howto ol{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;counter-reset:h}
+.howto li{display:flex;gap:10px;font-size:14px;counter-increment:h}
+.howto li::before{content:counter(h);flex:none;width:22px;height:22px;border-radius:50%;background:var(--c);color:var(--ink-on);font-weight:800;font-size:12.5px;display:grid;place-items:center}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}.tour-hole::after{animation:none}}
 </style>
 
 <div class="wrap">
   <header>
     <h1>Debubble Room</h1>
-    <p class="lede">Your room mirrors your real body, room and heart, and today's one mission outside is the letter in your hand. Tap yourself, your heart, the mess or the letter to start that task. Doing the real thing cleans the room and earns something for it. You start with nothing. This is the app's engine running in the browser.</p>
+    <p class="lede">Your room mirrors your real body, room and heart, and today's one mission outside is the letter in your hand. Tap yourself, your heart, the mess or the letter to start that task. Doing the real thing cleans the room and earns something for it. You start with nothing. After you move in, a short tour shows you around; "Show me around" replays it. This is the app's engine running in the browser.</p>
   </header>
 
   <div class="grid">
     <section class="stagecard" aria-label="Your room">
       <div class="roombox" id="roombox"><canvas id="room" class="px" role="img" aria-label="Your room"></canvas></div>
       <p class="hint" id="roomHint"></p>
-      <div class="meta">
-        <span class="stage-name" id="stageName">Sealed room</span>
-        <span class="small" id="stageCaption"></span>
+      <div id="world" style="display:flex;flex-direction:column;gap:8px">
+        <div class="meta">
+          <span class="stage-name" id="stageName">Sealed room</span>
+          <span class="small" id="stageCaption"></span>
+        </div>
+        <div class="track" style="--c:var(--glow)"><i id="stageTrack" style="width:0"></i></div>
       </div>
-      <div class="track" style="--c:var(--glow)"><i id="stageTrack" style="width:0"></i></div>
       <div id="notices" style="display:flex;flex-direction:column;gap:8px"></div>
       <div class="bar">
         <button class="btn" id="editBtn" aria-pressed="false">Arrange room</button>
         <button class="btn" id="putAway" hidden>Put away</button>
         <button class="btn ghost" id="lookBtn">Change how you look</button>
         <button class="btn ghost" id="checkinBtn">Honest check-in</button>
+        <button class="btn ghost" id="tourBtn">Show me around</button>
       </div>
       <p class="small" id="editHint" hidden>Drag anything, including yourself; your heart and the letter come with you. Floor things stay on the floor, wall things on the wall. Tap to select.</p>
       <div class="bar" id="stash" hidden></div>
@@ -571,9 +599,9 @@ function todayView() {
         return questRow({kind: "OUTSIDE", p, icon: "icon_out", name: PILLAR_NAME[p], title: m.do, cue: m.when, first: m.open || m.do, minutes: m.min, status: `level ${S.tiers[p]}`, done: false, c: COLOR[p]}, false);
       }).join("")
     : `<button class="link" data-extras>${out.done ? "Want more? " : ""}${more.length} more missions outside${out.done ? "" : ", if you want them"}</button>`;
-  return `<div class="section-h"><h2>Today</h2><span class="small" style="color:${done === q.length ? "var(--glow)" : "var(--dim)"};font-weight:800">${done} of ${q.length}</span></div>
+  return `<div id="todayHead" style="display:flex;flex-direction:column;gap:10px"><div class="section-h"><h2>Today</h2><span class="small" style="color:${done === q.length ? "var(--glow)" : "var(--dim)"};font-weight:800">${done} of ${q.length}</span></div>
     <div class="segs">${q.map(x => `<i class="${x.done ? "on" : ""}" style="--c:${x.c}"></i>`).join("")}</div>
-    <p class="small">${esc(headline(q))}</p>
+    <p class="small">${esc(headline(q))}</p></div>
     ${q.map(x => questRow(x, x === next)).join("")}${extra}`;
 }
 function taskView(d) {
@@ -584,6 +612,7 @@ function taskView(d) {
     <button class="btn ghost back" data-back>← Today</button>
     <span class="pill">${info(d).name} · ${info(d).levels[levels()[d]]}</span>
     <div class="big">${esc(r.title)}</div>
+    ${neverCared() ? howTo(CARE_HOW) : ""}
     <h3>When</h3>
     ${r.anchors.map(a => `<button class="opt ${a === cue ? "sel" : ""}" data-anchor="${esc(a)}"><span class="dot"></span><span><b>When ${esc(a)}</b></span></button>`).join("")}
     <h3>How much have you got?</h3>
@@ -605,6 +634,7 @@ function missionView(p) {
     <button class="btn ghost back" data-back>← Today</button>
     <span class="pill">Outside · ${PILLAR_NAME[p]} · level ${tier}</span>
     <div class="big">${esc(m.do)}</div>
+    ${neverOut() ? howTo(OUTSIDE_HOW) : ""}
     <div class="kv">
       <div><b>When</b>When ${esc(m.when)}.</div>
       <div><b>The first two minutes</b>${esc(m.open)}</div>
@@ -692,7 +722,11 @@ function wireSide() {
   q("[data-ci]").forEach(b => b.onclick = () => { const [d, i] = b.dataset.ci.split(":"); side.lv = {...side.lv, [d]: +i}; view.lv = side.lv; renderSide(); paint(); });
   q("[data-cisave]").forEach(b => b.onclick = () => { DOMS.forEach(d => S.care[d] = checkIn(S.care[d], side.lv[d], S.day)); view.lv = null; save(); side = {view: "today"}; renderAll(); });
   q("[data-look]").forEach(b => b.onclick = () => { const [k, i] = b.dataset.look.split(":"); S.look = {...S.look, [k]: +i}; save(); renderSide(); paint(); renderWidgets(); });
-  q("[data-lookdone]").forEach(b => b.onclick = () => { S.movedIn = true; save(); side = {view: "today"}; renderAll(); });
+  q("[data-lookdone]").forEach(b => b.onclick = () => {
+    const first = !S.movedIn;
+    S.movedIn = true; save(); side = {view: "today"}; renderAll();
+    if (first && !S.tourSeen) startTour();
+  });
   drawSprites();
 }
 function scrollSide() { if (innerWidth <= 820) $("side").scrollIntoView({behavior: reduced ? "auto" : "smooth"}); }
@@ -778,7 +812,196 @@ $("month").onclick = () => {
   extras = false; side = {view: "today"}; view.lv = null; save(); renderAll();
   toast(`A month of small things: ${got} new for the room.`);
 };
+$("tourBtn").onclick = () => { if (!S.movedIn) { toast("Move in first: pick how you look, then Move in."); return; } startTour(); };
 $("reset").onclick = () => { S = fresh(); sheet = null; edit = false; selected = null; extras = false; side = {view: "look"}; view.lv = null; save(); refreshEdit(); renderAll(); };
+
+/* ---------------- the tour: a transcription of engine/Tour.kt, adapted to this page ---------------- */
+const CARE_HOW = [
+  "Pick when. The same moment every day is what makes it stick.",
+  "Pick how much you have got. Tiny counts in full.",
+  "Put the phone down and do it for real.",
+  "Come back and tap I did it. (In the app you press and hold until it fills.)"];
+const OUTSIDE_HOW = [
+  "Read what it is: when, the first two minutes, and when it counts as done.",
+  "Pick the moment you will go.",
+  "Go and do it.",
+  "Back here, tap I did it. In the app, if it went wrong you tap Log friction instead: that counts too."];
+const neverCared = () => DOMS.every(d => S.care[d].reps === 0);
+const neverOut = () => S.rungs === 0;
+const howTo = steps => `<div class="howto"><b>First time? Here's how</b><ol>${steps.map(x => `<li><span>${esc(x)}</span></li>`).join("")}</ol></div>`;
+
+const KIND_OF = id => /^buddy\d$/.test(id) ? "HEART" : (id === "letter" || id === "bang") ? "OUTSIDE" : isMe(id) ? "BODY" : CAT.mess.some(m => m.fx === id) ? "ROOM" : null;
+/* Where each task is in the room: the biggest sprite of it whose middle a tap would open. */
+function spots(stageKey, home, lv, letter) {
+  const drawn = draws(stageKey, home, lv, 0, null, false, letter), out = {};
+  ["BODY", "ROOM", "HEART", "OUTSIDE"].forEach(k => {
+    const areas = drawn.filter(d => KIND_OF(d[0]) === k)
+      .map(d => { const z = sizeOf(d[0]); return z && [d[1], d[2] - z[1], z[0], z[1]]; }).filter(Boolean)
+      .sort((a, b) => b[2] * b[3] - a[2] * a[3]);
+    const pick = areas.find(a => tap(stageKey, home, lv, letter, a[0] + (a[2] >> 1), a[1] + (a[3] >> 1)) === k) || areas[0];
+    if (pick) out[k] = pick;
+  });
+  return out;
+}
+const IN_ROOM = {ME: "BODY", MESS: "ROOM", BUDDY: "HEART", LETTER: "OUTSIDE"};
+function spotEl(spot) {
+  if (spot === "ROOM" || IN_ROOM[spot]) return cv;
+  if (spot === "TODAY") return $("todayHead");
+  if (spot === "ROW_OUTSIDE") return document.querySelector('#side [data-quest^="OUT:"]');
+  if (spot.startsWith("ROW_")) return document.querySelector(`#side [data-quest="${spot.slice(4)}"]`);
+  if (spot === "WORLD") return $("world");
+  if (spot === "WIDGET") return document.querySelector("#homescreen .widget");
+  if (spot === "DAYBAR") return document.querySelector(".daybar");
+  return null;
+}
+function spotRect(spot) {
+  const el = spotEl(spot);
+  if (!el) return null;
+  const r = el.getBoundingClientRect();
+  if (!IN_ROOM[spot]) return r;
+  const a = spots(stageFor(S.rungs).key, S.home, levels(), letterOpen(quests()))[IN_ROOM[spot]];
+  if (!a) return null;
+  const k = r.width / R.w;
+  return new DOMRect(r.left + a[0] * k, r.top + a[1] * k, a[2] * k, a[3] * k);
+}
+function tourSteps() {
+  const q = quests(), care = q.filter(x => x.kind === "CARE");
+  const how = care.find(x => !x.done) || care[0], next = q.find(x => !x.done);
+  const rowOf = x => x.kind === "CARE" ? "ROW_" + x.d : "ROW_OUTSIDE";
+  const all = [
+    {spot: "ROOM", title: "This is your room", body: "It is a mirror of you. Look after yourself and it looks better; let things slide and it shows. Nothing you earn here is ever taken away, and a messy day is just a messy day."},
+    {spot: "ME", icon: "me", c: "var(--body)", title: "This is you: your Body", body: "How you look follows how your body is being looked after: washing, water, moving, food, sleep. Tap yourself to do today's body task."},
+    {spot: "MESS", icon: "icon_room", c: "var(--room)", title: "The mess is your Room", body: "Dust and clutter here follow your real room. Tidy something real (five things put away is enough) and it clears here too. Tap the mess to start.",
+     absent: "When your real room needs a tidy, dust and clutter turn up on this floor. Tidy for real and it clears here too. Your Room task is in the list."},
+    {spot: "BUDDY", icon: "buddy1", c: "var(--heart)", title: "This little heart is your Heart", body: "Its face follows how you are doing inside. Tap it for something kind for your mind: three slow breaths, naming what you feel, or a message to someone."},
+    {spot: "LETTER", icon: "icon_out", c: q[3].c, title: "The letter is today's mission", body: "One small step outside your bubble, new every day: somewhere new (Access), something new (Activity) or someone new (Social). Tap the letter to read it.",
+     absent: "On days you have not been out yet, you hold a letter: that day's mission outside your bubble. Today's is already done."},
+    {spot: "TODAY", icon: "icon_todo", title: "Today: four things", body: "The same four, as a list. Do them in any order. Each one says when to do it and its smallest version, and the smallest version counts in full."},
+    how && {spot: rowOf(how), icon: how.icon, c: how.c, title: "How to do one", body: "Tap it. Pick how much you have got; Tiny is fine. Do it for real, then tap I did it (in the app, you press and hold). Your room changes right then."},
+    {spot: "ROW_OUTSIDE", icon: "icon_out", c: q[3].c, title: "Going out works a bit differently", body: "Read it: when, the first two minutes, when it counts as done. Then go. Back home, say you did it. In the app, if it went wrong (a no, an awkward silence, you turned back) you tap Log friction. That still counts: it means you reached the edge."},
+    {spot: "WORLD", icon: "icon_done", title: "Your room fills up", body: "You start with nothing. Looking after yourself brings things for inside. Missions outside open the walls: first a window, then a door, then the street. Arrange room moves things around."},
+    {spot: "WIDGET", icon: "me", title: "Keep it on your home screen", body: "On a phone, the widget shows your room and today's four, so they are in front of you when the moment comes, not only when you remember to open the app. This is it, from the same state."},
+    {spot: "DAYBAR", title: "Try a few days", body: "This preview can move time. Next day starts a new one. Skip 3 days shows what a gap does: things get messy, nothing you earned goes. Do a month fills the room and opens the walls."},
+    next ? {spot: rowOf(next), icon: next.icon, c: next.c, title: "Start with one now", button: "Do it now", action: "START", quest: next,
+            body: `${next.name}: ${next.first.replace(/\.$/, "")}. ${next.minutes > 0 ? `About ${next.minutes} min. ` : ""}Doing one now, before you close this, is what makes tomorrow easier.`}
+         : {spot: "TODAY", icon: "icon_done", title: "That is today done", button: "Finish", body: "All four, ticked. Tomorrow's will be waiting here, and on your home screen."}
+  ].filter(Boolean);
+  // A spot that is not on screen falls back to the room with its other words, or the step goes.
+  return all.map(st => spotRect(st.spot) ? st : st.absent ? {...st, spot: "ROOM", body: st.absent} : null).filter(Boolean);
+}
+
+let tour = null;
+function startTour() {
+  edit = false; selected = null; extras = false; side = {view: "today"}; view.lv = null;
+  refreshEdit(); renderAll();
+  endTour(false);
+  const el = document.createElement("div");
+  el.innerHTML = `<div class="tour-block"></div><div class="tour-hole"></div>
+    <div class="tour-card" role="dialog" aria-modal="true" aria-labelledby="tourTitle"></div>`;
+  document.body.appendChild(el);
+  document.querySelector(".wrap").inert = true;
+  tour = {el, steps: tourSteps(), i: 0, raf: 0};
+  el.querySelector(".tour-block").onclick = () => el.querySelector(".tour-card [data-tnext]").focus();
+  document.addEventListener("keydown", tourKeys);
+  showStep();
+  const loop = () => { placeTour(); tour.raf = requestAnimationFrame(loop); };
+  tour.raf = requestAnimationFrame(loop);
+}
+function tourKeys(e) {
+  if (!tour) return;
+  if (e.key === "Escape") endTour(true);
+  else if (e.key === "ArrowRight") tourNext();
+  else if (e.key === "ArrowLeft" && tour.i > 0) { tour.i--; showStep(); }
+}
+function endTour(seen) {
+  if (!tour) return;
+  cancelAnimationFrame(tour.raf);
+  tour.el.remove();
+  document.removeEventListener("keydown", tourKeys);
+  document.querySelector(".wrap").inert = false;
+  tour = null;
+  if (seen) { S.tourSeen = true; save(); }
+}
+function tourNext() {
+  const st = tour.steps[tour.i];
+  if (st.action === "START") {
+    endTour(true);
+    if (st.quest.kind === "CARE") openTask(st.quest.d); else openMission(st.quest.p);
+    $("side").scrollIntoView({behavior: reduced ? "auto" : "smooth"});
+    return;
+  }
+  if (tour.i >= tour.steps.length - 1) { endTour(true); return; }
+  tour.i++; showStep();
+}
+function showStep() {
+  const st = tour.steps[tour.i], n = tour.steps.length, c = st.c || "var(--glow)";
+  const card = tour.el.querySelector(".tour-card"), hole = tour.el.querySelector(".tour-hole");
+  card.style.setProperty("--c", c); hole.style.setProperty("--c", c);
+  const ico = st.icon === "me" ? `<canvas class="px" data-me="1" data-dp="2"></canvas>` : st.icon ? icon(st.icon, 2.6) : "";
+  card.innerHTML = `<div class="thead"><span class="tnum">${tour.i + 1} of ${n}</span>${tour.i < n - 1 ? `<button class="link" data-tskip style="min-height:36px;padding:4px 0">Skip the tour</button>` : ""}</div>
+    <div class="tsegs">${Array.from({length: n}, (_, k) => `<i class="${k <= tour.i ? "on" : ""}"></i>`).join("")}</div>
+    <div class="ttitle">${ico ? `<span class="tico">${ico}</span>` : ""}<h3 id="tourTitle">${esc(st.title)}</h3></div>
+    <p class="tbody" aria-live="polite">${esc(st.body)}</p>
+    <div class="tbtns ${tour.i === 0 ? "solo" : ""}">${tour.i > 0 ? `<button class="btn" data-tback>Back</button>` : ""}<button class="btn primary" style="--a:${c}" data-tnext>${esc(st.button || (tour.i === n - 1 ? "Finish" : "Next"))}</button></div>
+    ${st.action === "START" ? `<button class="link" data-tlater style="text-align:center">I'll do it later</button>` : ""}`;
+  card.querySelector("[data-tnext]").onclick = tourNext;
+  card.querySelectorAll("[data-tback]").forEach(b => b.onclick = () => { tour.i--; showStep(); });
+  card.querySelectorAll("[data-tskip]").forEach(b => b.onclick = () => endTour(true));
+  card.querySelectorAll("[data-tlater]").forEach(b => b.onclick = () => endTour(true));
+  drawSprites();
+  card.querySelectorAll("canvas[data-me]").forEach(cnv => {
+    // The "this is you" icon is you, in your look, a little smaller than the picker's.
+    const r = fxDef("me0"), dpr = devicePixelRatio || 1, k = Math.max(1, Math.round(1.8 * dpr));
+    cnv.width = r.w * k; cnv.height = r.h * k; cnv.style.width = (r.w * k / dpr) + "px"; cnv.style.height = (r.h * k / dpr) + "px";
+    const g = cnv.getContext("2d"); g.imageSmoothingEnabled = false; g.drawImage(sheetFor(S.look), r.x, r.y, r.w, r.h, 0, 0, r.w * k, r.h * k);
+  });
+  card.querySelector("[data-tnext]").focus({preventScroll: true});
+  // Bring it into view with room for the card: centred when both fit, else the spot at the top.
+  const r = spotRect(st.spot);
+  if (r) {
+    const need = r.height + card.offsetHeight + 40, side = wideSide(r, card);
+    const y = side ? scrollY + r.top + r.height / 2 - innerHeight / 2
+      : need <= innerHeight ? scrollY + r.top - (innerHeight - need) / 2
+      : scrollY + r.top - 12;
+    window.scrollTo({top: Math.max(0, y), behavior: reduced ? "auto" : "smooth"});
+  }
+  placeTour();
+}
+/* On a wide screen the card goes beside the spot, if there is room on either side. */
+function wideSide(r, card) {
+  if (innerWidth <= 820) return null;
+  const w = Math.min(400, card.offsetWidth || 400) + 32;
+  if (innerWidth - r.right >= w) return "right";
+  if (r.left >= w) return "left";
+  return null;
+}
+function placeTour() {
+  if (!tour) return;
+  const st = tour.steps[tour.i], r = spotRect(st.spot);
+  const card = tour.el.querySelector(".tour-card"), hole = tour.el.querySelector(".tour-hole");
+  const ch = card.offsetHeight, pad = 6, gap = 14, edge = 12;
+  if (!r) {
+    hole.classList.add("none");
+    hole.style.left = innerWidth / 2 + "px"; hole.style.top = innerHeight / 2 + "px";
+    card.style.top = Math.max(edge, (innerHeight - ch) / 2) + "px";
+    return;
+  }
+  hole.classList.remove("none");
+  hole.style.left = (r.left - pad) + "px"; hole.style.top = (r.top - pad) + "px";
+  hole.style.width = (r.width + pad * 2) + "px"; hole.style.height = (r.height + pad * 2) + "px";
+  const side = wideSide(r, card);
+  if (side) {
+    card.style.width = "min(400px, 40vw)"; card.style.margin = "0"; card.style.right = "auto";
+    card.style.left = (side === "right" ? r.right + pad + gap : r.left - pad - gap - card.offsetWidth) + "px";
+    card.style.top = Math.min(Math.max(edge, r.top + r.height / 2 - ch / 2), innerHeight - ch - edge) + "px";
+    return;
+  }
+  card.style.width = ""; card.style.margin = ""; card.style.right = ""; card.style.left = "";
+  const below = innerHeight - r.bottom >= r.top;
+  let y = below ? r.bottom + pad + gap : r.top - pad - gap - ch;
+  card.style.top = Math.min(Math.max(edge, y), Math.max(edge, innerHeight - ch - edge)) + "px";
+}
+addEventListener("resize", () => { if (tour) placeTour(); });
 
 /* ---------------- the library ---------------- */
 $("libCount").textContent = `${LIB.routines.length} routines`;
@@ -791,4 +1014,6 @@ $("lib").innerHTML = DOMS.map(d => `<div class="libcol"><h3 style="color:${COLOR
 
 refreshEdit();
 renderAll();
+// Moved in on an earlier visit but never toured: show it once.
+if (S.movedIn && !S.tourSeen) setTimeout(startTour, 300);
 </script>
