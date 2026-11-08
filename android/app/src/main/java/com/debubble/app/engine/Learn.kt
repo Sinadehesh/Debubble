@@ -57,3 +57,32 @@ data class LearnCurriculum(
 
     fun readCount(read: Set<String>): Int = lessons.count { it.id in read }
 }
+
+/**
+ * One pack in the reading room: five short reads on one thing that sits underneath
+ * everything else, like sleep or a quieter mind. Premium. Authored in tools/gen_reading.py.
+ */
+@Serializable
+data class ReadingPack(
+    @SerialName("id") val id: String,
+    @SerialName("title") val title: String,
+    @SerialName("blurb") val blurb: String,
+    /** The room sprite on its cover. */
+    @SerialName("icon") val icon: String,
+    @SerialName("lessons") val lessons: List<Lesson> = emptyList()
+)
+
+@Serializable
+data class ReadingRoom(
+    @SerialName("packs") val packs: List<ReadingPack> = emptyList()
+) {
+    fun pack(id: String): ReadingPack? = packs.firstOrNull { it.id == id }
+
+    fun lesson(id: String): Lesson? = packs.firstNotNullOfOrNull { p -> p.lessons.firstOrNull { it.id == id } }
+
+    fun packOf(lessonId: String): ReadingPack? = packs.firstOrNull { p -> p.lessons.any { it.id == lessonId } }
+
+    val pageCount: Int get() = packs.sumOf { it.lessons.size }
+
+    fun readIn(pack: ReadingPack, read: Set<String>): Int = pack.lessons.count { it.id in read }
+}

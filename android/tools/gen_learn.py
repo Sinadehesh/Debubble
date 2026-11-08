@@ -67,18 +67,19 @@ You are not going to do it today. You are just naming it, so it stops being
 invisible.
 """),
 
-    ("three_directions", 2, "Access, Activity, Social",
-     "Three separate edges. Progress in one does not carry to the others.",
+    ("three_directions", 2, "Somewhere, something, someone",
+     "Three roads out of your bubble. Progress on one does not carry to the others.",
      3, ["foundations"], [], """
-Your bubble has three edges, and they move independently.
+Your bubble has three edges, and they move independently. In the app they are
+three roads out.
 
-**Access** is geography. Where you physically go. Someone can be socially
+**Somewhere new** is geography. Where you physically go. Someone can be socially
 confident and still have a two-kilometre radius.
 
-**Activity** is experience. What you do. Someone can travel constantly and still
+**Something new** is experience. What you do. Someone can travel constantly and still
 do the same five things everywhere.
 
-**Social** is people. Who you talk to, and how directly. This one is usually the
+**Someone new** is people. Who you talk to, and how directly. This one is usually the
 tightest, and it is the one most people mean when they say they want to change.
 
 ## Why they are separate
@@ -88,30 +89,31 @@ does very little for your ability to start a conversation. They feel like the
 same courage from the inside. They are not the same skill.
 
 If the app only tracked one number you would push on the easiest edge and feel
-like you were making progress everywhere. Three separate ladders make that
+like you were making progress everywhere. Three separate roads make that
 impossible to fake.
 
 ## Do this
 
-Look at your three levels on the home screen. One of them is lower than the
+Look at your three roads on the Outside tab. One of them is shorter than the
 others.
 
 That is not a problem to fix today. It is just the direction with the most
 available return.
 """),
 
-    ("friction_score", 3, "Why rejection scores highest",
-     "The score you want is the one that only goes up when things go wrong.",
+    ("friction_score", 3, "Why a no counts",
+     "The jar that only fills when things do not go to plan.",
      4, ["foundations", "rejection"], [], """
-Most apps count wins. This one counts the awkward stuff highest, and there is a
+Most apps count wins. This one counts the awkward stuff too, and there is a
 specific reason.
 
-If you only score outcomes, you learn to attempt only the things you will win.
-That is a rational response to the scoring system, and it produces a person who
+If you only count outcomes, you learn to attempt only the things you will win.
+That is a rational response to the counting, and it produces a person who
 never tries anything uncertain.
 
-Friction inverts it. You get points for asking and being refused. For starting a
-conversation that dies. For turning back halfway.
+Sparks invert it. You get one for asking and being refused. For starting a
+conversation that dies. For turning back halfway. Each one goes in your courage
+jar.
 
 ## What this is actually training
 
@@ -119,18 +121,18 @@ The thing that stops most people is not failure. It is the *anticipation* of
 failure — the flinch before the attempt. That flinch weakens every time you
 attempt something and survive the outcome, regardless of what the outcome was.
 
-So the app scores the attempt. It has to, because the attempt is the part you
+So the app counts the attempt. It has to, because the attempt is the part you
 control and the part that needs practice.
 
 There is a real consequence to this: someone who plays it safe for a hundred days
-will end up with a high level and almost no Friction. The app will show that
-plainly. That is not an insult. It is the most useful piece of information it
+will end up far along every road with an almost empty jar. The app will show
+that plainly. That is not an insult. It is the most useful piece of information it
 can give you.
 
 ## Do this
 
-Look at your Friction number. If it is zero, your next challenge should be one
-you are not sure you will complete.
+Look at your courage jar on the Outside tab. If it is empty, your next letter
+should be one you are not sure you will finish.
 """ ),
 
     ("small_beginnings", 4, "Why the first challenges are so small",
@@ -138,14 +140,14 @@ you are not sure you will complete.
      3, ["foundations"], [], """
 Standing outside your front door for sixty seconds is not a meaningful act.
 
-It is also exactly the right first challenge, and here is why.
+It is also exactly the right first letter, and here is why.
 
 You are not trying to change your life this week. You are trying to establish
 that when this app says do something, you do it. That link — instruction to
 action, without a negotiation in between — is the actual mechanism. Everything
 else is built on it.
 
-If the first challenge is hard, you will negotiate. You will decide to do it
+If the first step is hard, you will negotiate. You will decide to do it
 tomorrow, or do a modified version, and the link never forms.
 
 ## The trap
@@ -154,11 +156,11 @@ The trap is deciding the small ones are beneath you and skipping ahead. People
 who do this reliably stall around day twelve, because they built the ambition
 without building the mechanism.
 
-The ladder goes to a hundred. It gets genuinely difficult. Let it.
+Each road goes to step one hundred. It gets genuinely difficult. Let it.
 
 ## Do this
 
-Do today's challenge even though it is too easy. Especially because it is too
+Do today's letter even though it is too easy. Especially because it is too
 easy.
 """),
 
@@ -1161,19 +1163,19 @@ usually one of four things.
 ## 1. The challenges got hard and you started negotiating
 
 You do a modified, easier version and count it. It is worth noticing when this
-starts, because it is the point where the ladder stops being real.
+starts, because it is the point where the road stops being real.
 
-If a challenge is genuinely too big, log Friction. That is what it is for, and
-it steps the level back down honestly.
+If a letter is genuinely too big, tap \"It didn't go to plan\". That is what it is
+for: it counts as a spark, and the next one is the same size or smaller.
 
 ## 2. You are only pushing on one edge
 
-Look at your three levels. If one is much lower than the others, you have been
+Look at your three roads. If one is much shorter than the others, you have been
 taking the easy wins. The low one is where the return is.
 
-## 3. Your Friction has stopped moving
+## 3. Your jar has stopped filling
 
-If your level is climbing and your Friction is flat, you have optimised for
+If your roads are growing and your courage jar is not, you have optimised for
 completing rather than for attempting. That is comfortable and it is a
 plateau by definition.
 
@@ -1190,8 +1192,8 @@ today's list and let the mechanism carry you.
 
 ## Do this
 
-Look at your three levels and your Friction. Whichever number has moved least is
-your answer.
+Look at your three roads and your courage jar on the Outside tab. Whichever has
+moved least is your answer.
 """),
 
     ("after", 30, "What this was for",
@@ -1217,15 +1219,15 @@ list is the only durable answer to the voice that says you cannot.
 
 ## The measure of success
 
-The measure is not your level. It is whether you would do any of this without
-being asked.
+The measure is not how far along the roads you are. It is whether you would do
+any of this without being asked.
 
-At some point a challenge will arrive and you will have already done it that
+At some point a letter will arrive and you will have already done it that
 week, for your own reasons. That is the whole thing working.
 
 ## What happens at the end
 
-The ladder goes to a hundred, and then it stops, and there is deliberately
+Each road goes to step one hundred, and then it stops, and there is deliberately
 nothing after it.
 
 An app whose stated purpose is to get you out of the house cannot also be built

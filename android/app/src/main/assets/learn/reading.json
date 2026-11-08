@@ -1,0 +1,276 @@
+{
+ "packs": [
+  {
+   "id": "sleep",
+   "title": "Sleep, gently",
+   "blurb": "Five reads on falling asleep without fighting it.",
+   "icon": "bed",
+   "lessons": [
+    {
+     "id": "sleep_effort",
+     "day": -1,
+     "title": "Trying harder makes it worse",
+     "summary": "Sleep is the one thing effort undoes.",
+     "min": 3,
+     "tags": [
+      "sleep"
+     ],
+     "debuffs": [],
+     "body": "Most things get better when you try harder. Sleep gets worse.\n\nSleep arrives when your body stops guarding the day. Lying in bed checking whether\nyou are asleep yet, counting the hours left, telling yourself you must sleep: all of\nthat is guarding. It is effort, and effort is the opposite of what sleep needs.\n\nResearchers even measure it. People with insomnia score much higher on *sleep\neffort*, the amount of trying they put into falling asleep, than good sleepers do,\nand the trying keeps the problem going.\n\n## What to do instead\n\nLower the stakes. Tonight you are going to bed to rest, not to perform. Rest is\nuseful on its own: lying still in the dark, breathing slowly, is restorative even if\nyou never drop off.\n\nStop checking the clock. Turn it to face the wall. Every look at it is a small\nalarm going off.\n\n## Do this\n\nTonight, when you lie down, say to yourself: \"I am here to rest. Sleep can come\nor not.\" Then do not check the time again until morning.\n\n*Broomfield & Espie, 2005, Journal of Sleep Research.*"
+    },
+    {
+     "id": "one_wake_time",
+     "day": -1,
+     "title": "One time to get up",
+     "summary": "Your body clock sets itself from the morning, not the night.",
+     "min": 3,
+     "tags": [
+      "sleep"
+     ],
+     "debuffs": [],
+     "body": "If you change one thing about your sleep, change this: get up at the same time every\nday, weekends included.\n\nTwo systems decide when you feel sleepy. One is the pressure to sleep, which builds\nup the longer you have been awake. The other is your body clock, which runs on a\nroughly daily rhythm. A fixed wake-up time lines them up. Sleep pressure starts\nbuilding at the same time each morning, so it peaks at the same time each night.\n\nLie in after a bad night and you start the pressure late, so the next night is late\ntoo. That is how one bad night becomes a bad week.\n\n## The hard part\n\nGetting up on time after a poor night feels cruel. It is the part that works. The\ntiredness you feel that day is sleep pressure, and it will carry you to sleep that\nnight. A fixed schedule is one of the core parts of cognitive behavioural therapy for\ninsomnia, which reliably helps people fall asleep faster and wake less.\n\n## Do this\n\nPick a wake-up time you can keep on Saturday and Sunday too, within half an hour.\nSet one alarm for it, and get up when it goes, however the night went.\n\n*Trauer et al., 2015, Annals of Internal Medicine.*"
+    },
+    {
+     "id": "bed_for_sleep",
+     "day": -1,
+     "title": "Bed is for sleeping",
+     "summary": "If you cannot sleep, get up. It sounds wrong and it works.",
+     "min": 3,
+     "tags": [
+      "sleep"
+     ],
+     "debuffs": [],
+     "body": "Your brain learns what a place is for. If your bed is where you scroll, worry, eat\nand lie awake for hours, your brain learns that bed is a place for being awake.\n\nThe fix is called *stimulus control*, and it is one of the oldest and best-tested\ntreatments for insomnia. It is simple and slightly annoying.\n\n## The rules\n\nUse the bed for sleep, and nothing else that keeps you awake.\n\nGo to bed when you are sleepy, not when the clock says so.\n\nIf you have been awake for what feels like twenty minutes, get up. Go to another\nroom, keep the light dim, and do something dull: fold washing, read something boring.\nGo back to bed when you feel sleepy again. Repeat as often as it takes.\n\n## Why it works\n\nEvery time you get up instead of lying there frustrated, you break the link between\nbed and being awake. After a week or two, lying down starts to mean sleep again.\n\nThe first few nights can be short. That is the wake-up time and the sleep pressure\ndoing their work.\n\n## Do this\n\nTonight, if you are lying awake and it feels like twenty minutes, get up. Do one dull\nthing in dim light, and go back only when you are sleepy.\n\n*Bootzin, 1972; part of the therapy reviewed in Trauer et al., 2015.*"
+    },
+    {
+     "id": "wind_down",
+     "day": -1,
+     "title": "The last hour",
+     "summary": "Give your mind somewhere to put the day.",
+     "min": 3,
+     "tags": [
+      "sleep"
+     ],
+     "debuffs": [],
+     "body": "You cannot go from full speed to asleep. The last hour before bed is the slope down,\nand it works better with something on it.\n\n## Lower the light\n\nBright light late in the evening tells your body clock it is still day. Dim the room\nand turn the screen brightness down for the last hour. If you use your phone, use it\nfor something calm, and stop at the same time each night.\n\n## Put the day down\n\nA lot of lying awake is your mind carrying tomorrow. Give it somewhere else to put\nit. In one study, people who spent five minutes before bed writing a to-do list for\nthe next few days fell asleep faster than people who wrote about what they had\nalready done. The more specific the list, the faster they fell asleep.\n\n## Keep it the same\n\nA wind-down routine works through repetition, like any habit: the same few things in\nthe same order become a signal that sleep is next. It can be small: plug the phone in\nacross the room, wash your face, write the list, lights down.\n\n## Do this\n\nTonight, five minutes before bed, write tomorrow's to-do list. Be specific:\n\"email Sam about Thursday\", not \"work stuff\". Then put it out of reach.\n\n*Scullin et al., 2018, Journal of Experimental Psychology: General.*"
+    },
+    {
+     "id": "caffeine_light",
+     "day": -1,
+     "title": "Coffee, light and the clock",
+     "summary": "Two things you take in during the day that decide your night.",
+     "min": 3,
+     "tags": [
+      "sleep"
+     ],
+     "debuffs": [],
+     "body": "Two things during the day shape your night more than anything you do in bed.\n\n## Caffeine lasts longer than it feels\n\nCaffeine blocks the chemical that builds up as sleep pressure, and it stays in your\nbody for hours after the buzz fades. In a sleep lab study, caffeine taken six hours\nbefore bed still cut total sleep by more than an hour, even though people did not\nfeel it was keeping them awake.\n\nSo the cup at four in the afternoon is part of the night. A cut-off around lunch is a\ngood start: early enough that most of it is gone by bedtime.\n\n## Light in the morning\n\nYour body clock sets itself from daylight, and morning light is the strongest signal.\nA few minutes outside, or at a window, soon after you get up tells your body when the\nday started, which makes it easier to feel sleepy at the right time that night.\n\nEven a cloudy morning outside is far brighter than a lit room inside.\n\n## Do this\n\nHave your last coffee or tea with caffeine before one o'clock today. Tomorrow, within\nan hour of getting up, stand outside or at an open window for five minutes.\n\n*Drake et al., 2013, Journal of Clinical Sleep Medicine.*"
+    }
+   ]
+  },
+  {
+   "id": "move",
+   "title": "Move for your mood",
+   "blurb": "Five reads on what moving does for how you feel.",
+   "icon": "sneakers",
+   "lessons": [
+    {
+     "id": "any_movement",
+     "day": -1,
+     "title": "Some is most of it",
+     "summary": "The biggest gain is from none to a little.",
+     "min": 3,
+     "tags": [
+      "move"
+     ],
+     "debuffs": [],
+     "body": "The guidelines say adults should do 150 to 300 minutes of moderate activity a week,\nand something that works the muscles on two or more days. That sounds like a lot if\nyou are starting from the sofa.\n\nHere is the part that matters more: the biggest health gain is not from the athlete\nwho adds an hour. It is from the person who goes from almost nothing to a little.\nThe guidelines say it plainly: some activity is better than none, and every bit\ncounts.\n\n## What counts\n\nAnything that makes you breathe a bit harder. A brisk walk, stairs, carrying the\nshopping, dancing in the kitchen, cycling to the shop. It does not have to be in one\ngo. Ten minutes three times is the same as thirty once.\n\n## Why this matters for you\n\nIf the target feels impossible, you will not start. If the target is ten minutes,\nyou will. And once ten minutes is normal, twenty is a small step, not a leap.\n\nThat is why training in this app starts with one set, and counts a single walk as a\nday.\n\n## Do this\n\nGo for a ten-minute walk today, fast enough that you could talk but not sing. Log it\nunder Training. That is a day.\n\n*Bull et al., 2020, British Journal of Sports Medicine: the WHO 2020 guidelines.*"
+    },
+    {
+     "id": "exercise_mood",
+     "day": -1,
+     "title": "What it does for your mood",
+     "summary": "Moving helps low mood, and harder helps more.",
+     "min": 4,
+     "tags": [
+      "move"
+     ],
+     "debuffs": [],
+     "body": "Exercise is one of the most reliable things you can do for a low mood, and the\nevidence for it is large.\n\nA review in 2024 pulled together 218 trials of exercise for depression. Walking or\njogging, yoga and strength training all reduced symptoms. Harder sessions helped more\nthan gentle ones, but even light movement like walking helped. People also stuck with\nyoga and strength training better than with some other kinds.\n\n## Why it works\n\nNobody knows every part of it. Moving changes your body's chemistry, improves sleep,\ngives you a sense of having done something, and gets you out of the loop of thoughts\nfor a while. It is also a small win you can have on a day with no other wins.\n\n## The catch\n\nWhen your mood is low, moving is the last thing you feel like doing. That is not a\nsign it will not help. It is a sign of the low mood. Feeling like it usually comes\nafter you start, not before.\n\n## A note\n\nExercise helps, and it is not a replacement for proper help if you need it. If your\nmood has been low for weeks, talk to your doctor too.\n\n## Do this\n\nNext time you feel low, move for ten minutes first, then decide how you feel. Walk,\nstretch or do one set of something. Notice the difference, if there is one.\n\n*Noetel et al., 2024, BMJ.*"
+    },
+    {
+     "id": "strength_twice",
+     "day": -1,
+     "title": "Strength, twice a week",
+     "summary": "Muscles are not just for looks: they are for the rest of your life.",
+     "min": 3,
+     "tags": [
+      "move"
+     ],
+     "debuffs": [],
+     "body": "Strength training is not only for people who want to look a certain way. Muscle is\nwhat gets you up stairs, carries the shopping, and keeps you steady on your feet for\ndecades. You lose some every year after your thirties unless you use it.\n\nThat is why the guidelines ask for something that works the muscles on two or more\ndays a week, on top of moving around.\n\n## You do not need a gym\n\nYour own body is enough to start: push-ups against a wall, sitting down and standing\nup from a chair, a plank on the floor. When those get easy, there is a harder\nversion of each. That is how the training ladders in this app work.\n\n## What a session needs\n\nNot much. Work the main groups: something that pushes, something that pulls,\nsomething for your legs, something for your middle. Two or three sets of each, close\nto as many as you can do well. Twenty minutes is plenty.\n\n## Rest is part of it\n\nMuscles get stronger between sessions, not during them. A day off in between is not\nskipping. It is the other half of training.\n\n## Do this\n\nDo two strength sessions this week, any size. Even one set each of push-ups and\nsquats counts. Training shows your strength days for the week.\n\n*Bull et al., 2020, British Journal of Sports Medicine.*"
+    },
+    {
+     "id": "progress_slowly",
+     "day": -1,
+     "title": "One more than last time",
+     "summary": "How strength actually grows: a rep at a time.",
+     "min": 3,
+     "tags": [
+      "move"
+     ],
+     "debuffs": [],
+     "body": "The way strength grows is almost boring. You do a little more than last time, often.\n\nCoaches call it *progressive overload*: your body adapts to what you ask of it, so to\nkeep improving you ask for slightly more. The simplest version is double progression.\nPick a range, say eight to twelve. Each session, try to do one more rep than last\ntime. When you reach twelve, make it harder (a harder version, or a little more\nweight) and go back to eight.\n\nThat is exactly what the suggestions in Training do. Every number is your last\nsession plus one step, never a guess.\n\n## Sore is normal, pain is not\n\nFeeling stiff a day or two after a new exercise is normal and fades as you get used\nto it. Sharp pain, pain in a joint, or pain that gets worse as you go means stop. Try\nan easier version, and if it keeps happening, ask a doctor or physiotherapist.\n\n## Slow is fast\n\nThe people who get strongest are the ones who keep going, not the ones who go hardest\nin the first week. A plan you can repeat beats a plan that hurts.\n\n## Do this\n\nLook at your best set at one exercise in Training. Next time, do one more than that.\nJust one.\n\n*American College of Sports Medicine, 2009, Medicine & Science in Sports & Exercise.*"
+    },
+    {
+     "id": "not_in_the_mood",
+     "day": -1,
+     "title": "When you do not feel like it",
+     "summary": "Motivation follows action more often than it leads it.",
+     "min": 3,
+     "tags": [
+      "move"
+     ],
+     "debuffs": [],
+     "body": "Waiting until you feel like exercising is like waiting until you feel rested before\ngoing to bed. The feeling usually comes after.\n\nThis is the idea behind *behavioural activation*, one of the best-supported\ntreatments for low mood: you plan small, valued activities and do them whether or\nnot you feel like it, and your mood catches up. It does not ask you to change how you\nfeel first. It asks you to change what you do, and lets the feeling follow.\n\n## Make the first step stupidly small\n\nNot \"go for a run\". Put your shoes on. Not \"do a workout\". Do one push-up. The first\nstep should be so small that saying no to it feels silly. Once you are moving, the\nsecond step is much easier than the first.\n\n## Plan it, do not decide it\n\nDecide the night before: when, where, what. \"After I put the kettle on, I do ten\nsquats.\" When the moment comes, there is nothing to decide, only something to do.\n\n## Do this\n\nPick tomorrow's moment now: after something you already do every day. Write it down\nas \"After I ___, I will ___.\" Then make the ___ small enough that you will.\n\n*Ekers et al., 2014, PLoS ONE.*"
+    }
+   ]
+  },
+  {
+   "id": "unstuck",
+   "title": "Getting unstuck",
+   "blurb": "Five reads on starting when starting feels impossible.",
+   "icon": "map",
+   "lessons": [
+    {
+     "id": "action_first",
+     "day": -1,
+     "title": "Action comes before motivation",
+     "summary": "You do not have to feel ready. You have to start small.",
+     "min": 3,
+     "tags": [
+      "unstuck"
+     ],
+     "debuffs": [],
+     "body": "When you are stuck, it feels as if you are waiting for something: energy, motivation,\na good day. The waiting makes sense from the inside. It almost never works.\n\nLow mood and low motivation feed each other. You do less, so there is less that feels\ngood or useful in your day, so your mood drops, so you do less. The way out is not to\nfeel better first. It is to do a little, which gives your mood something to work with.\n\n## Pick something that matters\n\nNot everything you do has the same effect. Things that give you a sense of pleasure,\nor a sense of having done something useful, or that fit what you care about, lift\nmood the most. Washing up a few plates can count. So can sending a message to a\nfriend.\n\n## Keep a tiny record\n\nNote what you did and how you felt after, even roughly. Over a week, you will see\nwhich things help. That is your own evidence, which is far more convincing than any\narticle.\n\n## Do this\n\nChoose one small thing that would make tomorrow slightly better, and do two minutes\nof it today. Afterwards, notice how you feel compared with before.\n\n*Martell, Addis & Jacobson, 2001, Depression in Context.*"
+    },
+    {
+     "id": "procrastination_mood",
+     "day": -1,
+     "title": "Putting it off is about feelings",
+     "summary": "Procrastination is mood repair, not laziness.",
+     "min": 3,
+     "tags": [
+      "unstuck"
+     ],
+     "debuffs": [],
+     "body": "If you keep putting something off, it is probably not because you are lazy. It is\nbecause the task brings up a feeling you would rather not have: boredom, dread,\nself-doubt, overwhelm. Putting it off makes the feeling go away. For now.\n\nResearchers describe procrastination as short-term mood repair. It works in the\nmoment, which is why it is so hard to stop, and it costs more later, because the task\nis still there and now it comes with guilt.\n\n## Name the feeling\n\nAsk: what does this task make me feel? Bored? Scared it will be bad? Not sure where\nto start? Naming it takes some of its power away, and it tells you what to fix. Not\nsure where to start needs a smaller first step. Scared it will be bad needs\npermission to do a rough version.\n\n## Shrink the first step\n\nMake the first step so small that the feeling barely has time to show up. Open the\ndocument. Write one sentence. Find the envelope.\n\n## Be kind about it\n\nBeating yourself up over past procrastination makes the next round worse. Students\nwho forgave themselves for putting off revision procrastinated less on the next exam.\n\n## Do this\n\nPick the thing you have been putting off. Name the feeling in one word, then do the\nfirst two minutes. Stop after two minutes if you want to.\n\n*Sirois & Pychyl, 2013, Social and Personality Psychology Compass.*"
+    },
+    {
+     "id": "if_then",
+     "day": -1,
+     "title": "If this, then that",
+     "summary": "A plan with a moment in it works far better than a wish.",
+     "min": 3,
+     "tags": [
+      "unstuck"
+     ],
+     "debuffs": [],
+     "body": "\"I will exercise more\" is a wish. \"When I get home from work, I will put my trainers\non before I sit down\" is a plan. The difference is huge.\n\nPsychologists call these *implementation intentions*: if-then plans that link a\nspecific moment to a specific action. Across 94 studies, people who made them were\nmuch more likely to follow through on their goals than people who only set the goal.\n\n## Why it works\n\nThe moment does the remembering for you. You do not have to keep the goal in your\nhead all day and decide again when to do it. When the moment arrives, it triggers the\naction, almost automatically.\n\n## How to write one\n\nPick a moment that happens every day and is easy to notice: after you brush your\nteeth, when you sit down on the bus, when the kettle boils. Then pick an action small\nenough to do every time.\n\n\"When the kettle boils, I will do five squats.\" \"When I sit on the bus, I will read\none page.\"\n\nThis is what the times and moments in this app are for.\n\n## Do this\n\nWrite one if-then plan for something you keep meaning to do: \"When ___, I will ___.\"\nMake the moment specific and the action small.\n\n*Gollwitzer & Sheeran, 2006, Advances in Experimental Social Psychology.*"
+    },
+    {
+     "id": "make_it_tiny",
+     "day": -1,
+     "title": "Shrink it until it is easy",
+     "summary": "Tiny is not a compromise. It is the method.",
+     "min": 3,
+     "tags": [
+      "unstuck"
+     ],
+     "debuffs": [],
+     "body": "Most habits fail because they start too big. \"Go to the gym every day\" survives about\na week. \"Do one push-up after I brush my teeth\" can survive for years, and it\nquietly grows.\n\nA habit is built by repeating the same small act in the same moment until it happens\nwithout thinking. In one study following people forming new habits, it took a median\nof 66 days to become automatic, with a range of 18 to 254. What mattered was the\nrepetition, not the size. And missing a single day did not undo it.\n\n## How small\n\nSmall enough that you could do it on your worst day. If you are not sure, halve it.\nThen halve it again. One page, one push-up, one glass of water, one line in a journal.\n\n## It grows on its own\n\nOnce the tiny version is automatic, doing more is easy, and often happens by itself.\nYou put on your trainers \"just to walk to the end of the road\" and end up walking for\ntwenty minutes. But the habit is the tiny version. Anything more is a bonus.\n\nThat is why \"tiny\" in this app counts in full.\n\n## Do this\n\nTake one habit you keep failing at. Halve it, and halve it again. Do that tiny\nversion today, at the same moment you will do it tomorrow.\n\n*Lally et al., 2010, European Journal of Social Psychology.*"
+    },
+    {
+     "id": "after_a_slip",
+     "day": -1,
+     "title": "After a slip",
+     "summary": "What you say to yourself after a bad day decides the next one.",
+     "min": 3,
+     "tags": [
+      "unstuck"
+     ],
+     "debuffs": [],
+     "body": "You missed a few days. Or a few weeks. The next thought is often: \"I have ruined it,\nso what is the point.\" That thought does more damage than the missed days ever did.\n\n## A slip is not a reset\n\nIn research on how habits form, a single missed day made no real difference to how\nautomatic the habit became. Habits are built across weeks, not days. The only way a\nslip becomes a stop is if it turns into a reason to give up.\n\n## Kindness works better than criticism\n\nIt feels as if being hard on yourself should motivate you. The evidence says the\nopposite. In a series of studies, people who were encouraged to treat a mistake with\nself-compassion, the kindness you would give a friend, were more motivated to improve\nand put in more effort afterwards than people who were encouraged to build up their\nself-esteem or given no help at all.\n\n## Start again tiny\n\nThe first day back is not the day to make up for lost time. Do the tiny version. The\npoint is to reconnect the habit to its moment, not to prove anything.\n\n## Do this\n\nIf you have slipped recently, say out loud: \"That happened, and it is normal. I am\nstarting again today.\" Then do the smallest version of the habit, now.\n\n*Breines & Chen, 2012, Personality and Social Psychology Bulletin; Lally et al., 2010.*"
+    }
+   ]
+  },
+  {
+   "id": "calm",
+   "title": "A quieter mind",
+   "blurb": "Five reads on worry, feelings and the voice in your head.",
+   "icon": "candle",
+   "lessons": [
+    {
+     "id": "worry_time",
+     "day": -1,
+     "title": "Give worry an appointment",
+     "summary": "Worry postponed is often worry that never comes back.",
+     "min": 3,
+     "tags": [
+      "calm"
+     ],
+     "debuffs": [],
+     "body": "Worry tends to spread through the whole day. A thought arrives, you follow it, and an\nhour has gone. Telling yourself to stop worrying rarely works.\n\nWhat does work is giving worry a place and a time. It is called *worry postponement*,\nand it was first tested in the 1980s with people who worried a lot. They set aside\nhalf an hour at the same time and place each day for worrying, and postponed every\nworry that turned up at other times until then. Their worry went down.\n\n## How to do it\n\nPick fifteen minutes at a set time, not right before bed. When a worry turns up\nduring the day, write it down in a word or two and tell it: \"Later.\"\n\nThen, at worry time, read the list. Worry about anything still worth worrying about.\nFor each one, ask: is there something I can do about this? If yes, write the first\nstep. If no, let it sit.\n\n## What you will notice\n\nMany worries do not need the appointment by the time it comes. They were urgent only\nin the moment.\n\n## Do this\n\nChoose your worry time today, and write it down. For the rest of the day, note each\nworry in two words and say \"later\". At worry time, look at the list.\n\n*Borkovec et al., 1983, Behaviour Research and Therapy.*"
+    },
+    {
+     "id": "slow_breathing",
+     "day": -1,
+     "title": "Slow breathing, on purpose",
+     "summary": "Five minutes of a long breath out changes how you feel.",
+     "min": 3,
+     "tags": [
+      "calm"
+     ],
+     "debuffs": [],
+     "body": "Your breathing is one of the few parts of your body's stress system you can steer\ndirectly. When you breathe out slowly, your heart rate drops a little, and your body\nreads that as a signal that things are safe.\n\n## The cyclic sigh\n\nIn a study comparing breathing techniques, people who did five minutes a day of\n*cyclic sighing* felt better, and less anxious, than people who did mindfulness\nmeditation for the same time.\n\nIt goes like this: breathe in through your nose, then take a second short breath in\non top of it to fill your lungs completely. Then let it all out slowly through your\nmouth, taking longer to breathe out than you did to breathe in. Repeat.\n\n## When to use it\n\nAny time you notice you are tense, and on purpose at a set moment each day, so it\nbecomes easy to reach for. It is the Heart routine called slow breathing in this app.\n\n## A note\n\nIf breathing exercises make you feel dizzy or more anxious, breathe more gently, or\nstop. It should feel calming, not like a test.\n\n## Do this\n\nRight now, or at your next tense moment: three cyclic sighs. Two breaths in through\nthe nose, one long breath out through the mouth.\n\n*Balban et al., 2023, Cell Reports Medicine.*"
+    },
+    {
+     "id": "name_it",
+     "day": -1,
+     "title": "Name it to tame it",
+     "summary": "Putting a feeling into words turns its volume down.",
+     "min": 3,
+     "tags": [
+      "calm"
+     ],
+     "debuffs": [],
+     "body": "When a strong feeling arrives, the instinct is to push it away or to follow it. There\nis a third option that sounds too simple to work: name it.\n\nIn a brain imaging study, simply putting a label on an emotional image, choosing the\nword \"angry\" or \"scared\", reduced activity in the part of the brain that responds to\nthreat, more than other ways of looking at the same image. Researchers call this\n*affect labelling*. Naming the feeling seems to bring the thinking parts of the brain\nback online.\n\n## How to do it\n\nPause and finish the sentence: \"Right now I feel ___.\" One word is enough. If you can\nbe more precise, do: \"disappointed\" is more useful than \"bad\". If there is more than\none feeling, name each.\n\nYou do not have to fix it, explain it or argue with it. Naming is the whole step.\n\n## Why it helps later\n\nOver time, noticing your feelings early makes them easier to handle before they get\nbig. It also gives you a record: what you feel, when, and after what.\n\nThis is the Heart routine called Name it.\n\n## Do this\n\nThree times today, at random moments, stop and finish the sentence: \"Right now I feel\n___.\" Write the word down if you can.\n\n*Lieberman et al., 2007, Psychological Science.*"
+    },
+    {
+     "id": "thoughts_not_facts",
+     "day": -1,
+     "title": "Thoughts are not facts",
+     "summary": "You can notice a thought without having to believe it.",
+     "min": 3,
+     "tags": [
+      "calm"
+     ],
+     "debuffs": [],
+     "body": "Your mind produces thoughts all day, and some of them are cruel: \"Everyone thinks I\nam strange.\" \"I always mess things up.\" They arrive sounding like facts. They are\nnot. They are thoughts.\n\nTherapists call the skill of seeing that difference *defusion*: stepping back far\nenough to see a thought as words your mind is producing, rather than as the truth\nabout the world.\n\n## Two ways in\n\nAdd a frame. Instead of \"I am useless\", say \"I am having the thought that I am\nuseless.\" The thought is the same. Your relationship to it changes.\n\nWear it out. In one study, repeating a negative word about yourself out loud,\nquickly, for half a minute made it feel less believable and less upsetting. Said\nenough times, words go back to being sounds.\n\n## What this is not\n\nIt is not arguing with the thought or replacing it with a positive one. You do not\nhave to win against your mind. You just have to stop taking every word it says as\nan order.\n\n## Do this\n\nNotice the harshest thing your mind tells you today. Say it again, starting with \"I\nam having the thought that...\". Notice whether it lands any differently.\n\n*Masuda et al., 2004, Behaviour Research and Therapy.*"
+    },
+    {
+     "id": "kind_voice",
+     "day": -1,
+     "title": "Talk to yourself like a friend",
+     "summary": "Self-compassion is not letting yourself off. It is how people keep going.",
+     "min": 3,
+     "tags": [
+      "calm"
+     ],
+     "debuffs": [],
+     "body": "Listen to how you talk to yourself after a mistake. Now imagine saying the same words\nto a friend who made the same mistake. Most people could not.\n\n*Self-compassion* is treating yourself with the kindness you would give a friend. It\nhas three parts: being kind rather than harsh, remembering that struggling is part of\nbeing human rather than proof something is wrong with you, and noticing painful\nfeelings without drowning in them.\n\n## It is not going easy on yourself\n\nPeople worry that being kind to themselves will make them lazy. The research points\nthe other way. People who are more self-compassionate tend to have less anxiety and\ndepression, and they are more willing to try again after a failure, because failing\ndoes not cost them as much.\n\n## How to start\n\nWhen you notice the harsh voice, ask: \"What would I say to a friend right now?\" Then\nsay that to yourself, even if it feels awkward. Putting a hand on your chest while you\ndo it can help, which is why the Heart routine called Kind voice includes it.\n\n## Do this\n\nThink of something you are being hard on yourself about. Write two sentences you\nwould say to a friend in the same position. Then read them to yourself.\n\n*Neff, 2003, Self and Identity; MacBeth & Gumley, 2012, Clinical Psychology Review.*"
+    }
+   ]
+  }
+ ]
+}

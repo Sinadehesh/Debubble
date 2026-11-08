@@ -60,6 +60,8 @@ import com.debubble.app.engine.Today
 import com.debubble.app.engine.Tour
 import com.debubble.app.engine.TourSpot
 import com.debubble.app.engine.World
+import com.debubble.app.ui.components.BlockButton
+import com.debubble.app.engine.Target
 import com.debubble.app.ui.components.Glyph
 import com.debubble.app.ui.components.Glyphs
 import com.debubble.app.ui.components.HabitatAnnouncement
@@ -144,7 +146,12 @@ fun DashboardScreen(
     onOpenRoom: () -> Unit,
     onCheckIn: () -> Unit,
     /** Hoisted so the tour can scroll to what it is pointing at. */
-    scroll: ScrollState = rememberScrollState()
+    scroll: ScrollState = rememberScrollState(),
+    /** One set of something, sized to last time. See engine/Training.kt. */
+    move: Target? = null,
+    trainedToday: Boolean = false,
+    onMoveDone: (Target) -> Unit = {},
+    onOpenTraining: () -> Unit = {}
 ) {
     val stage = state.stage
     val next = Today.next(quests)
@@ -239,6 +246,11 @@ fun DashboardScreen(
                 onOpenRoutedCampaign = onOpenRoutedCampaign,
                 onOpenRoutedRemediation = onOpenRoutedRemediation
             )
+
+            if (move != null) {
+                VSpace(6)
+                MoveCard(art, move, trainedToday, onDone = { onMoveDone(move) }, onOpen = onOpenTraining)
+            }
 
             VSpace(6)
             WorldStrip(
@@ -443,6 +455,44 @@ private fun LetterRow(
             )
         }
         SpriteIcon(art, if (done) Today.ICON_DONE else Today.ICON_TODO, pixelScale = pixelScale(2f))
+    }
+}
+
+/**
+ * A move for right now: one set of one exercise, sized to what you did last time. An exercise
+ * snack, which is how fitness gets built by people who would never do a full session. The
+ * card opens Training; the button logs the set as suggested.
+ */
+@Composable
+private fun MoveCard(art: RoomArt, move: Target, trainedToday: Boolean, onDone: () -> Unit, onOpen: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .panel(fill = Ink.Body.wash)
+            .clickable(role = Role.Button, onClickLabel = "Open training", onClick = onOpen)
+            .padding(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(44.dp)
+                .clip(Cut.small)
+                .background(Ink.Surface)
+                .border(BorderStroke(2.dp, Ink.Border), Cut.small),
+            contentAlignment = Alignment.Center
+        ) {
+            SpriteIcon(art, move.exercise.icon, pixelScale = pixelScale(1.8f))
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Label(if (trainedToday) "Another move?" else "A move for right now", color = Ink.Body, strong = true)
+            Text(
+                text = move.label.replaceFirstChar { it.uppercase() },
+                color = Ink.Primary,
+                style = MaterialTheme.typography.titleMedium
+            )
+        }
+        BlockButton("Did it", modifier = Modifier.width(92.dp), small = true, onClick = onDone)
     }
 }
 

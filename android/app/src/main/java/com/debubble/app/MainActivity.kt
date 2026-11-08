@@ -1,6 +1,23 @@
 package com.debubble.app
 
 import android.content.Intent
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import androidx.compose.ui.platform.LocalContext
+import com.debubble.app.engine.Care
+import com.debubble.app.engine.HabitKind
+import com.debubble.app.engine.Premium
+import com.debubble.app.engine.Reading
+import com.debubble.app.engine.RoomTap
+import com.debubble.app.engine.Training
+import com.debubble.app.ui.screens.BookShelf
+import com.debubble.app.ui.screens.HabitLine
+import com.debubble.app.ui.screens.HabitListScreen
+import com.debubble.app.ui.screens.HabitPageScreen
+import com.debubble.app.ui.screens.PackScreen
+import com.debubble.app.ui.screens.PremiumScreen
+import com.debubble.app.ui.screens.TrainingScreen
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -129,6 +146,9 @@ private fun DeBubbleApp(
     val route by vm.route.collectAsStateWithLifecycle()
     val pulse by vm.pulse.collectAsStateWithLifecycle()
     val tourAsked by vm.tour.collectAsStateWithLifecycle()
+    val offer by vm.offer.collectAsStateWithLifecycle()
+    val billingAvailable by vm.billingAvailable.collectAsStateWithLifecycle()
+    val billingNotice by vm.billingNotice.collectAsStateWithLifecycle()
     // The room's sprites, decoded once for the whole app.
     val art = rememberRoomArt(vm.items)
 
@@ -234,7 +254,11 @@ private fun DeBubbleApp(
                                         welcomeBack = vm.welcomeBack(state),
                                         onRoomTap = vm::openFromRoom,
                                         onOpenRoom = vm::openRoom,
-                                        onCheckIn = vm::openCheckIn
+                                        onCheckIn = vm::openCheckIn,
+                                        move = Training.snack(state.workouts, vm.todayDay(), state.placeEnum),
+                                        trainedToday = state.workouts.any { it.epochDay == vm.todayDay() },
+                                        onMoveDone = { t -> vm.logSet(t.exercise.id, t.amount, t.kg) },
+                                        onOpenTraining = vm::openTraining
                                     )
                                 }
                                 TabBar(
@@ -291,7 +315,11 @@ private fun DeBubbleApp(
                             onToggleAmbient = vm::toggleAmbient,
                             widgetPlaced = vm.widgetPlaced(),
                             onAddWidget = vm::requestWidget,
-                            onReplayTour = vm::replayTour
+                            onReplayTour = vm::replayTour,
+                            onOpenHabits = vm::openHabits,
+                            onOpenTraining = vm::openTraining,
+                            onPremium = vm::openPaywall,
+                            premiumPrice = offer?.line ?: Premium.FALLBACK_PRICE
                         )
                     }
                 }
@@ -504,16 +532,32 @@ private fun DeBubbleApp(
                             dayIndex = vm.dayIndex(state),
                             debuffs = state.debuffs,
                             read = state.lessonsRead,
-                            onOpen = vm::openLesson
+                            onOpen = vm::openLesson,
+                            books = BookShelf(
+                                reading = state.reading,
+                                finished = Reading.shelf(state.books),
+                                pagesToday = Reading.pagesOn(state.readingLog, vm.todayDay()),
+                                pace = Reading.pace(state.readingLog, vm.todayDay()),
+                                onAdd = vm::addBook,
+                                onRead = vm::readPages,
+                                onSetPage = vm::setPage,
+                                onFinish = vm::finishBook,
+                                onRemove = vm::removeBook
+                            ),
+                            packs = vm.readingRoom.packs,
+                            premium = state.isPremium,
+                            onOpenPack = vm::openPack
                         )
                     }
                 }
 
                 is Route.ReadLesson -> {
-                    BackHandler { vm.goLearn() }
-                    val lesson = vm.learn.byId(r.id)
-                    if (lesson == null) {
-                        LaunchedEffect(Unit) { vm.goLearn() }
+                    val pack = vm.readingRoom.packOf(r.id)
+                    val leave = { if (pack != null) vm.openPack(pack.id) else vm.goLearn() }
+                    BackHandler { leave() }
+                    val lesson = vm.learn.byId(r.id) ?: vm.readingRoom.lesson(r.id)
+                    if (lesson == null || !vm.canRead(state, r.id)) {
+                        LaunchedEffect(Unit) { leave() }
                     } else {
                         // Opening it is reading it. A separate "mark as read" that people forget
                         // to press just makes the counter lie.
@@ -523,7 +567,8 @@ private fun DeBubbleApp(
                                 lesson = lesson,
                                 isRead = r.id in state.lessonsRead,
                                 onAddNote = { vm.newNote(linkLessonId = r.id) },
-                                onBack = vm::goLearn
+                                onBack = leave,
+                                kicker = pack?.title
                             )
                         }
                     }
@@ -687,7 +732,8 @@ private fun DeBubbleApp(
                                 daily = "Every day",
                                 dailyFirst = true
                             ),
-                            firstTime = state.neverCared
+                            firstTime = state.neverCared,
+                            onTraining = if (d == Domain.BODY) vm::openTraining else null
                         )
                     }
                 }
@@ -762,9 +808,126 @@ private fun DeBubbleApp(
                         CourageScreen(art = art, friction = r.friction, reason = r.reason, onDone = vm::goDashboard)
                     }
                 }
+
+                is Route.Train -> {
+                    BackHandler { vm.back(r.back) }
+                    TrainingScreen(
+                        art = art,
+                        state = state,
+                        today = vm.todayDay(),
+                        h24 = vm.h24(),
+                        onLog = vm::logSet,
+                        onUndo = vm::undoSet,
+                        onPlace = vm::setPlace,
+                        onStartPlan = vm::startPlan,
+                        onStopPlan = vm::stopPlan,
+                        onPremium = vm::openPaywall,
+                        onBack = { vm.back(r.back) }
+                    )
+                }
+
+                is Route.HabitList -> {
+                    BackHandler { vm.back(r.back) }
+                    HabitListScreen(
+                        art = art,
+                        stats = vm.habitStats(state),
+                        names = Domain.order.associate { d -> HabitKind.of(d) to vm.care.chosen(d, state.care(d)).title },
+                        insights = vm.insights(state),
+                        premium = state.isPremium,
+                        onOpen = vm::openHabit,
+                        onPremium = vm::openPaywall,
+                        onBack = { vm.back(r.back) }
+                    )
+                }
+
+                is Route.HabitPage -> {
+                    BackHandler { vm.back(r.back) }
+                    val k = r.kind
+                    val d = k.domain
+                    val cs = d?.let { state.care(it) }
+                    val routine = d?.let { vm.care.chosen(it, state.care(it)) }
+                    val reminder = d?.let { vm.reminderFor(state, "${Today.CARE}${it.name}") }
+                    HabitPageScreen(
+                        art = art,
+                        kind = k,
+                        stats = vm.habitStats(state).getValue(k),
+                        name = routine?.title,
+                        cue = if (cs != null && routine != null) "When ${cs.anchor.ifBlank { routine.anchors.first() }}, I do it." else null,
+                        feelings = vm.feelings(state)[k],
+                        automaticity = cs?.let { Care.automaticity(Care.daysWithRoutine(it)) },
+                        daysWithRoutine = cs?.let { Care.daysWithRoutine(it) },
+                        reminder = reminder?.let { Reminders.short(it, vm.todayDay(), vm.h24()) },
+                        recent = vm.habitRecent(state, k).map { (day, text) -> HabitLine(day, text) },
+                        today = vm.todayDay(),
+                        h24 = vm.h24(),
+                        doLabel = when (k) {
+                            HabitKind.BODY, HabitKind.ROOM, HabitKind.HEART -> "Do it now"
+                            HabitKind.OUTSIDE -> "Open today's letter"
+                            HabitKind.TRAINING -> "Open training"
+                            HabitKind.READING -> "Open your books"
+                        },
+                        onDo = {
+                            when (k) {
+                                HabitKind.BODY -> vm.openCare(Domain.BODY)
+                                HabitKind.ROOM -> vm.openCare(Domain.ROOM)
+                                HabitKind.HEART -> vm.openCare(Domain.HEART)
+                                HabitKind.OUTSIDE -> vm.openChallenge(vm.todaysRoad(state))
+                                HabitKind.TRAINING -> vm.openTraining()
+                                HabitKind.READING -> vm.goLearn()
+                            }
+                        },
+                        onBack = { vm.back(r.back) }
+                    )
+                }
+
+                is Route.Pack -> {
+                    BackHandler { vm.goLearn() }
+                    val pack = vm.readingRoom.pack(r.id)
+                    if (pack == null) {
+                        LaunchedEffect(Unit) { vm.goLearn() }
+                    } else {
+                        PackScreen(
+                            art = art,
+                            pack = pack,
+                            read = state.lessonsRead,
+                            premium = state.isPremium,
+                            onOpen = vm::openReading,
+                            onPremium = vm::openPaywall,
+                            onBack = vm::goLearn
+                        )
+                    }
+                }
+
+                is Route.Paywall -> {
+                    BackHandler { vm.closePaywall(r) }
+                    val activity = LocalContext.current.findActivity()
+                    PremiumScreen(
+                        art = art,
+                        look = state.home.look,
+                        active = state.isPremium,
+                        since = state.premium.since,
+                        offerLine = offer?.line,
+                        trial = offer?.trial == true,
+                        available = billingAvailable,
+                        notice = billingNotice,
+                        onSubscribe = { activity?.let { vm.subscribe(it) } },
+                        onRestore = vm::restorePurchases,
+                        onClose = { vm.closePaywall(r) }
+                    )
+                }
             }
         }
     }
+}
+
+/** The activity a composable is hosted in, for Google Play's subscribe sheet. */
+private fun Context.findActivity(): Activity? {
+    var c: Context = this
+    while (c is ContextWrapper) {
+        if (c is Activity) return c
+        c = c.baseContext
+    }
+    return null
 }
 
 /** First-visit tips, by place. */

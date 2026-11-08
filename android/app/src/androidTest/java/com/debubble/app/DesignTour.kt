@@ -3,6 +3,8 @@ package com.debubble.app
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.debubble.app.engine.Domain
 import com.debubble.app.engine.Pillar
+import com.debubble.app.engine.HabitKind
+import com.debubble.app.engine.PremiumState
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -64,6 +66,19 @@ class DesignTour : Camera() {
         at("26-extra", Route.Routed(remediation = false))
         at("27-fix", Route.Routed(remediation = true))
         at("28-ending", Route.Transcendence(Pillar.ACCESS), wait = 3000)
+
+        // Training, habits, reading and Premium: first as everyone sees them, then with
+        // Premium on and a plan under way.
+        at("29-training", Route.Train())
+        at("30-habits", Route.HabitList())
+        at("31-habit", Route.HabitPage(HabitKind.BODY))
+        at("32-pack", Route.Pack("sleep"))
+        at("33-paywall", Route.Paywall(back = Route.Profile))
+        reseed { it.copy(premium = PremiumState(active = true, since = System.currentTimeMillis() - 9L * 86_400_000L), plan = "first_pushup", planDone = 4) }
+        at("34-training-plan", Route.Train())
+        at("35-insights", Route.HabitList())
+        at("36-premium-on", Route.Paywall(back = Route.Profile))
+        vm.readingRoom.pack("sleep")?.lessons?.getOrNull(1)?.let { at("37-reading-room-page", Route.ReadLesson(it.id)) }
     }
 
     private companion object {

@@ -17,6 +17,14 @@ import com.debubble.app.engine.PillarState
 import com.debubble.app.engine.Progress
 import com.debubble.app.engine.Reminder
 import com.debubble.app.engine.Stage
+import com.debubble.app.engine.Book
+import com.debubble.app.engine.Place
+import com.debubble.app.engine.Plan
+import com.debubble.app.engine.Plans
+import com.debubble.app.engine.PremiumState
+import com.debubble.app.engine.Reading
+import com.debubble.app.engine.ReadingEntry
+import com.debubble.app.engine.WorkoutSet
 import kotlinx.serialization.Serializable
 
 /** One line in the history. Completions and friction live in the same stream, deliberately. */
@@ -172,8 +180,41 @@ data class AppState(
     /** Decides which surprise item arrives next. Set once, on moving in. */
     val homeSeed: Long = 0L,
 
+    /* ---- training: the gym tracker ---- */
+
+    /** Every set ever logged. Kept for good: it is the record of getting stronger. */
+    val workouts: List<WorkoutSet> = emptyList(),
+    /** Where you train, which decides what gets suggested. A [Place] name. */
+    val place: String = Place.HOME.name,
+    /** The training plan being followed, by id, or empty for none. Premium. */
+    val plan: String = "",
+    /** Sessions of [plan] finished. Counted in sessions, not dates: nobody falls behind. */
+    val planDone: Int = 0,
+    /** The day a plan session was last finished, so one day finishes one session. */
+    val planDay: Long = 0L,
+
+    /* ---- reading ---- */
+
+    val books: List<Book> = emptyList(),
+    val readingLog: List<ReadingEntry> = emptyList(),
+
+    /* ---- Premium ---- */
+
+    /** What Play last said about the subscription. Only a real answer from Play changes it. */
+    val premium: PremiumState = PremiumState(),
+
     val log: List<LogEntry> = emptyList()
 ) {
+    val placeEnum: Place get() = runCatching { Place.valueOf(place) }.getOrDefault(Place.HOME)
+
+    val isPremium: Boolean get() = premium.active
+
+    /** The plan being followed, if any. Only while Premium is active. */
+    val activePlan: Plan? get() = if (isPremium) Plans.byId(plan) else null
+
+    /** Books being read, most recently touched first. */
+    val reading: List<Book> get() = Reading.reading(books, readingLog)
+
     fun state(p: Pillar): PillarState = pillars[p.name] ?: PillarState()
 
     fun withPillar(p: Pillar, s: PillarState): AppState =

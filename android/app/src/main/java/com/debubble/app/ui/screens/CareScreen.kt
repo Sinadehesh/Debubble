@@ -87,7 +87,9 @@ fun CareScreen(
     art: RoomArt,
     remind: RemindHost,
     /** Nothing looked after yet: say how this screen works, in order. */
-    firstTime: Boolean = false
+    firstTime: Boolean = false,
+    /** Your body's other habit: getting stronger. Shown on Body only. */
+    onTraining: (() -> Unit)? = null
 ) {
     val info = library.info(domain)
     val routine = library.chosen(domain, care)
@@ -194,6 +196,26 @@ fun CareScreen(
                     Text("Make it easier", color = Ink.Primary, style = MaterialTheme.typography.titleMedium)
                 }
                 Text(text = routine.ease, color = Ink.Primary, style = MaterialTheme.typography.bodyMedium)
+            }
+
+            if (onTraining != null) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = Space.tap)
+                        .panel()
+                        .clickable(role = Role.Button, onClick = onTraining)
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    SpriteIcon(art, "dumbbells", pixelScale = pixelScale(1.8f))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Training", color = Ink.Primary, style = MaterialTheme.typography.titleMedium)
+                        Label("Your body's other habit: a move for right now, plans and your bests.")
+                    }
+                    Glyph(Glyphs.ArrowRight, colour = Ink.Primary, size = 16)
+                }
             }
 
             // ---- why it works

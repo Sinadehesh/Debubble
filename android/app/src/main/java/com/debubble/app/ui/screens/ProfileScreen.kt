@@ -93,7 +93,12 @@ fun ProfileScreen(
     widgetPlaced: Boolean,
     onAddWidget: () -> Unit,
     /** The first-day tour of the home screen, again. */
-    onReplayTour: () -> Unit
+    onReplayTour: () -> Unit,
+    onOpenHabits: () -> Unit = {},
+    onOpenTraining: () -> Unit = {},
+    onPremium: () -> Unit = {},
+    /** "$4.99 a month", as Play reports it here. */
+    premiumPrice: String = com.debubble.app.engine.Premium.FALLBACK_PRICE
 ) {
     val nextHat = World.nextHat(art.catalogue, state.level)
 
@@ -180,6 +185,10 @@ fun ProfileScreen(
             }
             Glyph(Glyphs.ArrowRight, colour = Ink.Primary, size = 18)
         }
+
+        NavRow(art, "icon_spark", "Your habits", "Every day you did each one, and what they show together", onOpenHabits)
+        NavRow(art, "dumbbells", "Training", "A move for right now, plans and your bests", onOpenTraining)
+        PremiumCard(art = art, active = state.isPremium, price = premiumPrice, onOpen = onPremium)
 
         VSpace(14)
         SignHeader(art, World.BELL, "Reminders")
@@ -276,6 +285,28 @@ fun ProfileScreen(
             color = Ink.Muted,
             style = MaterialTheme.typography.bodyMedium
         )
+    }
+}
+
+/** A row that opens somewhere: its sign, what it is, a line about it, and an arrow. */
+@Composable
+private fun NavRow(art: RoomArt, icon: String, title: String, detail: String, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = Space.tap)
+            .panel()
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        SpriteIcon(art, icon, pixelScale = pixelScale(1.8f))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, color = Ink.Primary, style = MaterialTheme.typography.titleMedium)
+            Label(detail)
+        }
+        Glyph(Glyphs.ArrowRight, colour = Ink.Primary, size = 18)
     }
 }
 

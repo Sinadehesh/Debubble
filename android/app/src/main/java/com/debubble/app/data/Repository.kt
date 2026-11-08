@@ -14,6 +14,7 @@ import com.debubble.app.engine.Family
 import com.debubble.app.engine.ItemCatalogue
 import com.debubble.app.engine.Curriculum
 import com.debubble.app.engine.LearnCurriculum
+import com.debubble.app.engine.ReadingRoom
 import com.debubble.app.engine.RemediationPool
 import com.debubble.app.engine.Scene
 import com.debubble.app.engine.Today
@@ -118,6 +119,16 @@ class Repository(private val context: Context) {
         val days = c.course.map { it.day }.toSet()
         require(days == (1..30).toSet()) { "the Learn course has gaps: ${(1..30).toSet() - days}" }
         c
+    }
+
+    /** The reading room: Premium's packs of short reads. None may share an id with Learn. */
+    fun loadReadingRoom(learn: LearnCurriculum): ReadingRoom = readAsset("learn/reading.json") { raw ->
+        val room = json.decodeFromString<ReadingRoom>(raw)
+        require(room.packs.isNotEmpty()) { "the reading room is empty" }
+        room.packs.forEach { p -> require(p.lessons.isNotEmpty()) { "${p.id} has no pages" } }
+        val clash = room.packs.flatMap { p -> p.lessons.map { it.id } }.filter { learn.byId(it) != null }
+        require(clash.isEmpty()) { "reading room pages clash with Learn: $clash" }
+        room
     }
 
     /**

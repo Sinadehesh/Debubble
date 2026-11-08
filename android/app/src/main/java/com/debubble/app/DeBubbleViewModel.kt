@@ -1,6 +1,26 @@
 package com.debubble.app
 
 import android.app.Application
+import android.app.Activity
+import com.debubble.app.billing.Billing
+import com.debubble.app.engine.Book
+import com.debubble.app.engine.Entitlement
+import com.debubble.app.engine.HabitKind
+import com.debubble.app.engine.HabitStats
+import com.debubble.app.engine.Habits
+import com.debubble.app.engine.Insight
+import com.debubble.app.engine.Mark
+import com.debubble.app.engine.Moves
+import com.debubble.app.engine.Place
+import com.debubble.app.engine.Plans
+import com.debubble.app.engine.PlayAnswer
+import com.debubble.app.engine.Reading
+import com.debubble.app.engine.ReadingEntry
+import com.debubble.app.engine.ReadingRoom
+import com.debubble.app.engine.WorkoutSet
+import java.time.Instant
+import java.time.LocalTime
+import java.time.ZoneId
 import android.text.format.DateFormat
 import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.AndroidViewModel
@@ -133,6 +153,18 @@ sealed interface Route {
     ) : Route
     /** The room, full screen, for moving things around. */
     data object Room : Route
+
+    /* ---- training, habits, reading and Premium. [back] is where the back arrow goes. ---- */
+
+    /** The gym tracker: a move for right now, today's session, plans and your bests. */
+    data class Train(val back: Route = Dashboard) : Route
+    /** Every habit, each with its own page. */
+    data class HabitList(val back: Route = Profile) : Route
+    data class HabitPage(val kind: HabitKind, val back: Route = HabitList()) : Route
+    /** One pack in the reading room. */
+    data class Pack(val id: String) : Route
+    /** What Premium adds and what it costs. */
+    data class Paywall(val back: Route) : Route
 }
 
 /** The widget's "check your prediction" link. Matched, not parsed. */
@@ -167,6 +199,15 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
     /** The care routines and the room's item catalogue. */
     val care: CareLibrary = repo.loadCare()
     val items: ItemCatalogue = repo.loadItems()
+
+    /** The reading room: Premium's packs of short reads. */
+    val readingRoom: ReadingRoom = repo.loadReadingRoom(learn)
+
+    /** Google Play, for the subscription. Every real answer it gives updates [AppState.premium]. */
+    private val billing = Billing(app) { answer -> onPlayAnswer(answer) }
+    val offer: StateFlow<Billing.Offer?> = billing.offer
+    val billingAvailable: StateFlow<Boolean?> = billing.available
+    val billingNotice: StateFlow<String?> = billing.notice
 
     fun track(goal: Goal): GoalTrack = goals.getValue(goal)
 
@@ -212,7 +253,15 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
                 !loaded.movedIn -> Route.CheckIn(firstRun = true)
                 else -> Route.Dashboard
             }
+            // Ask Play what is owned, every launch: a cancelled subscription ends here, and a
+            // purchase made on another phone starts here.
+            billing.start()
         }
+    }
+
+    override fun onCleared() {
+        billing.end()
+        super.onCleared()
     }
 
     // ------------------------------------------------------------------ serving
@@ -1327,4 +1376,231 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
     fun clearPulse() { _pulse.value = null }
 
     fun dayIndex(s: AppState): Long = s.dayIndex(today())
+
+    private fun edit(transform: (AppState) -> AppState) {
+        viewModelScope.launch { repo.update(transform) }
+    }
+
+    private fun minuteNow(): Int = LocalTime.now().let { it.hour * 60 + it.minute }
+
+    /** The local minute of the day a log entry was made, from its millisecond id. */
+    private fun minuteOf(millis: Long): Int =
+        if (millis < 1_000_000_000_000L) -1
+        else Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).let { it.hour * 60 + it.minute }
+
+    /** The first real act of a day: XP once, the day counted, one line in the history. */
+    private fun firstOfDay(s: AppState, kind: String, title: String, now: Long): AppState {
+        val streak = Engine.updateStreak(s.streak, s.lastActiveDay, today())
+        return s.copy(
+            xp = s.xp + Progress.XP_CARE,
+            streak = streak,
+            bestStreak = maxOf(s.bestStreak, streak),
+            lastActiveDay = today(),
+            log = listOf(
+                LogEntry(id = now, pillar = kind, tier = 0, title = title, epochDay = today(), kind = kind)
+            ) + s.log
+        )
+    }
+
+    // ------------------------------------------------------------------ Premium
+
+    private fun onPlayAnswer(answer: PlayAnswer) {
+        // Unavailable keeps what is known; writing it back would only wake the widget.
+        if (answer is PlayAnswer.Unavailable) return
+        edit { s -> s.copy(premium = Entitlement.resolve(s.premium, answer, System.currentTimeMillis())) }
+    }
+
+    /** The paywall, over wherever you are. Close goes back there. */
+    fun openPaywall() {
+        val here = _route.value
+        _route.value = Route.Paywall(back = if (here is Route.Paywall) here.back else here)
+        billing.start()
+    }
+
+    fun closePaywall(r: Route.Paywall) { _route.value = r.back }
+
+    /** Google Play's own subscribe sheet. If the offer is not loaded yet, ask for it again. */
+    fun subscribe(activity: Activity) {
+        if (!billing.buy(activity)) billing.start()
+    }
+
+    fun restorePurchases() { billing.refresh() }
+
+    // ------------------------------------------------------------------ training
+
+    fun openTraining() {
+        val here = _route.value
+        _route.value = Route.Train(back = if (here is Route.Train) here.back else here)
+    }
+
+    fun back(to: Route) { _route.value = to }
+
+    fun setPlace(place: Place) = edit { it.copy(place = place.name) }
+
+    /**
+     * One set, done. The first of the day pays XP and counts the day like any other real
+     * act. A plan session finishes the moment its last set is logged, once a day.
+     */
+    fun logSet(exercise: String, amount: Int, kg: Float = 0f) {
+        val ex = Moves.byId(exercise) ?: return
+        if (amount <= 0) return
+        viewModelScope.launch {
+            repo.update { s ->
+                val rolled = s.rolledTo(today())
+                val now = System.currentTimeMillis()
+                val set = WorkoutSet(now, ex.id, amount, kg.coerceAtLeast(0f), today(), minuteNow())
+                val first = rolled.workouts.none { it.epochDay == today() }
+                var next = rolled.copy(workouts = rolled.workouts + set)
+                if (first) next = firstOfDay(next, "TRAIN", ex.name, now)
+                val plan = next.activePlan
+                if (plan != null && next.planDay != today()) {
+                    val session = Plans.next(plan, next.planDone)
+                    if (session != null && Plans.complete(session, next.workouts, today())) {
+                        next = next.copy(planDone = next.planDone + 1, planDay = today(), xp = next.xp + Progress.XP_CHALLENGE)
+                    }
+                }
+                next
+            }
+        }
+    }
+
+    /** Take back a set logged by mistake. If it was the day's only one, the day goes too. */
+    fun undoSet(id: Long) = edit { s ->
+        val set = s.workouts.firstOrNull { it.id == id } ?: return@edit s
+        val rest = s.workouts - set
+        val lastOfDay = rest.none { it.epochDay == set.epochDay }
+        s.copy(
+            workouts = rest,
+            xp = if (lastOfDay) (s.xp - Progress.XP_CARE).coerceAtLeast(0) else s.xp,
+            log = if (lastOfDay) s.log.filterNot { it.kind == "TRAIN" && it.epochDay == set.epochDay } else s.log
+        )
+    }
+
+    /** Follow a plan from its first session. Premium. */
+    fun startPlan(id: String) {
+        if (!state.value.isPremium) return openPaywall()
+        if (Plans.byId(id) == null) return
+        edit { it.copy(plan = id, planDone = 0, planDay = 0L) }
+    }
+
+    fun stopPlan() = edit { it.copy(plan = "", planDone = 0, planDay = 0L) }
+
+    // ------------------------------------------------------------------ reading
+
+    fun addBook(title: String, author: String, pages: Int) {
+        val t = title.trim()
+        if (t.isEmpty()) return
+        edit { s ->
+            s.copy(books = s.books + Book(
+                id = System.currentTimeMillis(),
+                title = t.take(80),
+                author = author.trim().take(60),
+                pages = pages.coerceIn(0, 5000),
+                page = 0,
+                startedDay = today()
+            ))
+        }
+    }
+
+    fun readPages(bookId: Long, pages: Int) =
+        turnPage(bookId) { b -> Reading.readMore(b, pages, today(), System.currentTimeMillis(), minuteNow()) }
+
+    fun setPage(bookId: Long, page: Int) =
+        turnPage(bookId) { b -> Reading.turnTo(b, page, today(), System.currentTimeMillis(), minuteNow()) }
+
+    private fun turnPage(bookId: Long, move: (Book) -> Pair<Book, ReadingEntry?>) {
+        viewModelScope.launch {
+            repo.update { s ->
+                val rolled = s.rolledTo(today())
+                val book = rolled.books.firstOrNull { it.id == bookId } ?: return@update s
+                val (moved, entry) = move(book)
+                var next = rolled.copy(books = rolled.books.map { if (it.id == bookId) moved else it })
+                if (entry != null) {
+                    val first = rolled.readingLog.none { it.epochDay == today() && it.pages > 0 }
+                    next = next.copy(readingLog = next.readingLog + entry)
+                    if (first) next = firstOfDay(next, "READ", book.title, entry.id)
+                }
+                next
+            }
+        }
+    }
+
+    fun finishBook(bookId: Long) = edit { s ->
+        s.copy(books = s.books.map { if (it.id == bookId) Reading.finish(it, today()) else it })
+    }
+
+    /** Take a book off the list. The days you read it still count: they happened. */
+    fun removeBook(bookId: Long) = edit { s -> s.copy(books = s.books.filterNot { it.id == bookId }) }
+
+    /** A reading room pack. The first page of each is free, so anyone can see what it is. */
+    fun openPack(id: String) {
+        if (readingRoom.pack(id) != null) _route.value = Route.Pack(id)
+    }
+
+    fun canRead(s: AppState, lessonId: String): Boolean {
+        val pack = readingRoom.packOf(lessonId) ?: return true
+        return s.isPremium || pack.lessons.firstOrNull()?.id == lessonId
+    }
+
+    fun openReading(lessonId: String) {
+        if (canRead(state.value, lessonId)) openLesson(lessonId) else openPaywall()
+    }
+
+    // ------------------------------------------------------------------ habits
+
+    fun openHabits() {
+        val here = _route.value
+        _route.value = Route.HabitList(back = if (here is Route.HabitList || here is Route.HabitPage) Route.Profile else here)
+    }
+
+    fun openHabit(kind: HabitKind) {
+        val here = _route.value
+        _route.value = Route.HabitPage(kind, back = if (here is Route.HabitPage) here.back else here)
+    }
+
+    /** Every time each habit was done: the raw material for its page. */
+    fun habitMarks(s: AppState): Map<HabitKind, List<Mark>> = HabitKind.entries.associateWith { k ->
+        when (k) {
+            HabitKind.BODY, HabitKind.ROOM, HabitKind.HEART ->
+                s.log.filter { it.kind == "CARE" && it.domainEnum == k.domain }.map { Mark(it.epochDay, minuteOf(it.id)) }
+            HabitKind.OUTSIDE -> s.log.filter { it.isOutside }.map { Mark(it.epochDay, minuteOf(it.id)) }
+            HabitKind.TRAINING -> s.workouts.map { Mark(it.epochDay, it.minute) }
+            HabitKind.READING -> s.readingLog.filter { it.pages > 0 }.map { Mark(it.epochDay, it.minute) }
+        }
+    }
+
+    fun habitStats(s: AppState): Map<HabitKind, HabitStats> =
+        habitMarks(s).mapValues { (k, marks) -> Habits.stats(k, marks, today()) }
+
+    fun feelings(s: AppState): Map<HabitKind, Habits.Feelings> = Domain.order.associate { d ->
+        val c = s.care(d)
+        HabitKind.of(d) to Habits.Feelings(c.better, c.same, c.worse)
+    }
+
+    /** The last few times a habit was done, newest first, as (day, what) lines. */
+    fun habitRecent(s: AppState, k: HabitKind): List<Pair<Long, String>> = when (k) {
+        HabitKind.BODY, HabitKind.ROOM, HabitKind.HEART ->
+            s.log.filter { it.kind == "CARE" && it.domainEnum == k.domain }.take(10)
+                .map { it.epochDay to listOf(it.title, it.note).filter { t -> t.isNotBlank() }.joinToString(" · ") }
+        HabitKind.OUTSIDE -> s.log.filter { it.isOutside }.take(10)
+            .map { it.epochDay to (if (it.friction) "A spark: " else "") + it.title }
+        HabitKind.TRAINING -> s.workouts.groupBy { it.epochDay }.entries.sortedByDescending { it.key }.take(10)
+            .map { (day, sets) -> day to com.debubble.app.engine.Training.summary(sets) }
+        HabitKind.READING -> s.readingLog.filter { it.pages > 0 }.groupBy { it.epochDay }.entries
+            .sortedByDescending { it.key }.take(10)
+            .map { (day, entries) ->
+                val pages = entries.sumOf { it.pages }
+                val titles = entries.mapNotNull { e -> s.books.firstOrNull { it.id == e.book }?.title }.distinct()
+                day to "$pages ${if (pages == 1) "page" else "pages"}" + if (titles.isEmpty()) "" else " of " + titles.joinToString(", ")
+            }
+    }
+
+    fun insights(s: AppState): List<Insight> = Habits.insights(
+        marks = habitMarks(s),
+        feelings = feelings(s),
+        sets = s.workouts,
+        readingPace = Reading.pace(s.readingLog, today()),
+        today = today(),
+        h24 = h24()
+    )
 }

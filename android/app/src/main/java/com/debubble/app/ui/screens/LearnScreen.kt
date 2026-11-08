@@ -33,6 +33,7 @@ import com.debubble.app.engine.AuditCatalogue
 import com.debubble.app.engine.LearnCurriculum
 import com.debubble.app.engine.Lesson
 import com.debubble.app.engine.World
+import com.debubble.app.engine.ReadingPack
 import com.debubble.app.ui.components.Glyph
 import com.debubble.app.ui.components.Glyphs
 import com.debubble.app.ui.components.Label
@@ -73,7 +74,11 @@ fun LearnScreen(
     dayIndex: Long,
     debuffs: Set<String>,
     read: Set<String>,
-    onOpen: (String) -> Unit
+    onOpen: (String) -> Unit,
+    books: BookShelf,
+    packs: List<ReadingPack>,
+    premium: Boolean,
+    onOpenPack: (String) -> Unit
 ) {
     val targeted = curriculum.targetedFor(debuffs)
     val unlockedCourse = curriculum.course.filter { it.day <= dayIndex }
@@ -106,6 +111,8 @@ fun LearnScreen(
                 )
                 VSpace(10)
             }
+            BooksSection(art, books)
+            VSpace(24)
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -172,6 +179,9 @@ fun LearnScreen(
                     )
                 }
             }
+
+            VSpace(26)
+            ReadingRoomSection(art, packs, read, premium, onOpenPack)
 
             VSpace(26)
             SectionHeader("Thirty pages", trailing = "${unlockedCourse.size} of 30")
@@ -290,14 +300,16 @@ fun LessonScreen(
     lesson: Lesson,
     isRead: Boolean,
     onAddNote: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    /** The reading room pack a page belongs to, shown in place of the day. */
+    kicker: String? = null
 ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
     ) {
         TopBar(
-            title = if (lesson.isTargeted) "For you" else "Day ${lesson.day}",
+            title = kicker ?: if (lesson.isTargeted) "For you" else "Day ${lesson.day}",
             subtitle = "${lesson.minutes} min read",
             onBack = onBack
         )

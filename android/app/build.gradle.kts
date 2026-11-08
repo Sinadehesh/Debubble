@@ -94,6 +94,8 @@ dependencies {
 
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.kotlinx.serialization.json)
+    // Premium: Google Play Billing, the only way Play allows a subscription to be sold.
+    implementation(libs.android.billing)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.serialization.json)

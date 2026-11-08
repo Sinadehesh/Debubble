@@ -23,6 +23,9 @@ import com.debubble.app.engine.Pillar
 import com.debubble.app.engine.PillarState
 import com.debubble.app.engine.Progress
 import com.debubble.app.engine.Reminder
+import com.debubble.app.engine.ReadingEntry
+import com.debubble.app.engine.Book
+import com.debubble.app.engine.WorkoutSet
 import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 import java.io.File
@@ -56,6 +59,11 @@ abstract class Camera {
             settle(3000)
             body(scenario, vm)
         }
+    }
+
+    /** Change the saved state while the app is open; the screens follow it. */
+    protected fun reseed(transform: (AppState) -> AppState) {
+        runBlocking { Repository(context).update(transform) }
     }
 
     // ------------------------------------------------------------------ the person
@@ -128,7 +136,35 @@ abstract class Camera {
             ) else null
         )
 
+        // Three weeks of training: push-ups up the ladder, squats, a plank and some walks,
+        // mostly in the morning.
+        val workouts = mutableListOf<WorkoutSet>()
+        var setId = 1_000L
+        for (d in 0 until 23 step 2) {
+            val day = started + d
+            val pushup = if (d < 12) "incline_pushup" else "knee_pushup"
+            val reps = if (d < 12) 6 + d / 2 else 5 + (d - 12) / 2
+            repeat(2) { workouts += WorkoutSet(setId++, pushup, reps, 0f, day, 7 * 60 + 40) }
+            workouts += WorkoutSet(setId++, "squat", 8 + d / 2, 0f, day, 7 * 60 + 45)
+            if (d % 4 == 0) workouts += WorkoutSet(setId++, "plank", 15 + d, 0f, day, 7 * 60 + 50)
+            if (d % 3 == 0) workouts += WorkoutSet(setId++, "walk", 15 + d, 0f, day, 18 * 60 + 10)
+        }
+
+        // A book on the go, three on the shelf, and most evenings a few pages.
+        val books = listOf(
+            Book(1L, "Frankenstein", "Mary Shelley", 280, 280, started - 40, started - 20),
+            Book(2L, "The Secret Garden", "Frances Hodgson Burnett", 300, 300, started - 18, started + 6),
+            Book(3L, "Pride and Prejudice", "Jane Austen", 380, 380, started + 6, started + 18),
+            Book(4L, "The Wind in the Willows", "Kenneth Grahame", 240, 96, started + 18)
+        )
+        val readingLog = (0 until 23).filter { it % 3 != 1 }.map { d ->
+            ReadingEntry(5_000L + d, if (d < 18) 3L else 4L, 8 + (d % 5) * 3, started + d, 21 * 60 + 30)
+        }
+
         return AppState(
+            workouts = workouts,
+            books = books,
+            readingLog = readingLog,
             introSeen = true,
             tourSeen = true,
             tipsSeen = setOf("outside", "journal", "library", "you", "journey"),
