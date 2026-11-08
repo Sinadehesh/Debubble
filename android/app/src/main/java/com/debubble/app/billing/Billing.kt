@@ -37,13 +37,15 @@ class Billing(
     private val onAnswer: (PlayAnswer) -> Unit
 ) : PurchasesUpdatedListener {
 
-    /** What the paywall offers: the plan, its token, and the line that says what it costs. */
+    /**
+     * One way to pay, as Play offers it here: the plan, the token that buys it, and its price
+     * phases. What the paywall says about it comes from [Offers.choices].
+     */
     data class Offer(
+        val plan: Premium.Plan,
         val product: ProductDetails,
         val token: String,
-        val phases: List<PricePhase>,
-        val line: String,
-        val trial: Boolean
+        val phases: List<PricePhase>
     )
 
     private val client: BillingClient = BillingClient.newBuilder(context.applicationContext)
@@ -52,8 +54,9 @@ class Billing(
         .enableAutoServiceReconnection()
         .build()
 
-    private val _offer = MutableStateFlow<Offer?>(null)
-    val offer: StateFlow<Offer?> = _offer
+    /** The plans Play offers this person, by plan. Empty until it has answered. */
+    private val _offers = MutableStateFlow<Map<Premium.Plan, Offer>>(emptyMap())
+    val offers: StateFlow<Map<Premium.Plan, Offer>> = _offers
 
     /** Null until Play has answered once; false when billing is not available here. */
     private val _available = MutableStateFlow<Boolean?>(null)
@@ -69,7 +72,7 @@ class Billing(
     fun start() {
         if (client.isReady) {
             refresh()
-            if (_offer.value == null) loadOffer()
+            if (_offers.value.size < Premium.Plan.entries.size) loadOffers()
             return
         }
         if (connecting) return
@@ -80,7 +83,7 @@ class Billing(
                 if (result.responseCode == BillingClient.BillingResponseCode.OK) {
                     _available.value = true
                     refresh()
-                    loadOffer()
+                    loadOffers()
                 } else {
                     _available.value = false
                     onAnswer(PlayAnswer.Unavailable)
@@ -110,8 +113,16 @@ class Billing(
         }
     }
 
-    /** Ask Play what Premium costs here, in the local currency, with any free start. */
-    fun loadOffer() {
+    /**
+     * Back in the app: ask again, if already connected. A promo code redeemed in the Play
+     * Store, or a subscription bought on another phone, shows up here without a restart.
+     */
+    fun recheck() {
+        if (client.isReady) refresh()
+    }
+
+    /** Ask Play what each plan costs here, in the local currency, with any free start. */
+    fun loadOffers() {
         if (!client.isReady) return
         val params = QueryProductDetailsParams.newBuilder()
             .setProductList(
@@ -126,32 +137,36 @@ class Billing(
         client.queryProductDetailsAsync(params) { result, details ->
             if (result.responseCode != BillingClient.BillingResponseCode.OK) return@queryProductDetailsAsync
             val product = details.productDetailsList.firstOrNull() ?: return@queryProductDetailsAsync
-            val offers = product.subscriptionOfferDetails.orEmpty().filter { it.basePlanId == Premium.BASE_PLAN }
-            // Play only returns offers this person is eligible for, so a free trial here is
-            // one they can actually have. Otherwise the plain monthly plan.
-            val withPhases = offers.map { o ->
-                o to o.pricingPhases.pricingPhaseList.map { p ->
-                    PricePhase(
-                        formattedPrice = p.formattedPrice,
-                        priceMicros = p.priceAmountMicros,
-                        billingPeriod = p.billingPeriod,
-                        cycles = p.billingCycleCount,
-                        recurring = p.recurrenceMode == ProductDetails.RecurrenceMode.INFINITE_RECURRING
-                    )
+            val all = product.subscriptionOfferDetails.orEmpty()
+            // A plan only appears once its base plan is active in Play Console, so a yearly
+            // plan that is not set up yet is simply not offered.
+            _offers.value = Premium.Plan.entries.mapNotNull { plan ->
+                val withPhases = all.filter { it.basePlanId == plan.basePlan }.map { o ->
+                    o to o.pricingPhases.pricingPhaseList.map { p ->
+                        PricePhase(
+                            formattedPrice = p.formattedPrice,
+                            priceMicros = p.priceAmountMicros,
+                            billingPeriod = p.billingPeriod,
+                            cycles = p.billingCycleCount,
+                            recurring = p.recurrenceMode == ProductDetails.RecurrenceMode.INFINITE_RECURRING
+                        )
+                    }
                 }
-            }
-            val chosen = withPhases.firstOrNull { (o, phases) -> o.offerId != null && Offers.hasFreeTrial(phases) }
-                ?: withPhases.firstOrNull { (o, _) -> o.offerId == null }
-                ?: withPhases.firstOrNull()
-                ?: return@queryProductDetailsAsync
-            val (o, phases) = chosen
-            _offer.value = Offer(product, o.offerToken, phases, Offers.describe(phases), Offers.hasFreeTrial(phases))
+                // Play only returns offers this person is eligible for, so a free trial here
+                // is one they can actually have. Otherwise the plain base plan.
+                val chosen = withPhases.firstOrNull { (o, phases) -> o.offerId != null && Offers.hasFreeTrial(phases) }
+                    ?: withPhases.firstOrNull { (o, _) -> o.offerId == null }
+                    ?: withPhases.firstOrNull()
+                    ?: return@mapNotNull null
+                val (o, phases) = chosen
+                plan to Offer(plan, product, o.offerToken, phases)
+            }.toMap()
         }
     }
 
-    /** Open Google Play's own subscribe sheet. False when there is nothing to offer yet. */
-    fun buy(activity: Activity): Boolean {
-        val o = _offer.value ?: return false
+    /** Open Google Play's own subscribe sheet for a plan. False when Play has not offered it yet. */
+    fun buy(activity: Activity, plan: Premium.Plan): Boolean {
+        val o = _offers.value[plan] ?: return false
         _notice.value = null
         val params = BillingFlowParams.newBuilder()
             .setProductDetailsParamsList(
@@ -177,7 +192,8 @@ class Billing(
 
     /**
      * Turn purchases into an answer. A query that comes back empty is a real "not owned";
-     * an update that comes back empty is only a sheet that closed.
+     * an update that comes back empty is only a sheet that closed. Either plan is Premium:
+     * they are base plans of the same subscription.
      */
     private fun handle(purchases: List<Purchase>, answered: Boolean) {
         val mine = purchases.filter { Premium.PRODUCT_ID in it.products }

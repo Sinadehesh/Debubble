@@ -53,7 +53,7 @@ the "Store screenshots" workflow and captioned by `store.py screenshots <folder>
 > • Every habit in detail: this week, twelve weeks of squares, when you usually do it, and how it made you feel
 >
 > PREMIUM (OPTIONAL)
-> Everything that helps you look after yourself is free. Premium adds training plans, a reading room of short reads on sleep, mood, getting unstuck and a quieter mind, and insights across your habits. $4.99 a month, cancel any time in Google Play.
+> Everything that helps you look after yourself is free. Premium adds training plans, a reading room of short reads on sleep, mood, getting unstuck and a quieter mind, and insights across your habits. $4.99 a month, or $29.99 a year (about half the price), cancel any time in Google Play. If you cannot afford it, email sinadehesh@gmail.com and ask for a discount.
 >
 > PRIVATE BY DESIGN
 > No account, no ads, no tracking. DeBubble does not even have internet access: everything you write stays on your phone.
@@ -68,34 +68,70 @@ the "Store screenshots" workflow and captioned by `store.py screenshots <folder>
   Google's, not the app's. Purchases are made in Google Play; check Google's current guidance
   on what to declare for apps that use the Play Billing Library before submitting.
 - **Ads:** no ads.
-- **In-app purchases:** yes, one subscription (Premium).
+- **In-app purchases:** yes, one subscription (Premium), paid monthly or yearly.
 - **Health apps declaration:** add "Activity and fitness" alongside "Stress management,
   relaxation, mental acuity", now that there is a training tracker.
+- **Target audience:** 13 and over (not designed for children).
+- **App category:** Health & Fitness (or Lifestyle).
 
 ## Premium: setting it up in Play Console
 
-The app sells one subscription. Its ids are fixed in `engine/Premium.kt`, so they must match:
+The app sells one subscription with two base plans, monthly and yearly. Their ids are fixed in
+`engine/Premium.kt` (`Premium.PRODUCT_ID` and `Premium.Plan`), so they must match:
 
 1. **Monetize > Monetization setup:** link a payments profile (a merchant account) if Play
    asks; nothing can be sold without one.
 2. **Monetize > Products > Subscriptions > Create subscription.** Product ID
    `debubble_premium`, name "DeBubble Premium". Benefits, for the Play sheet: "Training plans",
    "The reading room", "Insights across your habits".
-3. **Add a base plan.** Base plan ID `monthly`, auto-renewing, billing period 1 month, price
-   USD 4.99 (let Play convert the other countries, then adjust any that look wrong).
+3. **Add the monthly base plan.** Base plan ID `monthly`, auto-renewing, billing period
+   1 month, price USD 4.99 (let Play convert the other countries, then adjust any that look
+   wrong). Mark it as the backwards compatible base plan: promo codes always use that one.
    Activate it.
-4. **Optional free trial:** add an offer to the `monthly` base plan, eligibility "New
-   customer acquisition", one phase "Free trial" of 7 days. The app finds it by itself and
-   says "7 days free, then $4.99 a month" on the button. Activate it.
-5. **Testing:** add your Google account under Setup > License testing, upload a build to the
+4. **Add the yearly base plan.** Base plan ID `yearly`, auto-renewing, billing period 1 year,
+   price USD 29.99, which is about half of twelve months at 4.99. Keep the other countries at
+   about half of twelve monthly payments too: the paywall works the saving out from Play's
+   own prices and says "About half the price of paying monthly" when it is between 45% and
+   55%, or the real percentage otherwise. Activate it. Until it is active the paywall simply
+   shows the monthly plan on its own.
+5. **Optional free trial:** add an offer to a base plan (`monthly`, `yearly`, or both),
+   eligibility "New customer acquisition", one phase "Free trial" of 7 days. The app finds it
+   by itself and says "7 days free, then $4.99 a month" on that plan. Activate it.
+6. **Testing:** add your Google account under Setup > License testing, upload a build to the
    internal testing track (products only load for an app Play knows about), install it from
    the testing link, and buy with the test card. Test subscriptions renew every few minutes,
    which is how to see a cancellation end Premium.
-6. **Grace period and account hold:** keep Play's defaults. A subscription in account hold
+7. **Grace period and account hold:** keep Play's defaults. A subscription in account hold
    is treated as not active until the payment is fixed.
 
-There is no server: the app asks Google Play on the phone what is owned, every launch, and
-acknowledges new purchases straight away (Play refunds anything not acknowledged in three
-days).
-- **Target audience:** 13 and over (not designed for children).
-- **App category:** Health & Fitness (or Lifestyle).
+There is no server: the app asks Google Play on the phone what is owned, every launch and
+every time it comes back to the front, and acknowledges new purchases straight away (Play
+refunds anything not acknowledged in three days).
+
+### What the paywall says about the two plans
+
+Monthly is chosen to start with, and its card says "The biggest help to the person who makes
+DeBubble." Yearly sits right under it with its saving. Both get exactly the same things. Under
+the button, a box says: "If you cannot afford it, email sinadehesh@gmail.com and ask for a
+discount." Its button opens the phone's mail app with the subject "DeBubble Premium
+discount", or copies the address if there is no mail app.
+
+### Answering a discount request
+
+Google Play cannot give one person a lower price, but it can give them free time:
+
+1. **Monetize with Play > Promo codes > Create promo code.** Type "One-time codes", the
+   `debubble_premium` subscription, and a free trial of up to 90 days (Play allows 3 to 90).
+   Play gives you up to 10,000 one-time codes a quarter for the subscription, and one-time
+   codes work for new, current and lapsed subscribers.
+2. **Email them a code.** The easiest is a link, `https://play.google.com/redeem?code=THECODE`,
+   which opens Google Play with the code filled in. They can also type it in the Play Store
+   (profile picture > Payments and subscriptions > Redeem code) or in the subscribe sheet
+   (the arrow next to the payment method > Redeem code). The code always applies to the backwards compatible base plan,
+   which is why `monthly` is marked as that.
+3. **Tell them plainly** that Google Play still asks for a payment method, and that the
+   subscription renews at the normal price when the free time ends unless they cancel in
+   Google Play first. Send another code when it runs out if you want to keep helping.
+
+The app needs nothing extra for this: a code redeemed in the Play Store shows up the next time
+DeBubble comes to the front.

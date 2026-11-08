@@ -14,6 +14,7 @@ import com.debubble.app.engine.Moves
 import com.debubble.app.engine.Place
 import com.debubble.app.engine.Plans
 import com.debubble.app.engine.PlayAnswer
+import com.debubble.app.engine.Premium
 import com.debubble.app.engine.Reading
 import com.debubble.app.engine.ReadingEntry
 import com.debubble.app.engine.ReadingRoom
@@ -205,7 +206,7 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
 
     /** Google Play, for the subscription. Every real answer it gives updates [AppState.premium]. */
     private val billing = Billing(app) { answer -> onPlayAnswer(answer) }
-    val offer: StateFlow<Billing.Offer?> = billing.offer
+    val offers: StateFlow<Map<Premium.Plan, Billing.Offer>> = billing.offers
     val billingAvailable: StateFlow<Boolean?> = billing.available
     val billingNotice: StateFlow<String?> = billing.notice
 
@@ -1419,12 +1420,15 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
 
     fun closePaywall(r: Route.Paywall) { _route.value = r.back }
 
-    /** Google Play's own subscribe sheet. If the offer is not loaded yet, ask for it again. */
-    fun subscribe(activity: Activity) {
-        if (!billing.buy(activity)) billing.start()
+    /** Google Play's own subscribe sheet, for a plan. If Play has not offered it yet, ask again. */
+    fun subscribe(activity: Activity, plan: Premium.Plan) {
+        if (!billing.buy(activity, plan)) billing.start()
     }
 
     fun restorePurchases() { billing.refresh() }
+
+    /** Back in the app from somewhere else, such as a promo code redeemed in the Play Store. */
+    fun onResumed() { billing.recheck() }
 
     /** Ask Google Play again from the start: connect, what is owned, what it costs. */
     fun retryBilling() { billing.start() }

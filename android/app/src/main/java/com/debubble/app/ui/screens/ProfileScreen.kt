@@ -97,7 +97,7 @@ fun ProfileScreen(
     onOpenHabits: () -> Unit = {},
     onOpenTraining: () -> Unit = {},
     onPremium: () -> Unit = {},
-    /** "$4.99 a month", as Play reports it here. */
+    /** "$4.99 a month or $29.99 a year", as Play reports it here. */
     premiumPrice: String = com.debubble.app.engine.Premium.FALLBACK_PRICE
 ) {
     val nextHat = World.nextHat(art.catalogue, state.level)

@@ -7,7 +7,7 @@ import android.content.ContextWrapper
 import androidx.compose.ui.platform.LocalContext
 import com.debubble.app.engine.Care
 import com.debubble.app.engine.HabitKind
-import com.debubble.app.engine.Premium
+import com.debubble.app.engine.Offers
 import com.debubble.app.engine.Reading
 import com.debubble.app.engine.RoomTap
 import com.debubble.app.engine.Training
@@ -41,6 +41,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.debubble.app.data.AppState
@@ -146,7 +148,12 @@ private fun DeBubbleApp(
     val route by vm.route.collectAsStateWithLifecycle()
     val pulse by vm.pulse.collectAsStateWithLifecycle()
     val tourAsked by vm.tour.collectAsStateWithLifecycle()
-    val offer by vm.offer.collectAsStateWithLifecycle()
+    val offers by vm.offers.collectAsStateWithLifecycle()
+    // What the paywall and the You tab say it costs: Play's prices here, or the US ones until
+    // it answers.
+    val premiumPlans = remember(offers) { Offers.choices(offers.mapValues { it.value.phases }) }
+    // Coming back from the Play Store (a promo code redeemed there, say) shows up straight away.
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { vm.onResumed() }
     val billingAvailable by vm.billingAvailable.collectAsStateWithLifecycle()
     val billingNotice by vm.billingNotice.collectAsStateWithLifecycle()
     // The room's sprites, decoded once for the whole app.
@@ -319,7 +326,7 @@ private fun DeBubbleApp(
                             onOpenHabits = vm::openHabits,
                             onOpenTraining = vm::openTraining,
                             onPremium = vm::openPaywall,
-                            premiumPrice = offer?.line ?: Premium.FALLBACK_PRICE
+                            premiumPrice = Offers.summary(premiumPlans)
                         )
                     }
                 }
@@ -906,11 +913,10 @@ private fun DeBubbleApp(
                         look = state.home.look,
                         active = state.isPremium,
                         since = state.premium.since,
-                        offerLine = offer?.line,
-                        trial = offer?.trial == true,
+                        plans = premiumPlans,
                         available = billingAvailable,
                         notice = billingNotice,
-                        onSubscribe = { activity?.let { vm.subscribe(it) } },
+                        onSubscribe = { plan -> activity?.let { vm.subscribe(it, plan) } },
                         onRestore = vm::restorePurchases,
                         onClose = { vm.closePaywall(r) },
                         onRetry = vm::retryBilling
