@@ -47,6 +47,14 @@ the "Store screenshots" workflow and captioned by `store.py screenshots <folder>
 > • Guess how a mission will go before you try it, then see how it really went. It is usually easier than you thought
 > • Journeys: 30-stop paths toward something you want, like a real circle of friends or a life worth describing
 >
+> TRAINING, READING AND YOUR HABITS
+> • Training at home or the gym: a move for right now, sized to what you did last time, and your week against the WHO's two numbers
+> • Your books, page by page, with every finished one on a little pixel shelf
+> • Every habit in detail: this week, twelve weeks of squares, when you usually do it, and how it made you feel
+>
+> PREMIUM (OPTIONAL)
+> Everything that helps you look after yourself is free. Premium adds training plans, a reading room of short reads on sleep, mood, getting unstuck and a quieter mind, and insights across your habits. $4.99 a month, cancel any time in Google Play.
+>
 > PRIVATE BY DESIGN
 > No account, no ads, no tracking. DeBubble does not even have internet access: everything you write stays on your phone.
 >
@@ -55,8 +63,39 @@ the "Store screenshots" workflow and captioned by `store.py screenshots <folder>
 ## App content answers
 
 - **Privacy policy:** https://www.sinadehesh.com/debubble/privacy/
-- **Data safety:** no data collected, no data shared. The app has no internet permission, so
-  nothing can leave the device; Android's own backup is Google's, not the app's.
+- **Data safety:** no data collected, no data shared. The app has no internet permission (CI
+  fails the build if one appears), so nothing can leave the device; Android's own backup is
+  Google's, not the app's. Purchases are made in Google Play; check Google's current guidance
+  on what to declare for apps that use the Play Billing Library before submitting.
 - **Ads:** no ads.
+- **In-app purchases:** yes, one subscription (Premium).
+- **Health apps declaration:** add "Activity and fitness" alongside "Stress management,
+  relaxation, mental acuity", now that there is a training tracker.
+
+## Premium: setting it up in Play Console
+
+The app sells one subscription. Its ids are fixed in `engine/Premium.kt`, so they must match:
+
+1. **Monetize > Monetization setup:** link a payments profile (a merchant account) if Play
+   asks; nothing can be sold without one.
+2. **Monetize > Products > Subscriptions > Create subscription.** Product ID
+   `debubble_premium`, name "DeBubble Premium". Benefits, for the Play sheet: "Training plans",
+   "The reading room", "Insights across your habits".
+3. **Add a base plan.** Base plan ID `monthly`, auto-renewing, billing period 1 month, price
+   USD 4.99 (let Play convert the other countries, then adjust any that look wrong).
+   Activate it.
+4. **Optional free trial:** add an offer to the `monthly` base plan, eligibility "New
+   customer acquisition", one phase "Free trial" of 7 days. The app finds it by itself and
+   says "7 days free, then $4.99 a month" on the button. Activate it.
+5. **Testing:** add your Google account under Setup > License testing, upload a build to the
+   internal testing track (products only load for an app Play knows about), install it from
+   the testing link, and buy with the test card. Test subscriptions renew every few minutes,
+   which is how to see a cancellation end Premium.
+6. **Grace period and account hold:** keep Play's defaults. A subscription in account hold
+   is treated as not active until the payment is fixed.
+
+There is no server: the app asks Google Play on the phone what is owned, every launch, and
+acknowledges new purchases straight away (Play refunds anything not acknowledged in three
+days).
 - **Target audience:** 13 and over (not designed for children).
 - **App category:** Health & Fitness (or Lifestyle).

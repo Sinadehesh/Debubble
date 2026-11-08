@@ -71,6 +71,19 @@ jobs:
       - name: Unit tests
         run: ./gradlew :app:test --stacktrace
 
+      # The privacy policy promises DeBubble has no internet access. Libraries can add
+      # permissions without anyone noticing (Play Billing's logger asks for the internet), so
+      # the built app is checked: any of these in the merged manifest fails the build.
+      - name: Check the app cannot use the internet
+        run: |
+          aapt2=$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)aapt2
+          apk=$(ls app/build/outputs/apk/debug/*.apk | head -1)
+          "$aapt2" dump permissions "$apk" | tee permissions.txt
+          if grep -E "android.permission.(INTERNET|ACCESS_NETWORK_STATE|ACCESS_WIFI_STATE|ACCESS_FINE_LOCATION|ACCESS_COARSE_LOCATION)" permissions.txt; then
+            echo "::error::The app has gained a network or location permission; the privacy policy says it has none."
+            exit 1
+          fi
+
       # The signing key lives in the repository's secrets: ANDROID_KEYSTORE_BASE64 (the
       # keystore file, base64) and ANDROID_KEYSTORE_PASSWORD. ANDROID_KEY_ALIAS and
       # ANDROID_KEY_PASSWORD are optional: the alias is read from the keystore when not given,
