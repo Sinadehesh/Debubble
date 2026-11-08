@@ -1,8 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The same panel the app uses: rounded, filled, with a visible 1dp boundary. The border is
-     not decoration — on a light wallpaper the fill alone leaves no edge at all. -->
-<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-    <solid android:color="@color/ink_surface" />
-    <stroke android:width="1dp" android:color="@color/ink_border" />
-    <corners android:radius="20dp" />
-</shape>
+<!-- The same card the app uses: cream paper, a plum edge stepped at the corners like a sprite, and a hard tan shadow. The edge is not decoration: on a light wallpaper the fill alone leaves no boundary at all. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- the hard shadow: the same stepped shape, moved down -->
+    <item android:left="6dp" android:top="3dp" android:right="6dp" android:bottom="0dp">
+        <shape android:shape="rectangle"><solid android:color="@color/ink_shadow" /></shape>
+    </item>
+    <item android:left="3dp" android:top="6dp" android:right="3dp" android:bottom="3dp">
+        <shape android:shape="rectangle"><solid android:color="@color/ink_shadow" /></shape>
+    </item>
+    <item android:left="0dp" android:top="9dp" android:right="0dp" android:bottom="6dp">
+        <shape android:shape="rectangle"><solid android:color="@color/ink_shadow" /></shape>
+    </item>
+    <!-- the edge -->
+    <item android:left="6dp" android:top="0dp" android:right="6dp" android:bottom="3dp">
+        <shape android:shape="rectangle"><solid android:color="@color/ink_border" /></shape>
+    </item>
+    <item android:left="3dp" android:top="3dp" android:right="3dp" android:bottom="6dp">
+        <shape android:shape="rectangle"><solid android:color="@color/ink_border" /></shape>
+    </item>
+    <item android:left="0dp" android:top="6dp" android:right="0dp" android:bottom="9dp">
+        <shape android:shape="rectangle"><solid android:color="@color/ink_border" /></shape>
+    </item>
+    <!-- the face -->
+    <item android:left="8dp" android:top="2dp" android:right="8dp" android:bottom="5dp">
+        <shape android:shape="rectangle"><solid android:color="@color/ink_surface" /></shape>
+    </item>
+    <item android:left="5dp" android:top="5dp" android:right="5dp" android:bottom="8dp">
+        <shape android:shape="rectangle"><solid android:color="@color/ink_surface" /></shape>
+    </item>
+    <item android:left="2dp" android:top="8dp" android:right="2dp" android:bottom="11dp">
+        <shape android:shape="rectangle"><solid android:color="@color/ink_surface" /></shape>
+    </item>
+</layer-list>

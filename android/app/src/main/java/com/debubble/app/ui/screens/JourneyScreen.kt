@@ -316,8 +316,10 @@ private fun TrailMap(
                 Label(
                     phase,
                     color = if (done >= row * perRow) accent else Ink.Muted,
+                    // Clear of the leg that drops in from the row above, which runs down
+                    // the left edge into even rows and the right edge into odd ones.
                     modifier = Modifier.offset(
-                        x = if (row % 2 == 0) 0.dp else width * 0.5f,
+                        x = if (row % 2 == 0) width * 0.11f else width * 0.42f,
                         y = rowHeight * row
                     )
                 )

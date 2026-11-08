@@ -1,28 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     These duplicate the Ink tokens in ui/theme/Theme.kt. The widget is drawn with RemoteViews,
-    which cannot see Compose colours, so the two have to be kept in step by hand. Anything
-    added here must match Theme.kt exactly, including the measured contrast ratios in its
-    comments — the widget sits on a stranger's wallpaper and is the one surface in the product
-    where a legibility mistake is permanently visible.
+    which cannot see Compose colours, so the two have to be kept in step by hand
+    (tools/check_palette.py reads Theme.kt; the inks here are the same values). The widget sits
+    on a stranger's wallpaper and is the one surface in the product where a legibility mistake
+    is permanently visible, so it is the same cream card with a plum edge as everything else.
 -->
 <resources>
-    <color name="void_ground">#FF000000</color>
-    <color name="ic_launcher_background">#FF000000</color>
+    <!-- The wall, before Compose draws its diamonds: no dark flash on launch. -->
+    <color name="void_ground">#FFFFF3DC</color>
+    <color name="ic_launcher_background">#FFFFF3DC</color>
 
-    <color name="ink_void">#FF140E16</color>
-    <color name="ink_surface">#FF231927</color>
-    <color name="ink_surface_high">#FF332538</color>
-    <color name="ink_border">#FF866E8D</color>
-    <color name="ink_primary">#FFFCF6F1</color>
-    <color name="ink_secondary">#FFCAB8C8</color>
-    <color name="ink_muted">#FFA28BA4</color>
-    <color name="ink_access">#FF4DA3FF</color>
-    <color name="ink_activity">#FF3DDC97</color>
-    <color name="ink_social">#FFFF6B81</color>
-    <color name="ink_ember">#FFFFB020</color>
-    <color name="ink_gold">#FFFFC94D</color>
-    <color name="ink_body">#FF9BD7D1</color>
-    <color name="ink_room">#FFE8B476</color>
-    <color name="ink_heart">#FFF3B8C8</color>
+    <color name="ink_void">#FFFFF3DC</color>
+    <color name="ink_surface">#FFFFFDF5</color>
+    <color name="ink_surface_high">#FFFFFFFF</color>
+    <color name="ink_well">#FFF3DFBB</color>
+    <color name="ink_shadow">#FFD7BE95</color>
+    <color name="ink_border">#FF33243A</color>
+    <color name="ink_primary">#FF33243A</color>
+    <color name="ink_secondary">#FF5A4660</color>
+    <color name="ink_muted">#FF6B5A6E</color>
+    <color name="ink_access">#FF28658F</color>
+    <color name="ink_activity">#FF2C6E37</color>
+    <color name="ink_social">#FF9C4428</color>
+    <color name="ink_ember">#FF9A4E16</color>
+    <color name="ink_gold">#FF8C5A0E</color>
+    <color name="ink_body">#FF2A676C</color>
+    <color name="ink_room">#FF8A5428</color>
+    <color name="ink_heart">#FF9E3E5A</color>
 </resources>

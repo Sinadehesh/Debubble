@@ -67,9 +67,9 @@ data class Note(
 /** How the Notes list is being narrowed. */
 enum class NoteFilter(val display: String) {
     ALL("All"),
-    LINKED("On challenges"),
-    FRICTION("On friction"),
-    FREE("Free writing")
+    LINKED("On letters"),
+    FRICTION("Sparks"),
+    FREE("Just writing")
 }
 
 object Notes {
