@@ -56,6 +56,7 @@ import com.debubble.app.ui.components.Label
 import com.debubble.app.ui.components.PageTip
 import com.debubble.app.ui.components.RoomArt
 import com.debubble.app.ui.components.RoomPainter
+import com.debubble.app.ui.components.RoomShell
 import com.debubble.app.ui.components.SignHeader
 import com.debubble.app.ui.components.SpriteIcon
 import com.debubble.app.ui.components.StatTile
@@ -248,7 +249,7 @@ private fun RoadRow(
             }
             Column(modifier = Modifier.weight(1f)) {
                 Text(World.roadName(pillar), color = Ink.Primary, style = MaterialTheme.typography.titleMedium)
-                Label("${pillar.display} · level $tier of ${Engine.MAX_TIER}", color = accent)
+                Label("Step $tier of ${Engine.MAX_TIER}", color = accent)
             }
             when {
                 done -> SpriteIcon(art, "icon_done", pixelScale = pixelScale(2f))
@@ -387,7 +388,7 @@ private fun Trips(art: RoomArt, state: AppState) {
                         (if (e.friction) "A spark · " else "") + when (e.kind) {
                             "MISSION" -> "Journey stop ${e.tier}"
                             "AUDIT", "CAMPAIGN" -> "Extra"
-                            else -> "${World.roadName(e.pillarEnum)} · level ${e.tier}"
+                            else -> "${World.roadName(e.pillarEnum)} · step ${e.tier}"
                         } + " · day ${state.dayIndexOf(e.epochDay)}",
                         color = if (e.friction) Ink.Ember else Ink.Muted
                     )

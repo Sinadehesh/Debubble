@@ -80,7 +80,7 @@ fun AuditScreen(
             .fillMaxSize()
     ) {
         TopBar(
-            title = "Systems audit",
+            title = "Habits to change",
             subtitle = if (marked.isEmpty()) "Nothing marked yet"
             else "${marked.size} marked",
             onBack = onBack

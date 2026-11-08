@@ -46,7 +46,7 @@ data class Quest(
     /** The smallest version: the tiny care act, or the mission's first two minutes. */
     val first: String,
     val minutes: Int,
-    /** "Lived-in" for care; "Social · level 4" for a mission. */
+    /** "Lived-in" for care; "Someone new · step 4" for a mission. */
     val status: String,
     val done: Boolean,
     /** What tapping it opens: "care:BODY", "tier:SOCIAL:4", or empty for nothing. */
@@ -118,7 +118,7 @@ object Today {
         cue = plan?.cue?.takeIf { it.isNotBlank() } ?: served.anchor,
         first = served.opener.ifBlank { served.directive },
         minutes = served.minutes,
-        status = "${served.pillar.display} · level ${served.tier}",
+        status = "${served.pillar.display} · step ${served.tier}",
         done = false,
         link = "$TIER${served.pillar.name}:${served.tier}"
     )
@@ -133,7 +133,7 @@ object Today {
         cue = "",
         first = "",
         minutes = 0,
-        status = "${pillar.display} · level $tier",
+        status = "${pillar.display} · step $tier",
         done = true,
         link = ""
     )

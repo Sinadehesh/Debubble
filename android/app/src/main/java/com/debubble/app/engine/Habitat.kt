@@ -61,7 +61,7 @@ enum class Stage(
     OPEN(
         threshold = 90,
         label = "Open ground",
-        note = "Ground in every direction. Fifty rungs ago this view did not exist for you.",
+        note = "Ground in every direction. Fifty missions ago this view did not exist for you.",
         openness = 0.67f
     ),
     HORIZON(

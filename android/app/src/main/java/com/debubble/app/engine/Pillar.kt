@@ -13,21 +13,21 @@ enum class Pillar(
     val evidenceNoun: String
 ) {
     ACCESS(
-        display = "Access",
+        display = "Somewhere new",
         dimension = "Geographic",
         code = "A",
         asset = "curriculum/access.json",
         evidenceNoun = "places you had never been"
     ),
     ACTIVITY(
-        display = "Activity",
+        display = "Something new",
         dimension = "Experiential",
         code = "B",
         asset = "curriculum/activity.json",
         evidenceNoun = "things you had never done"
     ),
     SOCIAL(
-        display = "Social",
+        display = "Someone new",
         dimension = "Interpersonal",
         code = "C",
         asset = "curriculum/social.json",

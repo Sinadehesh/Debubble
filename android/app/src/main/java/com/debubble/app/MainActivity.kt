@@ -215,7 +215,7 @@ private fun DeBubbleApp(
                                         routed = vm.routed(state),
                                         routedDone = state.routedDoneToday,
                                         openForecasts = state.openForecasts,
-                                        debuffLabel = { id -> vm.audit.debuff(id)?.label ?: "From your audit" },
+                                        debuffLabel = { id -> vm.audit.debuff(id)?.label ?: "For a habit you marked" },
                                         onOpenQuest = vm::openQuest,
                                         onOpen = vm::openChallenge,
                                         onReview = vm::openReview,
@@ -340,7 +340,7 @@ private fun DeBubbleApp(
                         ChallengeScreen(
                             art = art,
                             served = served,
-                            kicker = "${World.roadName(r.pillar)} · level ${served.tier}",
+                            kicker = "${World.roadName(r.pillar)} · step ${served.tier}",
                             soundOn = state.soundOn,
                             ambientOn = state.ambientOn,
                             forecast = state.forecastFor(challengeKey),
@@ -580,7 +580,7 @@ private fun DeBubbleApp(
                     val fix = today.remediation
                     val served = when {
                         r.remediation && fix != null ->
-                            fix.toServed(vm.audit.debuff(fix.debuff)?.label ?: "From your audit")
+                            fix.toServed(vm.audit.debuff(fix.debuff)?.label ?: "For a habit you marked")
                         !r.remediation && campaign != null -> campaign.toServed()
                         else -> null
                     }

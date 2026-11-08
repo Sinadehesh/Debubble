@@ -131,7 +131,7 @@ class WidgetTest {
         val q = quests(state(done = setOf(p), log = listOf(did), tier = 4)).last()
         assertTrue(q.done)
         assertEquals("Walk the long way round", q.title)
-        assertTrue(q.status.endsWith("level 3"))
+        assertTrue(q.status.endsWith("step 3"))
         assertFalse("no letter once it is done", Today.letter(quests(state(done = setOf(p), log = listOf(did)))))
         // Any ladder done today counts as today's one, so finishing an extra first is not lost.
         val other = Pillar.order.last { it != p }

@@ -136,7 +136,7 @@ private fun RepRow(
                     color = Ink.Primary,
                     style = MaterialTheme.typography.titleMedium
                 )
-                if (rep.friction) Pill("Friction", Ink.Ember)
+                if (rep.friction) Pill("Spark", Ink.Ember)
             }
             Text(
                 text = rep.hint,

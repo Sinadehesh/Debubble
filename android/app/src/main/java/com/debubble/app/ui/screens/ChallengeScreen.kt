@@ -68,6 +68,7 @@ import com.debubble.app.ui.components.TopBar
 import com.debubble.app.ui.components.panel
 import com.debubble.app.ui.components.pixelScale
 import com.debubble.app.ui.components.rememberHaptics
+import com.debubble.app.ui.components.SheetHandle
 import com.debubble.app.ui.theme.Ink
 import com.debubble.app.ui.theme.Space
 import com.debubble.app.ui.theme.accent
@@ -163,7 +164,7 @@ fun ChallengeScreen(
                     Note(
                         Glyphs.Spark,
                         Ink.Gold,
-                        "Aim for ${served.repTarget} tries today. Count them on your journey."
+                        "Aim for ${served.repTarget} ${if (served.repTarget == 1) "try" else "tries"} today. Count them on your journey."
                     )
                 }
 
@@ -242,7 +243,7 @@ private fun Facts(served: Served) {
     ) {
         Tag(Engine.formatMinutes(served.minutes))
         Tag(if (served.cost == 0) "Free" else "Costs ${served.cost}")
-        Tag("Nerve ${served.exposure}/10")
+        Tag("Courage ${served.exposure}/10")
     }
 }
 
@@ -386,7 +387,7 @@ private fun Ease(ease: String) {
     ) {
         Label("Too big today?", color = Ink.Primary, strong = true)
         Text(text = ease, color = Ink.Secondary, style = MaterialTheme.typography.bodyLarge)
-        Label("Do that instead. It counts as the day, and your level stays where it is.")
+        Label("Do that instead. It counts as the day, and your road stays where it is.")
     }
 }
 
@@ -401,8 +402,11 @@ private fun FrictionSheet(art: RoomArt, onPick: (String) -> Unit, onDismiss: () 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        shape = Cut.sheet,
         containerColor = Ink.Surface,
-        contentColor = Ink.Primary
+        contentColor = Ink.Primary,
+        scrimColor = Ink.Primary.copy(alpha = 0.45f),
+        dragHandle = { SheetHandle() }
     ) {
         Column(
             modifier = Modifier

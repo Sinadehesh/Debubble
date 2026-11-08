@@ -132,7 +132,7 @@ object Router {
             "This one counts for both of your goals at once."
 
         campaign != null && fix != null ->
-            "One for your goal, one for something you flagged in your audit."
+            "One for your journey, one for a habit you marked."
 
         campaign != null && goals > 1 ->
             "Your goals take turns. This one is up today."
@@ -140,9 +140,9 @@ object Router {
         campaign != null -> "From your goal."
 
         fix != null && debuffs > 1 ->
-            "Your audit items take turns. This one is up today."
+            "The habits you marked take turns. This one is up today."
 
-        fix != null -> "From your audit."
+        fix != null -> "For a habit you marked."
 
         else -> ""
     }

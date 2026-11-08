@@ -110,7 +110,7 @@ fun CompletionScreen(
         VSpace(4)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             SpriteIcon(art, World.road(pillar), pixelScale = pixelScale(2f))
-            Label("${World.roadName(pillar)} · level $tierCleared", color = pillar.accent, strong = true)
+            Label("${World.roadName(pillar)} · step $tierCleared", color = pillar.accent, strong = true)
         }
         Text(
             text = when (pillar) {

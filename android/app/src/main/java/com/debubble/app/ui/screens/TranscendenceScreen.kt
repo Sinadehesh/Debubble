@@ -122,7 +122,7 @@ fun TranscendenceScreen(
             horizontalAlignment = Alignment.Start
         ) {
             Column(modifier = Modifier.alpha(((p - 0.35f) / 0.4f).coerceIn(0f, 1f))) {
-                Label("${pillar.display} · level 100", color = pillar.accent, strong = true)
+                Label("${pillar.display} · step 100", color = pillar.accent, strong = true)
                 VSpace(16)
                 Text(
                     text = closingLine(pillar),
@@ -132,7 +132,7 @@ fun TranscendenceScreen(
                 )
                 VSpace(18)
                 Text(
-                    text = "There is no level 101. Whatever you do here now, you do without an app telling you to.",
+                    text = "There is no step 101. Whatever you do here now, you do without an app telling you to.",
                     color = Ink.Secondary,
                     style = MaterialTheme.typography.bodyLarge
                 )

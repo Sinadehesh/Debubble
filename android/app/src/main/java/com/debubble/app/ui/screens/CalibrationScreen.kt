@@ -249,7 +249,7 @@ fun CalibrationScreen(
                         onChange = { capacity = it }
                     )
                     VSpace(26)
-                    Label("What can you spend on a challenge?", strong = true)
+                    Label("What can you spend on a mission?", strong = true)
                     VSpace(6)
                     Text(
                         text = "This is a hard limit. Anything above it is never shown to " +
@@ -388,7 +388,7 @@ private fun ColumnScope.Result(baseline: Baseline, isRecalibration: Boolean) {
                     )
                     Label(p.dimension)
                 }
-                Figure("Level ${tiers.getValue(p)}", color = p.accent)
+                Figure("Step ${tiers.getValue(p)}", color = p.accent)
             }
             Divider()
         }

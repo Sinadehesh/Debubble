@@ -101,8 +101,8 @@ fun LearnScreen(
                 PageTip(
                     art = art,
                     title = "Why any of this works",
-                    body = "A short lesson opens each day for thirty days, and anything you " +
-                        "marked in your audit gets its own reading. Five minutes, standing up.",
+                    body = "A new page opens each day for thirty days, and every habit you " +
+                        "marked gets one of its own. Five minutes, standing up.",
                     onDismiss = onTipSeen
                 )
                 VSpace(10)
@@ -132,7 +132,7 @@ fun LearnScreen(
                 SectionHeader("For you", trailing = "${targeted.size} article${plural(targeted.size)}")
                 VSpace(6)
                 Text(
-                    text = "Based on what you marked in your audit.",
+                    text = "For the habits you marked.",
                     color = Ink.Secondary,
                     style = MaterialTheme.typography.bodyMedium
                 )
@@ -175,7 +175,7 @@ fun LearnScreen(
             }
 
             VSpace(26)
-            SectionHeader("The course", trailing = "${unlockedCourse.size} of 30")
+            SectionHeader("Thirty pages", trailing = "${unlockedCourse.size} of 30")
             VSpace(12)
 
             Column(verticalArrangement = Arrangement.spacedBy(Space.gap)) {
@@ -260,7 +260,7 @@ private fun LessonCard(
                 )
             }
             Text(
-                text = if (locked) "Locked until day ${lesson.day}" else lesson.title,
+                text = if (locked) "Opens on day ${lesson.day}" else lesson.title,
                 modifier = Modifier.weight(1f),
                 color = if (locked) Ink.Muted else Ink.Primary,
                 style = MaterialTheme.typography.titleMedium

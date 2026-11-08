@@ -198,7 +198,7 @@ fun ProfileScreen(
         }
 
         VSpace(14)
-        SignHeader(art, World.TAB_LIBRARY, "Your audit", trailing = "${state.debuffs.size} marked")
+        SignHeader(art, World.TAB_LIBRARY, "Habits to change", trailing = "${state.debuffs.size} marked")
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -211,7 +211,7 @@ fun ProfileScreen(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = if (state.debuffs.isEmpty()) "Run your systems audit"
+                    text = if (state.debuffs.isEmpty()) "Check your habits"
                     else "${state.debuffs.size} habit${if (state.debuffs.size == 1) "" else "s"} to work on",
                     color = Ink.Primary,
                     style = MaterialTheme.typography.bodyLarge

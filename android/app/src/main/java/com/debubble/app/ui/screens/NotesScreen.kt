@@ -188,7 +188,7 @@ fun NotesScreen(
             when {
                 notes.isEmpty() -> EmptyState(
                     title = "Start writing.",
-                    body = "After a challenge, after a no, or for no reason. This is the " +
+                    body = "After a letter, after a no, or for no reason. This is the " +
                         "only place in the app that keeps what you actually thought."
                 )
 
@@ -278,12 +278,12 @@ private fun NoteCard(art: RoomArt, note: Note, dayIndex: Long, onOpen: () -> Uni
 }
 
 private fun linkLabel(note: Note): String = when (note.linkedKind) {
-    "LESSON" -> "On a lesson"
+    "LESSON" -> "On a page"
     "REP" -> "On an attempt"
     "MISSION" -> "On a goal step"
-    "AUDIT" -> "On an audit item"
-    "CAMPAIGN" -> "On a goal challenge"
-    else -> "On a challenge"
+    "AUDIT" -> "On a habit"
+    "CAMPAIGN" -> "On a journey stop"
+    else -> "On a letter"
 }
 
 /**

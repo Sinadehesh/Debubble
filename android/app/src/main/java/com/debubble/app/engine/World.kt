@@ -42,11 +42,7 @@ object World {
     }
 
     /** What each road is, said the way someone would. */
-    fun roadName(p: Pillar): String = when (p) {
-        Pillar.ACCESS -> "Somewhere new"
-        Pillar.ACTIVITY -> "Something new"
-        Pillar.SOCIAL -> "Someone new"
-    }
+    fun roadName(p: Pillar): String = p.display
 
     /** The place at the end of each journey. */
     fun landmark(g: Goal): String = when (g) {

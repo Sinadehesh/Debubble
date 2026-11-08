@@ -160,9 +160,8 @@ object Tour {
                     spot = TourSpot.LETTER,
                     icon = Today.ICON_OUT,
                     title = "The letter is today's mission",
-                    body = "One small step outside your bubble, new every day: somewhere new " +
-                        "(Access), something new (Activity) or someone new (Social). Tap the " +
-                        "letter to read it.",
+                    body = "One small step outside your bubble, new every day: somewhere new, " +
+                        "something new or someone new. Tap the letter to read it.",
                     absent = "On days you have not been out yet, you hold a letter: that " +
                         "day's mission outside your bubble. Today's is already done."
                 )

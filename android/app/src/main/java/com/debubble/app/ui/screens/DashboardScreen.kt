@@ -371,7 +371,7 @@ private fun MoreForToday(
                 art = art,
                 icon = World.road(p),
                 accent = p.accent,
-                kicker = "${World.roadName(p)} · level ${s.tier}",
+                kicker = "${World.roadName(p)} · step ${s.tier}",
                 title = s.directive,
                 done = false,
                 onClick = { onOpen(p) }

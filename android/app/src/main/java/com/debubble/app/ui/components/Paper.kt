@@ -316,7 +316,7 @@ fun RemindSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheet,
-        shape = Cut.large,
+        shape = Cut.sheet,
         containerColor = Ink.Surface,
         contentColor = Ink.Primary,
         scrimColor = Ink.Primary.copy(alpha = 0.45f),
