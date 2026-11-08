@@ -912,7 +912,8 @@ private fun DeBubbleApp(
                         notice = billingNotice,
                         onSubscribe = { activity?.let { vm.subscribe(it) } },
                         onRestore = vm::restorePurchases,
-                        onClose = { vm.closePaywall(r) }
+                        onClose = { vm.closePaywall(r) },
+                        onRetry = vm::retryBilling
                     )
                 }
             }

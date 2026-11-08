@@ -1426,6 +1426,9 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
 
     fun restorePurchases() { billing.refresh() }
 
+    /** Ask Google Play again from the start: connect, what is owned, what it costs. */
+    fun retryBilling() { billing.start() }
+
     // ------------------------------------------------------------------ training
 
     fun openTraining() {

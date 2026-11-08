@@ -140,13 +140,19 @@ abstract class Camera {
         // mostly in the morning.
         val workouts = mutableListOf<WorkoutSet>()
         var setId = 1_000L
-        for (d in 0 until 23 step 2) {
+        // Push-ups were last done three days ago, so they are what is due today.
+        for (d in 0 until 23) {
             val day = started + d
-            val pushup = if (d < 12) "incline_pushup" else "knee_pushup"
-            val reps = if (d < 12) 6 + d / 2 else 5 + (d - 12) / 2
-            repeat(2) { workouts += WorkoutSet(setId++, pushup, reps, 0f, day, 7 * 60 + 40) }
-            workouts += WorkoutSet(setId++, "squat", 8 + d / 2, 0f, day, 7 * 60 + 45)
-            if (d % 4 == 0) workouts += WorkoutSet(setId++, "plank", 15 + d, 0f, day, 7 * 60 + 50)
+            if (d % 4 == 0) {
+                val pushup = if (d < 12) "incline_pushup" else "knee_pushup"
+                val reps = if (d < 12) 6 + d / 2 else 5 + (d - 12) / 2
+                repeat(2) { workouts += WorkoutSet(setId++, pushup, reps, 0f, day, 7 * 60 + 40) }
+            }
+            if (d % 2 == 0) workouts += WorkoutSet(setId++, "squat", 8 + d / 2, 0f, day, 7 * 60 + 45)
+            if (d % 4 == 2) {
+                workouts += WorkoutSet(setId++, "superman", 8 + d / 4, 0f, day, 7 * 60 + 48)
+                workouts += WorkoutSet(setId++, "plank", 15 + d, 0f, day, 7 * 60 + 50)
+            }
             if (d % 3 == 0) workouts += WorkoutSet(setId++, "walk", 15 + d, 0f, day, 18 * 60 + 10)
         }
 

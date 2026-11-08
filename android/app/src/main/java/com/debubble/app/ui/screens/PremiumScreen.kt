@@ -19,6 +19,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import kotlinx.coroutines.delay
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -74,9 +80,21 @@ fun PremiumScreen(
     notice: String?,
     onSubscribe: () -> Unit,
     onRestore: () -> Unit,
-    onClose: () -> Unit
+    onClose: () -> Unit,
+    /** Ask Google Play again, when it has not answered. */
+    onRetry: () -> Unit = onRestore
 ) {
     val uri = LocalUriHandler.current
+    // Google Play usually answers in a second. If it has not after a while (no Play Store,
+    // signed out, or the subscription not set up yet), say so rather than wait forever.
+    var waited by remember { mutableStateOf(false) }
+    LaunchedEffect(offerLine, available) {
+        waited = false
+        if (offerLine == null && available != false) {
+            delay(8_000)
+            waited = true
+        }
+    }
     Column(modifier = Modifier.fillMaxSize().navigationBarsPadding()) {
         TopBar(title = "Premium", subtitle = "DeBubble", onBack = onClose)
         Column(
@@ -175,7 +193,19 @@ fun PremiumScreen(
                             enabled = offerLine != null,
                             onClick = onSubscribe
                         )
-                        if (offerLine == null) Label("Asking Google Play for the price...")
+                        if (offerLine == null && !waited) Label("Asking Google Play for the price...")
+                        if (offerLine == null && waited) {
+                            Text(
+                                text = "Google Play is not answering. Check you are signed in to " +
+                                    "Google Play and online, then try again.",
+                                color = Ink.Secondary,
+                                style = MaterialTheme.typography.bodyMedium.centered
+                            )
+                            com.debubble.app.ui.components.SecondaryButton("Try again") {
+                                waited = false
+                                onRetry()
+                            }
+                        }
                     }
                     if (notice != null) {
                         Text(notice, color = Ink.Primary, style = MaterialTheme.typography.bodyMedium.centered)
