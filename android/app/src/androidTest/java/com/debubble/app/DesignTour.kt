@@ -79,7 +79,10 @@ class DesignTour : Camera() {
         shot(OUT, "33b-paywall-price")
         sh("input swipe 540 1600 540 300 500")
         settle(1200)
-        shot(OUT, "33c-paywall-discount")
+        shot(OUT, "33c-paywall-plans")
+        sh("input swipe 540 1600 540 300 500")
+        settle(1200)
+        shot(OUT, "33d-paywall-discount")
         reseed { it.copy(premium = PremiumState(active = true, since = System.currentTimeMillis() - 9L * 86_400_000L), plan = "first_pushup", planDone = 4) }
         at("34-training-plan", Route.Train())
         at("35-insights", Route.HabitList())
