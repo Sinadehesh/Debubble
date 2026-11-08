@@ -53,7 +53,7 @@ the "Store screenshots" workflow and captioned by `store.py screenshots <folder>
 > • Every habit in detail: this week, twelve weeks of squares, when you usually do it, and how it made you feel
 >
 > PREMIUM (OPTIONAL)
-> Everything that helps you look after yourself is free. Premium adds training plans, a reading room of short reads on sleep, mood, getting unstuck and a quieter mind, and insights across your habits. $4.99 a month, or $29.99 a year (about half the price), cancel any time in Google Play. If you cannot afford it, email sinadehesh@gmail.com and ask for a discount.
+> Everything that helps you look after yourself is free. Premium adds training plans, a reading room of short reads on sleep, mood, getting unstuck and a quieter mind, and insights across your habits. $4.99 a month, or $29.99 a year (about half the price), cancel any time in Google Play. If you cannot afford it, you can ask for a discount from the Premium page in the app.
 >
 > PRIVATE BY DESIGN
 > No account, no ads, no tracking. DeBubble does not even have internet access: everything you write stays on your phone.
