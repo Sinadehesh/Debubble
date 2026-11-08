@@ -1,5 +1,8 @@
 package com.debubble.app.ui.screens
 
+import com.debubble.app.ui.theme.wash
+import com.debubble.app.ui.components.pixelScale
+import com.debubble.app.ui.components.MeFigure
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -119,7 +122,7 @@ fun RoomScreen(
                 item != null -> Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .panel(fill = Ink.SurfaceHigh)
+                        .panel(fill = Ink.Gold.wash, borderWidth = 3.dp)
                         .padding(12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -149,7 +152,20 @@ fun RoomScreen(
             if (dressing || pick == Scene.ME) {
                 LookPicker(art = art, look = home.look, onChange = onLook)
             } else {
-                TextAction("Change how you look", colour = Ink.Secondary, onClick = { dressing = true })
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .panel(fill = Ink.Room.wash)
+                        .padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    MeFigure(art, home.look, pixelScale = pixelScale(3f))
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Label("Skin, hair and top. Hats arrive with levels, in the wardrobe.")
+                        SecondaryButton("Change how you look", onClick = { dressing = true })
+                    }
+                }
             }
 
             if (stored.isNotEmpty()) {
@@ -236,7 +252,7 @@ private fun familyColour(f: Family) = when (f) {
     Family.BODY -> Ink.Body
     Family.ROOM -> Ink.Room
     Family.HEART -> Ink.Heart
-    Family.WORLD -> Ink.Access
+    Family.WORLD -> Ink.Gold
 }
 
 private fun unitOf(f: Family): String = if (f == Family.WORLD) "mission" else "day"

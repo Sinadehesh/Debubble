@@ -1,5 +1,8 @@
 package com.debubble.app.ui.components
 
+import kotlin.math.floor
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.drawOutline
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.VectorConverter
@@ -257,31 +260,19 @@ fun TourOverlay(
             // only bright thing left and the eye goes straight to it.
             drawRect(Ink.Primary.copy(alpha = 0.72f))
             if (hole != null) {
-                val corner = CornerRadius(12.dp.toPx())
-                drawRoundRect(
-                    color = Color.Black,
-                    topLeft = lit.topLeft,
-                    size = lit.size,
-                    cornerRadius = corner,
-                    blendMode = BlendMode.Clear
-                )
-                drawRoundRect(
-                    color = accent.fill,
-                    topLeft = lit.topLeft,
-                    size = lit.size,
-                    cornerRadius = corner,
-                    style = Stroke(width = 4.dp.toPx())
-                )
-                // A ring that breathes outwards, so the eye finds the spot before the words.
+                // The lit spot is cut to the same stepped corners as every card it lands on.
+                val cut = Cut.large.createOutline(lit.size, layoutDirection, this)
+                translate(lit.left, lit.top) {
+                    drawOutline(cut, Color.Black, blendMode = BlendMode.Clear)
+                    drawOutline(cut, accent.fill, style = Stroke(width = 4.dp.toPx()))
+                }
+                // A ring that steps outwards, so the eye finds the spot before the words.
                 if (!reduced) {
-                    val grow = glow * 10.dp.toPx()
-                    drawRoundRect(
-                        color = accent.fill.copy(alpha = (1f - glow) * 0.8f),
-                        topLeft = lit.topLeft - Offset(grow, grow),
-                        size = Size(lit.width + grow * 2, lit.height + grow * 2),
-                        cornerRadius = CornerRadius(12.dp.toPx() + grow),
-                        style = Stroke(width = 2.dp.toPx())
-                    )
+                    val grow = floor(glow * 10.dp.toPx())
+                    val ring = Cut.large.createOutline(Size(lit.width + grow * 2, lit.height + grow * 2), layoutDirection, this)
+                    translate(lit.left - grow, lit.top - grow) {
+                        drawOutline(ring, accent.fill.copy(alpha = (1f - glow) * 0.8f), style = Stroke(width = 2.dp.toPx()))
+                    }
                 }
             }
         }

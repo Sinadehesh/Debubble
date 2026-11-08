@@ -1,5 +1,12 @@
 package com.debubble.app.ui.screens
 
+import androidx.compose.ui.unit.sp
+import com.debubble.app.ui.theme.wash
+import com.debubble.app.ui.theme.fill
+import com.debubble.app.ui.theme.ButtonText
+import com.debubble.app.ui.components.BlockButton
+import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -89,7 +96,7 @@ import com.debubble.app.ui.theme.Cut
 fun ChallengeScreen(
     art: RoomArt,
     served: Served,
-    /** Where it sits: "Someone new · level 4", "Your journey · step 4 of 30". */
+    /** Where it sits: "Someone new · step 4", "Your journey · stop 4 of 30". */
     kicker: String,
     soundOn: Boolean,
     ambientOn: Boolean,
@@ -123,19 +130,18 @@ fun ChallengeScreen(
             TopBar(
                 title = if (served.kind == "MISSION") "Your journey" else "Today's letter",
                 subtitle = kicker,
-                accent = accent,
                 onBack = onBack,
                 action = {
                     if (onSwap != null) {
                         Box(
                             modifier = Modifier
-                                .heightIn(min = Space.tap)
-                                .panel(border = Ink.Border)
+                                .heightIn(min = 44.dp)
+                                .panel(shape = Cut.small, shadow = Ink.Border)
                                 .clickable(role = Role.Button) { onSwap() }
-                                .padding(horizontal = 14.dp, vertical = 12.dp),
+                                .padding(horizontal = 12.dp, vertical = 10.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            Label("Another one", color = Ink.Primary, strong = true)
+                            Text("Another one", color = Ink.Primary, style = MaterialTheme.typography.labelLarge)
                         }
                     }
                 }
@@ -180,7 +186,7 @@ fun ChallengeScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = Space.tap)
-                        .panel(fill = Ink.SurfaceHigh, border = Ink.Ember)
+                        .panel(fill = Ink.Ember.wash)
                         .clickable(role = Role.Button) { frictionOpen = true }
                         .padding(horizontal = 14.dp, vertical = 12.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -252,10 +258,11 @@ private fun Tag(text: String) {
     Box(
         modifier = Modifier
             .clip(Cut.small)
-            .background(Ink.PaperShade)
+            .background(Ink.Well)
+            .border(BorderStroke(2.dp, Ink.Border), Cut.small)
             .padding(horizontal = 12.dp, vertical = 6.dp)
     ) {
-        Text(text, color = Ink.PaperText, style = MaterialTheme.typography.labelLarge)
+        Text(text, color = Ink.Primary, style = MaterialTheme.typography.labelLarge)
     }
 }
 
@@ -264,13 +271,13 @@ private fun Note(glyph: Glyphs, colour: Color, text: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .panel(fill = Ink.SurfaceHigh)
+            .panel(fill = colour.wash)
             .padding(horizontal = 14.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Glyph(glyph, colour = colour, size = 18)
-        Text(text = text, color = Ink.Secondary, style = MaterialTheme.typography.bodyMedium)
+        Text(text = text, color = Ink.Primary, style = MaterialTheme.typography.bodyMedium)
     }
 }
 
@@ -303,18 +310,19 @@ private fun Steps(served: Served, accent: Color) {
             text = "How to do it",
             modifier = Modifier.semantics { heading() },
             color = Ink.Primary,
-            style = MaterialTheme.typography.titleMedium
+            style = MaterialTheme.typography.titleLarge
         )
         steps.forEachIndexed { i, (label, text) ->
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Box(
                     modifier = Modifier
-                        .size(26.dp)
-                        .clip(CircleShape)
-                        .background(if (label == "Leave this behind") Ink.Ember else accent),
+                        .size(28.dp)
+                        .clip(Cut.small)
+                        .background(if (label == "Leave this behind") Ink.Ember.fill else accent.fill)
+                        .border(BorderStroke(2.dp, Ink.Border), Cut.small),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("${i + 1}", color = Ink.OnAccent, style = MaterialTheme.typography.labelLarge)
+                    Text("${i + 1}", color = Ink.OnAccent, style = ButtonText.copy(fontSize = 20.sp, lineHeight = 20.sp))
                 }
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Label(label, color = if (label == "Leave this behind") Ink.Ember else accent, strong = true)
@@ -338,7 +346,7 @@ private fun Guess(served: Served, forecast: Forecast?, onPredict: (String, Int) 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .panel(fill = Ink.Surface, border = Ink.Ember.copy(alpha = 0.7f))
+            .panel(fill = Ink.Ember.wash)
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
@@ -363,10 +371,12 @@ private fun Guess(served: Served, forecast: Forecast?, onPredict: (String, Int) 
                 accent = Ink.Ember
             )
             NerveSlider(label = "How hard will it be?", value = distress, onChange = { distress = it })
-            SecondaryButton(
+            BlockButton(
                 text = "Save my guess",
-                colour = if (text.isBlank()) Ink.Muted else Ink.Ember
-            ) { if (text.isNotBlank()) onPredict(text.trim(), distress) }
+                fill = Ink.Surface,
+                ink = Ink.Primary,
+                enabled = text.isNotBlank()
+            ) { onPredict(text.trim(), distress) }
         }
     }
 }
@@ -381,12 +391,12 @@ private fun Ease(ease: String) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .panel(fill = Ink.Well, border = Ink.Faint)
+            .panel(fill = Ink.Heart.wash)
             .padding(horizontal = 15.dp, vertical = 13.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        Label("Too big today?", color = Ink.Primary, strong = true)
-        Text(text = ease, color = Ink.Secondary, style = MaterialTheme.typography.bodyLarge)
+        Text("Too big today?", color = Ink.Primary, style = MaterialTheme.typography.titleMedium)
+        Text(text = ease, color = Ink.Primary, style = MaterialTheme.typography.bodyLarge)
         Label("Do that instead. It counts as the day, and your road stays where it is.")
     }
 }

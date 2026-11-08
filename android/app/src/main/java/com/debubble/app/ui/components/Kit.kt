@@ -622,7 +622,7 @@ fun Pill(
         modifier = modifier
             .clip(Cut.small)
             .background(if (filled) colour.fill else colour.wash)
-            .border(BorderStroke(1.5.dp, if (filled) Ink.Border else colour.copy(alpha = 0.55f)), Cut.small)
+            .border(BorderStroke(1.5.dp, Ink.Border), Cut.small)
             .padding(horizontal = 9.dp, vertical = 4.dp)
     ) {
         Text(

@@ -1,5 +1,12 @@
 package com.debubble.app.ui.screens
 
+import com.debubble.app.ui.theme.wash
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -83,6 +90,7 @@ fun GoalPickerScreen(
         ) {
             Text(
                 text = if (firstRun) "Where do you want to get to?" else "Where are you headed?",
+                modifier = Modifier.semantics { heading() },
                 color = Ink.Primary,
                 style = MaterialTheme.typography.displayMedium
             )
@@ -125,19 +133,29 @@ fun GoalPickerScreen(
                         horizontalArrangement = Arrangement.spacedBy(11.dp)
                     ) {
                         CheckBox(selected = on, accent = accent)
-                        SpriteIcon(art, World.landmark(goal), pixelScale = pixelScale(2f))
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(Cut.small)
+                                .background(if (on) Ink.Surface else accent.wash)
+                                .border(BorderStroke(2.dp, Ink.Border), Cut.small),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            SpriteIcon(art, World.landmark(goal), pixelScale = pixelScale(2f))
+                        }
                         Text(
                             text = goal.display,
                             modifier = Modifier.weight(1f),
                             color = Ink.Primary,
                             style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = if (on) FontWeight.Bold else FontWeight.SemiBold
+                                fontWeight = if (on) FontWeight.ExtraBold else FontWeight.Bold
                             )
                         )
                         if (started) {
                             Pill(
                                 if (Goals.isComplete(gs)) "Arrived" else "Stop ${gs.step}",
-                                accent
+                                accent,
+                                filled = true
                             )
                         }
                     }
@@ -147,7 +165,7 @@ fun GoalPickerScreen(
                         style = MaterialTheme.typography.bodyMedium
                     )
                     if (started) {
-                        ProgressTrack(Goals.progress(gs), accent, height = 6)
+                        ProgressTrack(Goals.progress(gs), accent, height = 10)
                     }
                 }
             }
@@ -184,7 +202,7 @@ fun PrincipleScreen(
     ) {
         TopBar(
             title = goal.display,
-            accent = goal.homePillar.accent,
+            subtitle = "An idea for the road",
             onBack = onDone
         )
         Column(
@@ -196,8 +214,9 @@ fun PrincipleScreen(
             VSpace(8)
             Text(
                 text = principle.title,
+                modifier = Modifier.semantics { heading() },
                 color = Ink.Primary,
-                style = MaterialTheme.typography.displayMedium
+                style = MaterialTheme.typography.displaySmall
             )
             VSpace(18)
             Text(
@@ -212,7 +231,7 @@ fun PrincipleScreen(
             VSpace(24)
         }
         Column(modifier = Modifier.padding(start = Space.gutter, end = Space.gutter, bottom = Space.gutter)) {
-            PrimaryButton("Got it", accent = goal.homePillar.accent) { onDone() }
+            PrimaryButton("Got it") { onDone() }
         }
     }
 }

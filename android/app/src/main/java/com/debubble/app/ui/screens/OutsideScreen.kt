@@ -1,5 +1,12 @@
 package com.debubble.app.ui.screens
 
+import com.debubble.app.ui.theme.fill
+import kotlin.math.floor
+import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
+import com.debubble.app.ui.components.castShadow
+import com.debubble.app.ui.components.Pill
+import com.debubble.app.ui.components.PageHeader
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -102,18 +109,7 @@ fun OutsideScreen(
             .padding(top = 18.dp, bottom = 28.dp),
         verticalArrangement = Arrangement.spacedBy(Space.gap)
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            SpriteIcon(art, World.TAB_OUT, pixelScale = pixelScale(2.6f))
-            Column {
-                Text(
-                    text = "Outside",
-                    modifier = Modifier.semantics { heading() },
-                    color = Ink.Primary,
-                    style = MaterialTheme.typography.headlineMedium
-                )
-                Label("Everything past your walls")
-            }
-        }
+        PageHeader(art = art, icon = World.TAB_OUT, title = "Outside", subtitle = "Everything past your walls")
 
         if (showTip) {
             PageTip(
@@ -181,34 +177,24 @@ private fun Stages(current: Stage, cleared: Int) {
                 modifier = Modifier.width(132.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                RoomShell(
-                    st,
+                Box(
                     modifier = Modifier
+                        .then(if (here) Modifier.castShadow(Cut.card, 3.dp, Ink.Border) else Modifier)
                         .clip(Cut.card)
-                        .alpha(if (reached) 1f else 0.35f)
-                        .drawWithContent {
-                            drawContent()
-                            if (here) {
-                                drawRoundRect(
-                                    color = Ink.Gold,
-                                    cornerRadius = CornerRadius(8.dp.toPx()),
-                                    style = Stroke(width = 6.dp.toPx())
-                                )
-                            }
-                        }
-                )
+                        .border(BorderStroke(if (here) 3.dp else 2.dp, if (reached) Ink.Border else Ink.Faint), Cut.card)
+                ) {
+                    RoomShell(st, modifier = Modifier.alpha(if (reached) 1f else 0.4f))
+                }
                 Text(
                     text = st.label,
-                    color = if (here) Ink.Gold else if (reached) Ink.Primary else Ink.Muted,
+                    color = if (reached) Ink.Primary else Ink.Muted,
                     style = MaterialTheme.typography.labelLarge
                 )
-                Label(
-                    when {
-                        here -> "You are here"
-                        reached -> "Been here"
-                        else -> "At ${st.threshold} missions"
-                    }
-                )
+                if (here) {
+                    Pill("You are here", Ink.Gold, filled = true)
+                } else {
+                    Label(if (reached) "Been here" else "At ${st.threshold} missions")
+                }
             }
         }
     }
@@ -232,7 +218,11 @@ private fun RoadRow(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .panel(fill = Ink.Surface, border = if (todays && !done) accent else Ink.Border, borderWidth = if (todays && !done) 2.dp else 1.dp)
+            .panel(
+                fill = if (todays && !done) accent.wash else Ink.Surface,
+                borderWidth = if (todays && !done) 3.dp else 2.dp,
+                shadow = if (todays && !done) Ink.Border else Ink.Shadow
+            )
             .clickable(role = Role.Button, enabled = !done, onClick = onOpen)
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -240,20 +230,21 @@ private fun RoadRow(
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(
                 modifier = Modifier
-                    .size(44.dp)
-                    .clip(Cut.card)
-                    .background(accent.wash),
+                    .size(48.dp)
+                    .clip(Cut.small)
+                    .background(if (todays && !done) Ink.Surface else accent.wash)
+                    .border(BorderStroke(2.dp, Ink.Border), Cut.small),
                 contentAlignment = Alignment.Center
             ) {
                 SpriteIcon(art, World.road(pillar), pixelScale = pixelScale(2f))
             }
             Column(modifier = Modifier.weight(1f)) {
-                Text(World.roadName(pillar), color = Ink.Primary, style = MaterialTheme.typography.titleMedium)
-                Label("Step $tier of ${Engine.MAX_TIER}", color = accent)
+                Text(World.roadName(pillar), color = Ink.Primary, style = MaterialTheme.typography.titleLarge)
+                Label("Step $tier of ${Engine.MAX_TIER}", color = accent, strong = true)
             }
             when {
                 done -> SpriteIcon(art, "icon_done", pixelScale = pixelScale(2f))
-                todays -> Label("Today's", color = accent, strong = true)
+                todays -> Pill("Today's", accent, filled = true)
             }
         }
         Road(tier = tier, accent = accent)
@@ -266,45 +257,50 @@ private fun RoadRow(
                     style = MaterialTheme.typography.bodyMedium,
                     maxLines = 2
                 )
-                Glyph(Glyphs.ArrowRight, colour = Ink.Muted, size = 16)
+                Glyph(Glyphs.ArrowRight, colour = Ink.Primary, size = 16)
             }
         }
     }
 }
 
-/** The road itself: a hundred levels, a post every ten, and you on it. */
+/**
+ * The road itself, the way the room would draw it: a sunken track with a plum edge, filled
+ * in the road's colour as far as you have walked, a post every ten steps, and you on it as a
+ * block. Every edge lands on a whole pixel.
+ */
 @Composable
 private fun Road(tier: Int, accent: Color) {
+    val fillColour = accent.fill
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(18.dp)
+            .height(20.dp)
             .drawBehind {
-                val y = size.height / 2f
-                val track = 6.dp.toPx()
-                drawRoundRect(
-                    color = Ink.Well,
-                    topLeft = Offset(0f, y - track / 2f),
-                    size = Size(size.width, track),
-                    cornerRadius = CornerRadius(track / 2f)
-                )
-                val at = size.width * (tier.coerceIn(1, Engine.MAX_TIER) / Engine.MAX_TIER.toFloat())
-                drawRoundRect(
-                    color = accent,
-                    topLeft = Offset(0f, y - track / 2f),
-                    size = Size(at, track),
-                    cornerRadius = CornerRadius(track / 2f)
-                )
+                fun px(v: Float) = floor(v)
+                val line = px(2.dp.toPx()).coerceAtLeast(1f)
+                val track = px(12.dp.toPx())
+                val top = px((size.height - track) / 2f)
+                val marker = px(size.height)
+                val reach = size.width - marker
+                val at = px(marker / 2f + reach * (tier.coerceIn(1, Engine.MAX_TIER) / Engine.MAX_TIER.toFloat()))
+                // The track: plum edge, sunken middle, walked part in the road's colour.
+                drawRect(Ink.Border, topLeft = Offset(0f, top), size = Size(size.width, track))
+                drawRect(Ink.Well, topLeft = Offset(line, top + line), size = Size(size.width - line * 2, track - line * 2))
+                drawRect(fillColour, topLeft = Offset(line, top + line), size = Size(at - line, track - line * 2))
+                // A post every ten steps.
                 for (post in 1..9) {
-                    val x = size.width * post / 10f
+                    val x = px(marker / 2f + reach * post / 10f)
                     drawRect(
-                        color = if (x <= at) accent else Ink.Faint,
-                        topLeft = Offset(x - 1.dp.toPx(), y - size.height / 2f),
-                        size = Size(2.dp.toPx(), size.height)
+                        color = if (x <= at) Ink.Border else Ink.Faint,
+                        topLeft = Offset(x - line / 2f, top + line),
+                        size = Size(line, track - line * 2)
                     )
                 }
-                drawCircle(color = Ink.Paper, radius = size.height / 2.4f, center = Offset(at.coerceAtLeast(size.height / 2.4f), y))
-                drawCircle(color = accent, radius = size.height / 3.6f, center = Offset(at.coerceAtLeast(size.height / 2.4f), y))
+                // You, as a block on the road.
+                val left = px(at - marker / 2f)
+                drawRect(Ink.Border, topLeft = Offset(left, 0f), size = Size(marker, marker))
+                drawRect(Ink.Surface, topLeft = Offset(left + line, line), size = Size(marker - line * 2, marker - line * 2))
+                drawRect(fillColour, topLeft = Offset(left + line * 2, line * 2), size = Size(marker - line * 4, marker - line * 4))
             }
     )
 }
@@ -320,7 +316,7 @@ private fun Guesses(state: AppState) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .panel(fill = Ink.Surface, border = if (done.isEmpty()) Ink.Border else Ink.Access.copy(alpha = 0.6f))
+            .panel()
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {

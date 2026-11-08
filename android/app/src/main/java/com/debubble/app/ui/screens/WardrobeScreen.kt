@@ -1,5 +1,7 @@
 package com.debubble.app.ui.screens
 
+import com.debubble.app.ui.components.Glyphs
+import com.debubble.app.ui.components.Glyph
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -73,7 +75,7 @@ fun WardrobeScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .panel(fill = Ink.Room.wash, border = Ink.Room.copy(alpha = 0.5f))
+                    .panel(fill = Ink.Room.wash)
                     .padding(vertical = 18.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -93,11 +95,15 @@ fun WardrobeScreen(
                             modifier = Modifier
                                 .weight(1f)
                                 .aspectRatio(1f)
-                                .clip(Cut.card)
-                                .background(if (on) Ink.SurfaceHigh else Ink.Surface)
-                                .border(
-                                    BorderStroke(if (on) 2.dp else 1.dp, if (on) Ink.Gold else Ink.Border),
-                                    Cut.card
+                                .panel(
+                                    fill = when {
+                                        on -> Ink.Gold.wash
+                                        open -> Ink.Surface
+                                        else -> Ink.Void
+                                    },
+                                    border = if (open) Ink.Border else Ink.Faint,
+                                    borderWidth = if (on) 3.dp else 2.dp,
+                                    shadow = if (on) Ink.Border else Ink.Shadow
                                 )
                                 .clickable(role = Role.RadioButton, enabled = open) { onLook(look.copy(hat = index)) }
                                 .semantics {
@@ -113,7 +119,10 @@ fun WardrobeScreen(
                             verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically)
                         ) {
                             if (id != null) {
-                                SpriteIcon(art, id, pixelScale = pixelScale(2.4f), modifier = Modifier.alpha(if (open) 1f else 0.35f))
+                                Box(contentAlignment = Alignment.Center) {
+                                    SpriteIcon(art, id, pixelScale = pixelScale(2.4f), modifier = Modifier.alpha(if (open) 1f else 0.3f))
+                                    if (!open) Glyph(Glyphs.Lock, colour = Ink.Secondary, size = 18)
+                                }
                             } else {
                                 Text("None", color = Ink.Secondary, style = MaterialTheme.typography.labelLarge)
                             }

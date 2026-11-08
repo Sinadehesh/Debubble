@@ -1,5 +1,18 @@
 package com.debubble.app.ui.screens
 
+import com.debubble.app.ui.theme.wash
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.heading
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
+import com.debubble.app.engine.World
+import com.debubble.app.ui.components.pixelScale
+import com.debubble.app.ui.components.SpriteIcon
+import com.debubble.app.ui.components.PixelSwitch
+import com.debubble.app.ui.components.PixelSlider
+import com.debubble.app.ui.components.Pill
+import com.debubble.app.ui.components.Ticks
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -114,22 +127,13 @@ fun CalibrationScreen(
         )
         if (!isRecalibration) SetupSteps(art, 1)
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = Space.gutter),
-            horizontalArrangement = Arrangement.spacedBy(5.dp)
-        ) {
-            repeat(cards + 1) { i ->
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(4.dp)
-                        .clip(Cut.small)
-                        .background(if (i <= step) Ink.Primary else Ink.Faint)
-                )
-            }
-        }
+        Ticks(
+            total = cards + 1,
+            done = step + 1,
+            accent = Ink.Gold,
+            modifier = Modifier.padding(horizontal = Space.gutter),
+            height = 8
+        )
 
         Column(
             modifier = Modifier
@@ -245,7 +249,7 @@ fun CalibrationScreen(
                 ) {
                     NumberSlider(
                         value = capacity, range = 10..180, step = 5,
-                        unit = "minutes a day", accent = Ink.Access,
+                        unit = "minutes a day", accent = Ink.Gold,
                         onChange = { capacity = it }
                     )
                     VSpace(26)
@@ -266,7 +270,6 @@ fun CalibrationScreen(
                                 detail = t.detail,
                                 selected = tier == t,
                                 single = true,
-                                accent = Ink.Activity,
                                 onToggle = {
                                     tier = t
                                     // Keep the legacy cash figure in step, since the pillar
@@ -292,7 +295,7 @@ fun CalibrationScreen(
                     Notice("You can change any of this later from your profile.")
                 }
 
-                else -> Result(baseline, isRecalibration)
+                else -> Result(art, baseline, isRecalibration)
             }
         }
 
@@ -327,17 +330,12 @@ private fun ColumnScope.Question(
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         if (pillar != null) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Dot(pillar.accent)
-                Label(pillar.display, color = pillar.accent, strong = true)
-            }
-            VSpace(10)
+            Pill(pillar.display, pillar.accent, filled = true)
+            VSpace(12)
         }
         Text(
             text = question,
+            modifier = Modifier.semantics { heading() },
             color = Ink.Primary,
             style = MaterialTheme.typography.headlineLarge
         )
@@ -353,44 +351,53 @@ private fun ColumnScope.Question(
 }
 
 @Composable
-private fun ColumnScope.Result(baseline: Baseline, isRecalibration: Boolean) {
+private fun ColumnScope.Result(art: RoomArt, baseline: Baseline, isRecalibration: Boolean) {
     val tiers = Calibration.entryTiers(baseline)
     Column(modifier = Modifier.fillMaxWidth()) {
-        Label(if (isRecalibration) "Updated" else "All set")
-        VSpace(10)
+        Pill(if (isRecalibration) "Updated" else "All set", Ink.Gold, filled = true)
+        VSpace(12)
         Text(
             text = "Here is where you start.",
+            modifier = Modifier.semantics { heading() },
             color = Ink.Primary,
             style = MaterialTheme.typography.displayMedium
         )
         VSpace(12)
         Text(
-            text = "These are starting levels, not scores. Nobody begins at zero, and you " +
-                "will never be given something you told us you cannot do.",
+            text = "Three roads out of your bubble, and the step you start on for each. " +
+                "Nobody begins at zero, and you will never be given something you told us " +
+                "you cannot do.",
             color = Ink.Secondary,
             style = MaterialTheme.typography.bodyMedium
         )
-        VSpace(24)
-        Pillar.order.forEach { p ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 14.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Dot(p.accent, size = 10)
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = p.display,
-                        color = Ink.Primary,
-                        style = MaterialTheme.typography.labelLarge
-                    )
-                    Label(p.dimension)
+        VSpace(20)
+        Column(verticalArrangement = Arrangement.spacedBy(Space.gap)) {
+            Pillar.order.forEach { p ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .panel(fill = p.accent.wash)
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(Cut.small)
+                            .background(Ink.Surface)
+                            .border(BorderStroke(2.dp, Ink.Border), Cut.small),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        SpriteIcon(art, World.road(p), pixelScale = pixelScale(2f))
+                    }
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(text = p.display, color = Ink.Primary, style = MaterialTheme.typography.titleMedium)
+                        Label(p.dimension)
+                    }
+                    Figure("Step ${tiers.getValue(p)}", color = p.accent)
                 }
-                Figure("Step ${tiers.getValue(p)}", color = p.accent)
             }
-            Divider()
         }
     }
 }
@@ -401,12 +408,12 @@ private fun Notice(text: String) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .panel(fill = Ink.SurfaceHigh)
+            .panel(fill = Ink.Heart.wash)
             .padding(horizontal = 14.dp, vertical = 12.dp)
     ) {
         Text(
             text = text,
-            color = Ink.Secondary,
+            color = Ink.Primary,
             style = MaterialTheme.typography.bodyMedium
         )
     }
@@ -431,19 +438,14 @@ private fun NumberSlider(
             Figure(display(value), color = accent, large = true)
             Label(unit)
         }
-        val steps = ((range.last - range.first) / step) - 1
-        Slider(
-            value = value.toFloat(),
-            onValueChange = { onChange(it.toInt()) },
-            valueRange = range.first.toFloat()..range.last.toFloat(),
-            steps = steps.coerceAtLeast(0),
-            colors = SliderDefaults.colors(
-                thumbColor = accent,
-                activeTrackColor = accent,
-                inactiveTrackColor = Ink.Faint,
-                activeTickColor = Color.Transparent,
-                inactiveTickColor = Color.Transparent
-            )
+        PixelSlider(
+            value = value,
+            range = range,
+            step = step,
+            accent = accent,
+            description = unit,
+            valueText = "${display(value)} $unit",
+            onChange = onChange
         )
     }
 }
@@ -455,25 +457,25 @@ private fun YesNoRow(label: String, on: Boolean, onChange: (Boolean) -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = Space.tap)
-            .selectablePanel(on, Ink.Activity)
+            .selectablePanel(on, Ink.Gold)
             .toggleable(value = on, role = Role.Switch, onValueChange = onChange)
             .padding(horizontal = 14.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        CheckBox(selected = on, accent = Ink.Activity)
         Text(
             text = label,
             modifier = Modifier.weight(1f),
             color = Ink.Primary,
             style = MaterialTheme.typography.bodyLarge.copy(
-                fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal
+                fontWeight = if (on) FontWeight.ExtraBold else FontWeight.SemiBold
             )
         )
         Text(
             text = if (on) "Yes" else "No",
-            color = if (on) Ink.Activity else Ink.Muted,
+            color = Ink.Primary,
             style = MaterialTheme.typography.labelLarge
         )
+        PixelSwitch(checked = on)
     }
 }

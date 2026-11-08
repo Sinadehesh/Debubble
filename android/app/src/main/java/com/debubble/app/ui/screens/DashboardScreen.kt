@@ -1,6 +1,13 @@
 package com.debubble.app.ui.screens
 
 import androidx.compose.foundation.ScrollState
+import kotlin.math.floor
+import com.debubble.app.ui.theme.fill
+import com.debubble.app.ui.components.Pill
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.geometry.Size
+import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,8 +22,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -61,6 +66,7 @@ import com.debubble.app.ui.components.HabitatAnnouncement
 import com.debubble.app.ui.components.HouseScene
 import com.debubble.app.ui.components.Label
 import com.debubble.app.ui.components.MeHead
+import com.debubble.app.ui.components.PageHeader
 import com.debubble.app.ui.components.PaperLabel
 import com.debubble.app.ui.components.PaperText
 import com.debubble.app.ui.components.PrimaryButton
@@ -160,7 +166,7 @@ fun DashboardScreen(
                     .padding(horizontal = Space.gutter)
                     .padding(top = 8.dp)
                     .fillMaxWidth()
-                    .panel(fill = Ink.SurfaceHigh, border = Ink.Heart.copy(alpha = 0.7f))
+                    .panel(fill = Ink.Heart.wash)
                     .padding(14.dp),
                 color = Ink.Primary,
                 style = MaterialTheme.typography.bodyMedium
@@ -274,35 +280,33 @@ fun DashboardScreen(
 @Composable
 private fun TopLine(art: RoomArt, state: AppState, dayIndex: Long, onOpenWardrobe: () -> Unit) {
     val today = remember { LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE d MMMM")) }
-    Row(
+    PageHeader(
+        art = art,
+        icon = World.TAB_HOME,
+        title = "Day $dayIndex",
+        subtitle = today,
         modifier = Modifier
-            .fillMaxWidth()
             .padding(horizontal = Space.gutter)
-            .padding(top = 14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text("Day $dayIndex", color = Ink.Primary, style = MaterialTheme.typography.headlineMedium)
-            Label(today)
-        }
-        Row(
-            modifier = Modifier
-                .heightIn(min = Space.tap)
-                .panel(fill = Ink.Surface, shape = Cut.card)
-                .clickable(role = Role.Button, onClick = onOpenWardrobe)
-                .padding(horizontal = 10.dp, vertical = 6.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            MeHead(art = art, look = state.home.look, pixelScale = pixelScale(1.6f))
-            Column(modifier = Modifier.width(76.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                Text("Level ${state.level}", color = Ink.Primary, style = MaterialTheme.typography.labelLarge)
-                ProgressTrack(fraction = state.levelProgress, accent = Ink.Gold, height = 6)
-                Label("${Progress.xpIntoLevel(state.xp)}/${Progress.XP_PER_LEVEL}")
+            .padding(top = 16.dp),
+        trailing = {
+            Row(
+                modifier = Modifier
+                    .heightIn(min = Space.tap)
+                    .panel(fill = Ink.Gold.wash, shape = Cut.card)
+                    .clickable(role = Role.Button, onClickLabel = "Open the wardrobe", onClick = onOpenWardrobe)
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                MeHead(art = art, look = state.home.look, pixelScale = pixelScale(1.6f))
+                Column(modifier = Modifier.width(80.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text("Level ${state.level}", color = Ink.Primary, style = MaterialTheme.typography.titleLarge)
+                    ProgressTrack(fraction = state.levelProgress, accent = Ink.Gold, height = 10)
+                    Label("${Progress.xpIntoLevel(state.xp)} of ${Progress.XP_PER_LEVEL} XP")
+                }
             }
         }
-    }
+    )
 }
 
 /**
@@ -314,7 +318,7 @@ private fun Mail(art: RoomArt, forecast: Forecast, onOpen: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .paper()
+            .panel(fill = Ink.Gold.wash, borderWidth = 3.dp, shadow = Ink.Border)
             .clickable(role = Role.Button, onClick = onOpen)
             .padding(14.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -322,10 +326,14 @@ private fun Mail(art: RoomArt, forecast: Forecast, onOpen: () -> Unit) {
     ) {
         SpriteIcon(art, World.POSTCARD, pixelScale = pixelScale(2.4f))
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            PaperLabel("You have mail", color = Ink.PaperText)
-            PaperText("How did \"${forecast.challengeTitle.take(60)}\" really go?", muted = true)
+            Text("You have mail", color = Ink.Primary, style = MaterialTheme.typography.titleMedium)
+            Text(
+                text = "How did \"${forecast.challengeTitle.take(60)}\" really go?",
+                color = Ink.Secondary,
+                style = MaterialTheme.typography.bodyMedium
+            )
         }
-        Glyph(Glyphs.ArrowRight, colour = Ink.PaperText, size = 16)
+        Glyph(Glyphs.ArrowRight, colour = Ink.Primary, size = 16)
     }
 }
 
@@ -417,9 +425,10 @@ private fun LetterRow(
     ) {
         Box(
             modifier = Modifier
-                .size(40.dp)
-                .clip(Cut.card)
-                .background(accent.wash),
+                .size(44.dp)
+                .clip(Cut.small)
+                .background(if (done) Ink.Well else accent.wash)
+                .border(BorderStroke(2.dp, if (done) Ink.Faint else Ink.Border), Cut.small),
             contentAlignment = Alignment.Center
         ) {
             SpriteIcon(art, icon, pixelScale = pixelScale(1.8f))
@@ -429,7 +438,7 @@ private fun LetterRow(
             Text(
                 text = title,
                 color = if (done) Ink.Secondary else Ink.Primary,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.titleSmall,
                 maxLines = 2
             )
         }
@@ -465,10 +474,10 @@ private fun WorldStrip(
             verticalAlignment = Alignment.CenterVertically
         ) {
             SpriteIcon(art, World.TAB_HOME, pixelScale = pixelScale(1.8f))
-            Text(stage.label, color = Ink.Primary, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+            Text(stage.label, color = Ink.Primary, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
             Label("$owned of $total things")
         }
-        ProgressTrack(Habitat.progress(state.clearedRungs), Ink.Gold, height = 6)
+        ProgressTrack(Habitat.progress(state.clearedRungs), Ink.Gold, height = 10)
         Label(Habitat.caption(state.clearedRungs))
         Row(horizontalArrangement = Arrangement.spacedBy(Space.gap)) {
             Box(modifier = Modifier.weight(1f)) {
@@ -499,7 +508,7 @@ internal fun JourneyCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .panel(fill = Ink.Surface, border = Ink.Gold.copy(alpha = 0.6f))
+                .panel(fill = Ink.Gold.wash)
                 .clickable(role = Role.Button, onClick = onPick)
                 .padding(14.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -507,10 +516,10 @@ internal fun JourneyCard(
         ) {
             SpriteIcon(art, World.landmark(Goal.INTERESTING), pixelScale = pixelScale(2.4f))
             Column(modifier = Modifier.weight(1f)) {
-                Text("Pick a journey", color = Ink.Primary, style = MaterialTheme.typography.titleMedium)
+                Text("Pick a journey", color = Ink.Primary, style = MaterialTheme.typography.titleLarge)
                 Label("Thirty small steps towards something you actually want.")
             }
-            Glyph(Glyphs.ArrowRight, colour = Ink.Muted, size = 16)
+            Glyph(Glyphs.ArrowRight, colour = Ink.Primary, size = 16)
         }
         return
     }
@@ -519,7 +528,7 @@ internal fun JourneyCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .panel(fill = Ink.Surface, border = accent.copy(alpha = 0.7f))
+            .panel(fill = Ink.Surface)
             .clickable(role = Role.Button, onClick = onOpen)
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -531,9 +540,9 @@ internal fun JourneyCard(
             SpriteIcon(art, World.landmark(goal), pixelScale = pixelScale(2.4f))
             Column(modifier = Modifier.weight(1f)) {
                 Label("Your journey", color = accent, strong = true)
-                Text(goal.display, color = Ink.Primary, style = MaterialTheme.typography.titleMedium)
+                Text(goal.display, color = Ink.Primary, style = MaterialTheme.typography.titleLarge)
             }
-            Label(if (mission == null) "Arrived" else "Stop ${gs.step} of ${Goals.CAMPAIGN_LENGTH}")
+            Pill(if (mission == null) "Arrived" else "Stop ${gs.step} of ${Goals.CAMPAIGN_LENGTH}", accent)
         }
         Trail(stops = Goals.CAMPAIGN_LENGTH, done = gs.completed, accent = accent)
         if (mission != null) {
@@ -549,22 +558,29 @@ internal fun JourneyCard(
     }
 }
 
-/** Thirty stops as a dotted path, filled as far as you have walked it. */
+/**
+ * Thirty stops as a row of pixel squares, filled in the road's ink as far as you have walked
+ * it. Every tenth stop is a bigger square: a landmark to walk towards.
+ */
 @Composable
 fun Trail(stops: Int, done: Int, accent: Color, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxWidth()
             .height(14.dp)
+            .semantics { contentDescription = "$done of $stops stops walked" }
             .drawBehind {
                 val gap = size.width / stops
-                val r = (gap * 0.32f).coerceAtMost(size.height / 2f)
+                val small = floor(minOf(gap * 0.55f, size.height * 0.55f)).coerceAtLeast(2f)
+                val big = floor(minOf(gap * 0.85f, size.height)).coerceAtLeast(small)
                 for (i in 0 until stops) {
-                    val c = Offset(gap * i + gap / 2f, size.height / 2f)
-                    drawCircle(
+                    val side = if (i % 10 == 9) big else small
+                    val x = floor(gap * i + (gap - side) / 2f)
+                    val y = floor((size.height - side) / 2f)
+                    drawRect(
                         color = if (i < done) accent else Ink.Faint,
-                        radius = if (i % 10 == 9) r * 1.4f else r,
-                        center = c
+                        topLeft = Offset(x, y),
+                        size = Size(side, side)
                     )
                 }
             }
@@ -587,7 +603,7 @@ private fun WidgetOffer(art: RoomArt, onAdd: () -> Unit, onDismiss: () -> Unit) 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .panel(fill = Ink.SurfaceHigh, border = Ink.Gold.copy(alpha = 0.7f))
+            .panel(fill = Ink.Gold.wash)
             .padding(15.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
@@ -596,7 +612,7 @@ private fun WidgetOffer(art: RoomArt, onAdd: () -> Unit, onDismiss: () -> Unit) 
             verticalAlignment = Alignment.CenterVertically
         ) {
             SpriteIcon(art, World.TAB_HOME, pixelScale = pixelScale(1.8f))
-            Label("Put your room on your home screen", color = Ink.Gold, strong = true)
+            Text("Put your room on your home screen", color = Ink.Primary, style = MaterialTheme.typography.titleMedium)
         }
         Text(
             text = "Your room and today's four, where you will see them, with the times you " +
@@ -606,7 +622,7 @@ private fun WidgetOffer(art: RoomArt, onAdd: () -> Unit, onDismiss: () -> Unit) 
         )
         Row(horizontalArrangement = Arrangement.spacedBy(Space.gap)) {
             Box(modifier = Modifier.weight(1f)) {
-                PrimaryButton("Add the widget", accent = Ink.Gold, onClick = onAdd)
+                PrimaryButton("Add the widget", onClick = onAdd)
             }
             Box(modifier = Modifier.weight(1f)) {
                 SecondaryButton("Not now", onClick = onDismiss)
@@ -642,8 +658,8 @@ fun TabBar(
         modifier = modifier
             .fillMaxWidth()
             .background(Ink.Surface)
-            .drawBehind { drawRect(Ink.Faint, size = size.copy(height = 1.dp.toPx())) }
-            .padding(top = 6.dp, bottom = 8.dp),
+            .drawBehind { drawRect(Ink.Border, size = size.copy(height = 2.dp.toPx())) }
+            .padding(top = 8.dp, bottom = 8.dp, start = 6.dp, end = 6.dp),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         Tab.entries.forEach { tab ->
@@ -655,16 +671,21 @@ fun TabBar(
                     .clip(Cut.card)
                     .clickable(role = Role.Tab) { onSelect(tab) }
                     .semantics { selected = on }
-                    .padding(vertical = 4.dp),
+                    .padding(vertical = 2.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(3.dp)
             ) {
                 Box(
                     modifier = Modifier
-                        .size(width = 52.dp, height = 30.dp)
-                        .clip(CircleShape)
-                        .background(if (on) Ink.SurfaceHigh else Color.Transparent)
-                        .alpha(if (on) 1f else 0.62f),
+                        .size(width = 54.dp, height = 32.dp)
+                        .then(
+                            if (on) Modifier
+                                .clip(Cut.small)
+                                .background(Ink.Gold.fill)
+                                .border(BorderStroke(2.dp, Ink.Border), Cut.small)
+                            else Modifier
+                        )
+                        .alpha(if (on) 1f else 0.7f),
                     contentAlignment = Alignment.Center
                 ) {
                     when (tab) {
@@ -675,7 +696,7 @@ fun TabBar(
                 Text(
                     text = tab.label,
                     color = if (on) Ink.Primary else Ink.Muted,
-                    style = MaterialTheme.typography.labelMedium
+                    style = if (on) MaterialTheme.typography.labelLarge else MaterialTheme.typography.labelMedium
                 )
             }
         }

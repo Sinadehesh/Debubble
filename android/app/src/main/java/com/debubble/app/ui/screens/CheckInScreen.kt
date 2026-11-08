@@ -1,5 +1,19 @@
 package com.debubble.app.ui.screens
 
+import com.debubble.app.ui.theme.wash
+import com.debubble.app.ui.theme.Cut
+import com.debubble.app.ui.components.pixelScale
+import com.debubble.app.ui.components.SpriteIcon
+import com.debubble.app.ui.components.Pill
+import com.debubble.app.engine.Today
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -81,6 +95,7 @@ fun CheckInScreen(
             Text(
                 text = if (firstRun) "This room is a mirror of your real one."
                 else "How is it, really?",
+                modifier = Modifier.semantics { heading() },
                 color = Ink.Primary,
                 style = MaterialTheme.typography.headlineMedium
             )
@@ -110,7 +125,7 @@ fun CheckInScreen(
             // to it. Afterwards it lives in the room screen.
             if (firstRun) {
                 VSpace(4)
-                Text("This is you", color = Ink.Primary, style = MaterialTheme.typography.titleMedium)
+                Text("This is you", color = Ink.Primary, style = MaterialTheme.typography.titleLarge)
                 Label("Pick what looks like you. You can change it any time from your room.")
                 LookPicker(art = art, look = home.look, onChange = onLook)
             }
@@ -120,15 +135,25 @@ fun CheckInScreen(
                 VSpace(8)
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Dot(d.accent, size = 10)
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(Cut.small)
+                            .background(d.accent.wash)
+                            .border(BorderStroke(2.dp, Ink.Border), Cut.small),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        SpriteIcon(art, Today.icon(d), pixelScale = pixelScale(1.8f))
+                    }
                     Text(
                         text = info.name,
-                        color = d.accent,
-                        style = MaterialTheme.typography.titleMedium
+                        modifier = Modifier.weight(1f).semantics { heading() },
+                        color = Ink.Primary,
+                        style = MaterialTheme.typography.titleLarge
                     )
-                    Label(info.levels[levels[d] ?: 0])
+                    Pill(info.levels[levels[d] ?: 0], d.accent, filled = true)
                 }
                 info.checkin.forEachIndexed { level, answer ->
                     SelectRow(
@@ -145,7 +170,6 @@ fun CheckInScreen(
         Column(modifier = Modifier.fillMaxWidth().padding(Space.gutter)) {
             PrimaryButton(
                 text = if (firstRun) "Move in" else "Save",
-                accent = Ink.Room,
                 onClick = { onSave(levels) }
             )
         }

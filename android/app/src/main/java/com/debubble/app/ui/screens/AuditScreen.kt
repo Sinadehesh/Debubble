@@ -1,5 +1,7 @@
 package com.debubble.app.ui.screens
 
+import androidx.compose.ui.semantics.heading
+import com.debubble.app.ui.theme.fill
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -97,20 +99,21 @@ fun AuditScreen(
                     modifier = Modifier
                         .padding(horizontal = Space.gutter)
                         .fillMaxWidth()
-                        .panel(fill = Ink.SurfaceHigh, shape = Cut.large)
+                        .panel(fill = Ink.Heart.wash)
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(9.dp)
                 ) {
                     Text(
-                        text = "Mark your target areas.",
+                        text = "Which habits keep you in?",
+                        modifier = Modifier.semantics { heading() },
                         color = Ink.Primary,
                         style = MaterialTheme.typography.headlineMedium
                     )
                     Text(
-                        text = "This is a checklist of specific habits, not a judgement. " +
-                            "Everything on it is something that can be changed, and " +
-                            "everything you mark gets its own challenges — starting with one " +
-                            "you could do today.",
+                        text = "A checklist of specific habits, not a judgement. Everything " +
+                            "on it can be changed, and everything you mark gets its own " +
+                            "extras and a page in your library, starting with one small " +
+                            "enough to do today.",
                         color = Ink.Secondary,
                         style = MaterialTheme.typography.bodyMedium
                     )
@@ -118,11 +121,11 @@ fun AuditScreen(
                         horizontalArrangement = Arrangement.spacedBy(9.dp),
                         verticalAlignment = Alignment.Top
                     ) {
-                        Glyph(Glyphs.Lock, colour = Ink.Muted, size = 17)
+                        Glyph(Glyphs.Lock, colour = Ink.Secondary, size = 17)
                         Text(
                             text = "Nobody sees this. It never leaves your phone, and you " +
                                 "can change it any time.",
-                            color = Ink.Muted,
+                            color = Ink.Secondary,
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
@@ -146,9 +149,10 @@ fun AuditScreen(
                             .heightIn(min = Space.tap)
                             .panel(
                                 shape = Cut.small,
-                                fill = if (on) Ink.Access.wash else Ink.Surface,
-                                border = if (on) Ink.Access else Ink.Border,
-                                borderWidth = if (on) 2.dp else 1.dp
+                                fill = if (on) Ink.Gold.fill else Ink.Surface,
+                                borderWidth = if (on) 3.dp else 2.dp,
+                                lift = 2.dp,
+                                shadow = if (on) Ink.Border else Ink.Shadow
                             )
                             .clickable(role = Role.Tab) { tab = c.id }
                             .semantics { selected = on }
@@ -158,12 +162,10 @@ fun AuditScreen(
                     ) {
                         Text(
                             text = c.name,
-                            color = if (on) Ink.Primary else Ink.Secondary,
-                            style = MaterialTheme.typography.labelLarge.copy(
-                                fontWeight = if (on) FontWeight.Bold else FontWeight.Medium
-                            )
+                            color = Ink.Primary,
+                            style = if (on) MaterialTheme.typography.labelLarge else MaterialTheme.typography.labelMedium
                         )
-                        if (count > 0) Pill("$count", Ink.Access, filled = on)
+                        if (count > 0) Pill("$count", Ink.Heart, filled = true)
                     }
                 }
             }
@@ -191,7 +193,7 @@ fun AuditScreen(
                                 label = d.label,
                                 detail = d.detail,
                                 selected = d.id in marked,
-                                accent = Ink.Access,
+                                accent = Ink.Heart,
                                 onToggle = {
                                     marked = if (d.id in marked) marked - d.id else marked + d.id
                                 }
@@ -208,16 +210,16 @@ fun AuditScreen(
                     modifier = Modifier
                         .padding(horizontal = Space.gutter)
                         .fillMaxWidth()
-                        .panel(fill = Ink.SurfaceHigh)
+                        .panel(fill = Ink.Gold.wash)
                         .padding(14.dp),
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                     verticalAlignment = Alignment.Top
                 ) {
                     Glyph(Glyphs.Spark, colour = Ink.Gold, size = 18)
                     Text(
-                        text = "You will get one of these a day, on rotation, on top of your " +
-                            "usual challenges. Each one starts with the easiest version.",
-                        color = Ink.Secondary,
+                        text = "One extra a day, taking turns, on top of today's four. Each " +
+                            "starts with the easiest version.",
+                        color = Ink.Primary,
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
@@ -234,7 +236,7 @@ fun AuditScreen(
                 text = when {
                     marked.isEmpty() && firstRun -> "Skip for now"
                     marked.isEmpty() -> "Save with nothing marked"
-                    else -> "Save ${marked.size} target${if (marked.size == 1) "" else "s"}"
+                    else -> "Save ${marked.size} habit${if (marked.size == 1) "" else "s"}"
                 }
             ) { onSave(marked) }
             if (!firstRun && onBack != null) TextAction("Cancel") { onBack() }

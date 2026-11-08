@@ -1,5 +1,9 @@
 package com.debubble.app.ui.screens
 
+import com.debubble.app.ui.theme.wash
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.heading
+import com.debubble.app.ui.components.Pill
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -110,7 +114,7 @@ fun CompletionScreen(
         VSpace(4)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             SpriteIcon(art, World.road(pillar), pixelScale = pixelScale(2f))
-            Label("${World.roadName(pillar)} · step $tierCleared", color = pillar.accent, strong = true)
+            Pill("${World.roadName(pillar)} · step $tierCleared", pillar.accent, filled = true)
         }
         Text(
             text = when (pillar) {
@@ -118,6 +122,7 @@ fun CompletionScreen(
                 Pillar.ACTIVITY -> "You did something new"
                 Pillar.SOCIAL -> "You spoke to someone"
             },
+            modifier = Modifier.semantics { heading() },
             color = Ink.Primary,
             style = MaterialTheme.typography.displayMedium.centered
         )
@@ -129,7 +134,10 @@ fun CompletionScreen(
 
         // Said, not shown: the celebration is an instruction, so it is the loudest thing here.
         Column(
-            modifier = Modifier.fillMaxWidth().paper().padding(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .panel(fill = Ink.Gold.wash, borderWidth = 3.dp, shadow = Ink.Border)
+                .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -146,7 +154,7 @@ fun CompletionScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .panel(fill = Ink.SurfaceHigh, border = Ink.Gold)
+                    .panel(fill = Ink.Gold.wash, borderWidth = 3.dp, shadow = Ink.Border)
                     .padding(14.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(14.dp)
@@ -166,7 +174,7 @@ fun CompletionScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .panel(fill = Ink.Surface, border = Ink.Ember.copy(alpha = 0.7f))
+                    .panel(fill = Ink.Ember.wash)
                     .padding(14.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
@@ -179,8 +187,7 @@ fun CompletionScreen(
                     onChange = {
                         distress = it
                         checked = true
-                    },
-                    accent = Ink.Access
+                    }
                 )
                 FieldBox(
                     value = actual,
@@ -196,7 +203,7 @@ fun CompletionScreen(
         }
 
         Column(
-            modifier = Modifier.fillMaxWidth().paper(fill = Ink.PaperShade).padding(14.dp),
+            modifier = Modifier.fillMaxWidth().panel(fill = Ink.Heart.wash).padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -213,7 +220,7 @@ fun CompletionScreen(
         }
 
         VSpace(4)
-        PrimaryButton(text = "Back home", accent = pillar.accent) {
+        PrimaryButton(text = "Back home") {
             onFinish(note, actual, if (forecast != null && checked) distress else null)
         }
     }
@@ -262,14 +269,14 @@ fun ReviewScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Column(
-                modifier = Modifier.fillMaxWidth().paper().padding(16.dp),
+                modifier = Modifier.fillMaxWidth().panel(fill = Ink.Ember.wash).padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                PaperLabel("Before you went, you wrote")
+                PaperLabel("Before you went, you wrote", color = Ink.Ember)
                 PaperText("\"${forecast.predicted}\"")
                 PaperLabel("${forecast.predictedDistress}/10 · ${Forecasts.label(forecast.predictedDistress)}")
             }
-            NerveSlider(label = "How hard was it really?", value = distress, onChange = { distress = it }, accent = Ink.Access)
+            NerveSlider(label = "How hard was it really?", value = distress, onChange = { distress = it })
             FieldBox(
                 value = actual,
                 onChange = { actual = it },
@@ -284,7 +291,7 @@ fun ReviewScreen(
             modifier = Modifier.padding(horizontal = Space.gutter, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            PrimaryButton(text = "Save it", accent = Ink.Access) { onResolve(actual, distress) }
+            PrimaryButton(text = "Save it") { onResolve(actual, distress) }
             // Never nag twice. Someone who does not want to answer gets to not answer.
             TextAction("I'd rather not log this one") { onDismiss() }
         }
@@ -331,6 +338,6 @@ fun CourageScreen(art: RoomArt, friction: Int, reason: String, onDone: () -> Uni
         )
         Label(if (friction == 1) "Your first spark. Nobody who stays inside earns one." else "$friction sparks in your jar now.")
         VSpace(10)
-        PrimaryButton(text = "Back home", accent = Ink.Ember, onClick = onDone)
+        PrimaryButton(text = "Back home", onClick = onDone)
     }
 }

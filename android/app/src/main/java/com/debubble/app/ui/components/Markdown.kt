@@ -1,5 +1,11 @@
 package com.debubble.app.ui.components
 
+import com.debubble.app.ui.theme.wash
+import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -43,7 +49,7 @@ import com.debubble.app.ui.theme.Cut
 fun Markdown(
     text: String,
     modifier: Modifier = Modifier,
-    accent: Color = Ink.Access,
+    accent: Color = Ink.Heart,
     body: Color = Ink.Secondary
 ) {
     val blocks = remember(text) { parse(text) }
@@ -101,14 +107,17 @@ fun Markdown(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 6.dp)
+                            .height(IntrinsicSize.Min)
                             .clip(Cut.card)
-                            .background(Ink.SurfaceHigh)
+                            .background(accent.wash)
+                            .border(BorderStroke(2.dp, Ink.Border), Cut.card)
                             .padding(14.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Box(
                             modifier = Modifier
-                                .width(3.dp)
+                                .width(4.dp)
+                                .fillMaxHeight()
                                 .background(accent)
                         )
                         Text(

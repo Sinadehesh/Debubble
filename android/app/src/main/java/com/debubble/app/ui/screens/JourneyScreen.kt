@@ -1,5 +1,10 @@
 package com.debubble.app.ui.screens
 
+import kotlin.math.floor
+import androidx.compose.ui.geometry.Size
+import com.debubble.app.ui.theme.fill
+import com.debubble.app.ui.theme.Cut
+import com.debubble.app.ui.components.Pill
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -96,18 +101,17 @@ fun JourneyScreen(
         TopBar(
             title = goal.display,
             subtitle = if (complete) "Arrived" else "Stop ${state.step} of ${Goals.CAMPAIGN_LENGTH} · ${track.phaseOf(state.step)}",
-            accent = accent,
             onBack = onBack,
             action = {
                 Box(
                     modifier = Modifier
-                        .heightIn(min = Space.tap)
-                        .panel(border = Ink.Border)
+                        .heightIn(min = 44.dp)
+                        .panel(shape = Cut.small, shadow = Ink.Border)
                         .clickable(role = Role.Button, onClick = onChangeGoal)
-                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Label("Change", color = Ink.Primary, strong = true)
+                    Text("Change", color = Ink.Primary, style = MaterialTheme.typography.labelLarge)
                 }
             }
         )
@@ -147,7 +151,7 @@ fun JourneyScreen(
                     PaperTitle(stop.directive)
                     if (stopDoneToday) PaperLabel("Done for today. The next stop opens tomorrow.", color = Ink.PaperText)
                 }
-                if (!stopDoneToday) PrimaryButton("Open today's stop", accent = accent, onClick = onOpenStop)
+                if (!stopDoneToday) PrimaryButton("Open today's stop", onClick = onOpenStop)
             } else {
                 Text(
                     text = "All thirty stops. This ground stays yours, whether or not you come back to it.",
@@ -183,7 +187,7 @@ fun JourneyScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .heightIn(min = Space.tap)
-                            .panel(fill = if (open) Ink.Surface else Ink.Void, border = if (open) accent.copy(alpha = 0.5f) else Ink.Faint)
+                            .panel(fill = if (open) Ink.Surface else Ink.Void, border = if (open) Ink.Border else Ink.Faint)
                             .clickable(role = Role.Button, enabled = open) { onOpenPrinciple(i) }
                             .semantics {
                                 stateDescription = when {
@@ -203,14 +207,11 @@ fun JourneyScreen(
                                 color = if (open) Ink.Primary else Ink.Muted,
                                 style = MaterialTheme.typography.titleMedium
                             )
-                            Label(
-                                when {
-                                    !open -> "Opens at stop ${p.unlocksAt}"
-                                    read -> "Read"
-                                    else -> "New"
-                                },
-                                color = if (open && !read) accent else Ink.Muted
-                            )
+                            if (open && !read) {
+                                Pill("New", Ink.Gold, filled = true)
+                            } else {
+                                Label(if (!open) "Opens at stop ${p.unlocksAt}" else "Read")
+                            }
                         }
                     }
                 }
@@ -237,6 +238,7 @@ private fun TrailMap(
     val perRow = 10
     val rows = (stops + perRow - 1) / perRow
     val rowHeight = 78.dp
+    val stopFill = accent.fill
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxWidth()
@@ -259,27 +261,50 @@ private fun TrailMap(
                 .fillMaxWidth()
                 .height(rowHeight * rows)
                 .drawBehind {
-                    val dash = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 5.dp.toPx()))
+                    // Every leg of the trail runs along a row or drops to the next, so the
+                    // whole thing is drawn in whole-pixel rectangles: walked legs solid in
+                    // the road's ink, the rest a dotted line of pixel squares.
+                    val line = floor(2.dp.toPx()).coerceAtLeast(1f)
+                    val path = floor(4.dp.toPx())
+                    val dot = floor(3.dp.toPx())
+                    val gap = floor(7.dp.toPx())
                     for (s in 1 until stops) {
                         val (ax, ay) = at(s)
                         val (bx, by) = at(s + 1)
-                        drawLine(
-                            color = if (s < done + 1) accent else Ink.Faint,
-                            start = Offset(ax.toPx(), ay.toPx()),
-                            end = Offset(bx.toPx(), by.toPx()),
-                            strokeWidth = 3.dp.toPx(),
-                            pathEffect = if (s < done + 1) null else dash
-                        )
+                        val x0 = floor(minOf(ax, bx).toPx())
+                        val x1 = floor(maxOf(ax, bx).toPx())
+                        val y0 = floor(minOf(ay, by).toPx())
+                        val y1 = floor(maxOf(ay, by).toPx())
+                        if (s < done + 1) {
+                            drawRect(accent, topLeft = Offset(x0 - path / 2f, y0 - path / 2f), size = Size(x1 - x0 + path, y1 - y0 + path))
+                        } else {
+                            val across = y1 - y0 < 1f
+                            val length = if (across) x1 - x0 else y1 - y0
+                            var t = 0f
+                            while (t <= length) {
+                                val x = if (across) x0 + t else x0
+                                val y = if (across) y0 else y0 + t
+                                drawRect(Ink.Faint, topLeft = Offset(floor(x - dot / 2f), floor(y - dot / 2f)), size = Size(dot, dot))
+                                t += gap
+                            }
+                        }
                     }
                     for (s in 1 until stops) {
                         val (x, y) = at(s)
-                        val big = s % perRow == 0
-                        val r = (if (big) 8.dp else 5.5.dp).toPx()
-                        drawCircle(Ink.Void, radius = r + 2.dp.toPx(), center = Offset(x.toPx(), y.toPx()))
-                        drawCircle(
-                            color = if (s <= done) accent else if (s == current) Ink.Paper else Ink.Faint,
-                            radius = r,
-                            center = Offset(x.toPx(), y.toPx())
+                        val side = floor((if (s % perRow == 0) 16.dp else 11.dp).toPx())
+                        val left = floor(x.toPx() - side / 2f)
+                        val top = floor(y.toPx() - side / 2f)
+                        val walked = s <= done
+                        val here = s == current
+                        drawRect(if (walked || here) Ink.Border else Ink.Faint, topLeft = Offset(left, top), size = Size(side, side))
+                        drawRect(
+                            color = when {
+                                walked -> stopFill
+                                here -> Ink.Surface
+                                else -> Ink.Well
+                            },
+                            topLeft = Offset(left + line, top + line),
+                            size = Size(side - line * 2f, side - line * 2f)
                         )
                     }
                 }

@@ -1,5 +1,9 @@
 package com.debubble.app.ui.screens
 
+import com.debubble.app.ui.theme.wash
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.heading
+import com.debubble.app.ui.components.Pill
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -111,10 +115,11 @@ fun CareDoneScreen(
         )
 
         VSpace(6)
-        Label(info.name, color = accent, strong = true)
+        Pill(info.name, accent, filled = true)
         Text(
             text = if (before == after) info.levels[after]
             else "${info.levels[before]} to ${info.levels[after]}",
+            modifier = Modifier.semantics { heading() },
             color = Ink.Primary,
             style = MaterialTheme.typography.displayMedium.centered
         )
@@ -129,7 +134,7 @@ fun CareDoneScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .panel(fill = Ink.SurfaceHigh, border = Ink.Gold)
+                    .panel(fill = Ink.Gold.wash, borderWidth = 3.dp, shadow = Ink.Border)
                     .padding(14.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(14.dp)
@@ -174,7 +179,7 @@ fun CareDoneScreen(
         )
         Label("Your answers become your own evidence. Skip it any time.")
         Feel.entries.reversed().forEach { f ->
-            SecondaryButton(f.label, colour = if (f == Feel.BETTER) accent else Ink.Primary) {
+            SecondaryButton(f.label) {
                 onFeel(f)
             }
         }

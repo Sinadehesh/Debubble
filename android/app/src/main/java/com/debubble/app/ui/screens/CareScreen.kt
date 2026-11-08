@@ -1,5 +1,18 @@
 package com.debubble.app.ui.screens
 
+import com.debubble.app.ui.theme.wash
+import com.debubble.app.ui.theme.Cut
+import com.debubble.app.ui.components.pixelScale
+import com.debubble.app.ui.components.SpriteIcon
+import com.debubble.app.engine.Today
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -88,8 +101,19 @@ fun CareScreen(
         TopBar(
             title = info.name,
             subtitle = "Right now: ${info.levels[level]}",
-            accent = accent,
-            onBack = onBack
+            onBack = onBack,
+            action = {
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(Cut.small)
+                        .background(accent.wash)
+                        .border(BorderStroke(2.dp, Ink.Border), Cut.small),
+                    contentAlignment = Alignment.Center
+                ) {
+                    SpriteIcon(art, Today.icon(domain), pixelScale = pixelScale(1.8f))
+                }
+            }
         )
         Column(
             modifier = Modifier
@@ -103,10 +127,11 @@ fun CareScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Label("Your ${info.name.lowercase()} routine")
-                if (doneToday) Pill("Done today", accent)
+                if (doneToday) Pill("Done today", accent, filled = true)
             }
             Text(
                 text = routine.title,
+                modifier = Modifier.semantics { heading() },
                 color = Ink.Primary,
                 style = MaterialTheme.typography.displayMedium
             )
@@ -157,7 +182,7 @@ fun CareScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .panel(fill = Ink.SurfaceHigh, border = accent.copy(alpha = 0.6f))
+                    .panel(fill = accent.wash)
                     .padding(14.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
@@ -166,7 +191,7 @@ fun CareScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Glyph(Glyphs.Spark, colour = accent, size = 16)
-                    Label("Make it easier", color = accent, strong = true)
+                    Text("Make it easier", color = Ink.Primary, style = MaterialTheme.typography.titleMedium)
                 }
                 Text(text = routine.ease, color = Ink.Primary, style = MaterialTheme.typography.bodyMedium)
             }
@@ -185,7 +210,7 @@ fun CareScreen(
                 "How automatic it is",
                 trailing = "$days ${if (days == 1) "day" else "days"} with this one"
             )
-            ProgressTrack(fraction = auto, accent = accent, height = 8)
+            ProgressTrack(fraction = auto, accent = accent, height = 10)
             Label(
                 "About ${(auto * 100).toInt()}%, estimated from the typical curve in Lally " +
                     "et al. (2010): most people were near automatic by day 66, but the range " +
@@ -209,7 +234,7 @@ fun CareScreen(
                     color = Ink.Primary,
                     strong = true
                 )
-                Glyph(if (swapping) Glyphs.ArrowLeft else Glyphs.ArrowRight, colour = Ink.Muted, size = 16)
+                Glyph(if (swapping) Glyphs.ArrowLeft else Glyphs.ArrowRight, colour = Ink.Primary, size = 16)
             }
             if (swapping) {
                 Label(

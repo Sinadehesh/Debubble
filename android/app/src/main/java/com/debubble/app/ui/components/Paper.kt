@@ -697,17 +697,14 @@ fun PageHeader(
     sign: (@Composable () -> Unit)? = null
 ) {
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = Space.gutter)
-            .padding(top = 14.dp, bottom = 4.dp),
+        modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
             modifier = Modifier
-                .size(48.dp)
-                .panel(fill = Ink.Surface, lift = 2.dp),
+                .size(52.dp)
+                .panel(fill = Ink.Surface, lift = 3.dp),
             contentAlignment = Alignment.Center
         ) {
             if (sign != null) sign() else SpriteIcon(art, icon, pixelScale = pixelScale(2.2f))

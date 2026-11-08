@@ -1,5 +1,9 @@
 package com.debubble.app.ui.screens
 
+import androidx.compose.ui.semantics.heading
+import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
+import com.debubble.app.ui.components.PageHeader
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -81,20 +85,15 @@ fun LearnScreen(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {
-        Row(
+        PageHeader(
+            art = art,
+            icon = World.TAB_LIBRARY,
+            title = "Library",
+            subtitle = "$readCount read",
             modifier = Modifier
-                .fillMaxWidth()
                 .padding(horizontal = Space.gutter)
-                .padding(top = 18.dp, bottom = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            SpriteIcon(art, World.TAB_LIBRARY, pixelScale = pixelScale(2.6f))
-            Column {
-                Text("Library", color = Ink.Primary, style = MaterialTheme.typography.headlineMedium)
-                Label("$readCount read")
-            }
-        }
+                .padding(top = 18.dp, bottom = 12.dp)
+        )
 
         Column(modifier = Modifier.padding(horizontal = Space.gutter)) {
             if (showTip) {
@@ -110,26 +109,26 @@ fun LearnScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .panel(fill = Ink.SurfaceHigh, shape = Cut.large)
+                    .panel()
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(9.dp)
             ) {
                 Text(
                     text = "Day ${dayIndex.coerceAtMost(30)} of 30",
                     color = Ink.Primary,
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleLarge
                 )
                 ProgressTrack(
                     fraction = (unlockedCourse.size / 30f).coerceIn(0f, 1f),
-                    accent = Ink.Access,
-                    height = 8
+                    accent = Ink.Gold,
+                    height = 10
                 )
-                Label("${unlockedCourse.size} of 30 lessons open")
+                Label("${unlockedCourse.size} of 30 pages open")
             }
 
             if (targeted.isNotEmpty()) {
                 VSpace(24)
-                SectionHeader("For you", trailing = "${targeted.size} article${plural(targeted.size)}")
+                SectionHeader("For you", trailing = "${targeted.size} page${plural(targeted.size)}")
                 VSpace(6)
                 Text(
                     text = "For the habits you marked.",
@@ -154,7 +153,7 @@ fun LearnScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .panel(border = Ink.Gold.copy(alpha = 0.6f))
+                        .panel(fill = Ink.Gold.wash)
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -163,11 +162,11 @@ fun LearnScreen(
                         horizontalArrangement = Arrangement.spacedBy(9.dp)
                     ) {
                         Glyph(Glyphs.Spark, colour = Ink.Gold, size = 19)
-                        Label("Nothing targeted yet", color = Ink.Gold, strong = true)
+                        Text("No habits marked yet", color = Ink.Primary, style = MaterialTheme.typography.titleMedium)
                     }
                     Text(
-                        text = "Run the systems audit from your profile and this section " +
-                            "fills with guides on whatever you mark.",
+                        text = "Mark the habits you want to change, under You, and a page " +
+                            "for each of them opens here.",
                         color = Ink.Secondary,
                         style = MaterialTheme.typography.bodyMedium
                     )
@@ -184,7 +183,7 @@ fun LearnScreen(
                         lesson = lesson,
                         locked = false,
                         isRead = lesson.id in read,
-                        accent = Ink.Access,
+                        accent = Ink.Heart,
                         badge = "Day ${lesson.day}",
                         onOpen = { onOpen(lesson.id) }
                     )
@@ -229,7 +228,7 @@ private fun LessonCard(
             .fillMaxWidth()
             .panel(
                 fill = if (locked) Ink.Void else Ink.Surface,
-                border = if (locked) Ink.Faint else accent.copy(alpha = 0.55f)
+                border = if (locked) Ink.Faint else Ink.Border
             )
             .then(if (locked) Modifier else Modifier.clickable(role = Role.Button, onClick = onOpen))
             .semantics {
@@ -248,9 +247,10 @@ private fun LessonCard(
         ) {
             Box(
                 modifier = Modifier
-                    .size(28.dp)
-                    .clip(CircleShape)
-                    .background(if (locked) Ink.SurfaceHigh else accent.wash),
+                    .size(32.dp)
+                    .clip(Cut.small)
+                    .background(if (locked) Ink.Well else accent.wash)
+                    .border(BorderStroke(2.dp, if (locked) Ink.Faint else Ink.Border), Cut.small),
                 contentAlignment = Alignment.Center
             ) {
                 Glyph(
@@ -265,7 +265,7 @@ private fun LessonCard(
                 color = if (locked) Ink.Muted else Ink.Primary,
                 style = MaterialTheme.typography.titleMedium
             )
-            if (!locked && isRead) Pill("Read", Ink.Activity)
+            if (!locked && isRead) Pill("Read", Ink.Gold, filled = true)
         }
 
         if (!locked) {
@@ -276,7 +276,7 @@ private fun LessonCard(
             )
             Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                 Pill(badge, Ink.Muted)
-                Pill("${lesson.minutes} min read", Ink.Muted)
+                Pill("${lesson.minutes} min", Ink.Muted)
             }
         } else {
             Label("Keep going — this one opens on day ${lesson.day}.")
@@ -310,8 +310,9 @@ fun LessonScreen(
         ) {
             Text(
                 text = lesson.title,
+                modifier = Modifier.semantics { heading() },
                 color = Ink.Primary,
-                style = MaterialTheme.typography.displayMedium
+                style = MaterialTheme.typography.displaySmall
             )
             VSpace(10)
             Text(
@@ -322,7 +323,7 @@ fun LessonScreen(
 
             Markdown(
                 text = lesson.body,
-                accent = if (lesson.isTargeted) Ink.Gold else Ink.Access
+                accent = if (lesson.isTargeted) Ink.Gold else Ink.Heart
             )
 
             VSpace(24)
@@ -333,11 +334,8 @@ fun LessonScreen(
             verticalArrangement = Arrangement.spacedBy(Space.gap)
         ) {
             // Reading without writing anything down is how this becomes entertainment.
-            SecondaryButton("Write a note about this", onClick = onAddNote)
-            PrimaryButton(
-                text = if (isRead) "Done" else "Mark as read",
-                accent = if (lesson.isTargeted) Ink.Gold else Ink.Access
-            ) { onBack() }
+            SecondaryButton("Write a postcard about this", onClick = onAddNote)
+            PrimaryButton(text = if (isRead) "Done" else "Mark as read") { onBack() }
         }
     }
 }

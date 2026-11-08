@@ -1,5 +1,6 @@
 package com.debubble.app.ui.components
 
+import com.debubble.app.ui.theme.wash
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -119,10 +120,7 @@ private fun RepRow(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .panel(
-                fill = Ink.SurfaceHigh,
-                border = if (count > 0) accent.copy(alpha = 0.7f) else Ink.Border
-            )
+            .panel(fill = if (count > 0) accent.wash else Ink.Surface)
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
@@ -136,7 +134,7 @@ private fun RepRow(
                     color = Ink.Primary,
                     style = MaterialTheme.typography.titleMedium
                 )
-                if (rep.friction) Pill("Spark", Ink.Ember)
+                if (rep.friction) Pill("Spark", Ink.Ember, filled = true)
             }
             Text(
                 text = rep.hint,
@@ -175,12 +173,9 @@ private fun RepRow(
             ) {
                 Text(
                     text = count.toString(),
-                    color = if (count > 0) accent else Ink.Muted,
+                    color = if (count > 0) Ink.Primary else Ink.Muted,
                     textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.displayMedium.copy(
-                        fontFamily = NumberFamily,
-                        fontWeight = FontWeight.Bold
-                    )
+                    style = MaterialTheme.typography.displayMedium.copy(fontFamily = NumberFamily)
                 )
             }
             RoundButton(

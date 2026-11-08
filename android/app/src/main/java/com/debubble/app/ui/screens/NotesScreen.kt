@@ -1,5 +1,7 @@
 package com.debubble.app.ui.screens
 
+import com.debubble.app.ui.components.PageHeader
+import com.debubble.app.ui.components.FieldBox
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -54,6 +56,7 @@ import com.debubble.app.ui.theme.Ink
 import com.debubble.app.ui.theme.Space
 import com.debubble.app.ui.theme.roomGround
 import com.debubble.app.ui.theme.wash
+import com.debubble.app.ui.theme.fill
 import com.debubble.app.ui.theme.Cut
 
 /**
@@ -86,23 +89,16 @@ fun NotesScreen(
         modifier = Modifier
             .fillMaxSize()
     ) {
-        Row(
+        PageHeader(
+            art = art,
+            icon = World.TAB_JOURNAL,
+            title = "Journal",
+            subtitle = if (notes.isEmpty()) "Nothing written yet"
+            else "${notes.size} postcard${if (notes.size == 1) "" else "s"}",
             modifier = Modifier
-                .fillMaxWidth()
                 .padding(horizontal = Space.gutter)
-                .padding(top = 18.dp, bottom = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            SpriteIcon(art, World.TAB_JOURNAL, pixelScale = pixelScale(2.6f))
-            Column {
-                Text("Journal", color = Ink.Primary, style = MaterialTheme.typography.headlineMedium)
-                Label(
-                    if (notes.isEmpty()) "Nothing written yet"
-                    else "${notes.size} postcard${if (notes.size == 1) "" else "s"}"
-                )
-            }
-        }
+                .padding(top = 18.dp, bottom = 12.dp)
+        )
 
         Column(modifier = Modifier.padding(horizontal = Space.gutter)) {
             if (showTip) {
@@ -116,29 +112,11 @@ fun NotesScreen(
                 )
                 VSpace(10)
             }
-            OutlinedTextField(
+            FieldBox(
                 value = query,
-                onValueChange = { query = it },
-                modifier = Modifier.fillMaxWidth(),
-                placeholder = {
-                    Text(
-                        text = "Search everything you have written",
-                        color = Ink.Muted,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                },
-                singleLine = true,
-                shape = Cut.card,
-                textStyle = MaterialTheme.typography.bodyLarge,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Ink.Primary,
-                    unfocusedTextColor = Ink.Primary,
-                    focusedBorderColor = Ink.Access,
-                    unfocusedBorderColor = Ink.Border,
-                    cursorColor = Ink.Access,
-                    focusedContainerColor = Ink.Surface,
-                    unfocusedContainerColor = Ink.Surface
-                )
+                onChange = { query = it },
+                placeholder = "Search everything you have written",
+                max = 80
             )
 
             VSpace(10)
@@ -155,9 +133,10 @@ fun NotesScreen(
                             .heightIn(min = Space.tap)
                             .panel(
                                 shape = Cut.small,
-                                fill = if (on) Ink.Access.wash else Ink.Surface,
-                                border = if (on) Ink.Access else Ink.Border,
-                                borderWidth = if (on) 2.dp else 1.dp
+                                fill = if (on) Ink.Gold.fill else Ink.Surface,
+                                borderWidth = if (on) 3.dp else 2.dp,
+                                lift = 2.dp,
+                                shadow = if (on) Ink.Border else Ink.Shadow
                             )
                             .clickable(role = Role.Tab) { filter = f }
                             .semantics { selected = on }
@@ -167,12 +146,10 @@ fun NotesScreen(
                     ) {
                         Text(
                             text = f.display,
-                            color = if (on) Ink.Primary else Ink.Secondary,
-                            style = MaterialTheme.typography.labelMedium.copy(
-                                fontWeight = if (on) FontWeight.Bold else FontWeight.Medium
-                            )
+                            color = Ink.Primary,
+                            style = if (on) MaterialTheme.typography.labelLarge else MaterialTheme.typography.labelMedium
                         )
-                        Label("$count")
+                        Label("$count", color = if (on) Ink.Primary else Ink.Muted)
                     }
                 }
             }
@@ -217,7 +194,7 @@ private fun EmptyState(title: String, body: String) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .panel(fill = Ink.SurfaceHigh, shape = Cut.large)
+            .panel(fill = Ink.Heart.wash)
             .padding(18.dp),
         verticalArrangement = Arrangement.spacedBy(9.dp)
     ) {
@@ -228,11 +205,11 @@ private fun EmptyState(title: String, body: String) {
 
 @Composable
 private fun NoteCard(art: RoomArt, note: Note, dayIndex: Long, onOpen: () -> Unit) {
-    val accent = if (note.isFriction) Ink.Ember else Ink.Access
+    val accent = if (note.isFriction) Ink.Ember else Ink.Secondary
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .panel(border = if (note.isLinked) accent.copy(alpha = 0.55f) else Ink.Border)
+            .panel()
             .clickable(role = Role.Button, onClick = onOpen)
             .padding(15.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -279,10 +256,10 @@ private fun NoteCard(art: RoomArt, note: Note, dayIndex: Long, onOpen: () -> Uni
 
 private fun linkLabel(note: Note): String = when (note.linkedKind) {
     "LESSON" -> "On a page"
-    "REP" -> "On an attempt"
-    "MISSION" -> "On a goal step"
+    "REP" -> "On a try"
+    "MISSION" -> "On a journey stop"
     "AUDIT" -> "On a habit"
-    "CAMPAIGN" -> "On a journey stop"
+    "CAMPAIGN" -> "On an extra"
     else -> "On a letter"
 }
 
@@ -314,7 +291,7 @@ fun NoteEditorScreen(
             .imePadding()
     ) {
         TopBar(
-            title = if (existing == null) "New note" else "Edit note",
+            title = if (existing == null) "New postcard" else "Your postcard",
             subtitle = if (linkedTitle.isNotBlank()) linkedTitle else null,
             onBack = onBack,
             action = {
@@ -322,14 +299,20 @@ fun NoteEditorScreen(
                     modifier = Modifier
                         .heightIn(min = Space.tap)
                         .panel(
-                            fill = if (preview) Ink.Access.wash else Ink.Surface,
-                            border = if (preview) Ink.Access else Ink.Border
+                            shape = Cut.small,
+                            fill = if (preview) Ink.Gold.fill else Ink.Surface,
+                            borderWidth = if (preview) 3.dp else 2.dp,
+                            shadow = Ink.Border
                         )
                         .clickable(role = Role.Button) { preview = !preview }
-                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Label(if (preview) "Edit" else "Preview", color = Ink.Primary, strong = true)
+                    Text(
+                        text = if (preview) "Write" else "Preview",
+                        color = Ink.Primary,
+                        style = MaterialTheme.typography.labelLarge
+                    )
                 }
             }
         )
@@ -344,22 +327,19 @@ fun NoteEditorScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .panel(
-                            fill = Ink.SurfaceHigh,
-                            border = if (linkedKind == "FRICTION") Ink.Ember else Ink.Border
-                        )
+                        .panel(fill = if (linkedKind == "FRICTION") Ink.Ember.wash else Ink.Heart.wash)
                         .padding(14.dp),
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                     verticalAlignment = Alignment.Top
                 ) {
                     Glyph(
                         Glyphs.Spark,
-                        colour = if (linkedKind == "FRICTION") Ink.Ember else Ink.Access,
+                        colour = if (linkedKind == "FRICTION") Ink.Ember else Ink.Heart,
                         size = 18
                     )
                     Text(
                         text = prompt,
-                        color = Ink.Secondary,
+                        color = Ink.Primary,
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
@@ -373,57 +353,21 @@ fun NoteEditorScreen(
                     Markdown(text = body)
                 }
             } else {
-                OutlinedTextField(
+                FieldBox(
                     value = body,
-                    onValueChange = { body = it },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 260.dp),
-                    placeholder = {
-                        Text(
-                            text = "Write as much or as little as you want.\n\n" +
-                                "**Bold**, *italic*, # headings and - lists all work.",
-                            color = Ink.Muted,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    },
-                    textStyle = MaterialTheme.typography.bodyLarge,
-                    shape = Cut.card,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Ink.Primary,
-                        unfocusedTextColor = Ink.Primary,
-                        focusedBorderColor = Ink.Access,
-                        unfocusedBorderColor = Ink.Border,
-                        cursorColor = Ink.Access,
-                        focusedContainerColor = Ink.Surface,
-                        unfocusedContainerColor = Ink.Surface
-                    )
+                    onChange = { body = it },
+                    placeholder = "Write as much or as little as you want.\n\n" +
+                        "**Bold**, *italic*, # headings and - lists all work.",
+                    lines = 7,
+                    max = 20_000
                 )
 
                 VSpace(12)
-                OutlinedTextField(
+                FieldBox(
                     value = tags,
-                    onValueChange = { tags = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = {
-                        Text(
-                            text = "Tags, comma separated",
-                            color = Ink.Muted,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    },
-                    singleLine = true,
-                    shape = Cut.card,
-                    textStyle = MaterialTheme.typography.bodyMedium,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Ink.Primary,
-                        unfocusedTextColor = Ink.Primary,
-                        focusedBorderColor = Ink.Access,
-                        unfocusedBorderColor = Ink.Border,
-                        cursorColor = Ink.Access,
-                        focusedContainerColor = Ink.Surface,
-                        unfocusedContainerColor = Ink.Surface
-                    )
+                    onChange = { tags = it },
+                    placeholder = "Tags, comma separated",
+                    max = 120
                 )
                 VSpace(8)
                 Label("Up to ${Notes.MAX_TAGS} tags. They show on the card and are searchable.")
@@ -437,8 +381,8 @@ fun NoteEditorScreen(
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             PrimaryButton(
-                text = if (body.isBlank() && existing != null) "Delete this note" else "Save",
-                accent = if (body.isBlank() && existing != null) Ink.Social else Ink.Access
+                text = if (body.isBlank() && existing != null) "Delete this postcard" else "Save",
+                accent = if (body.isBlank() && existing != null) Ink.Social else Ink.Primary
             ) { onSave(body, tags) }
             if (onDelete != null) {
                 TextAction("Delete", colour = Ink.Social) { onDelete() }

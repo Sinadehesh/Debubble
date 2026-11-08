@@ -1,5 +1,10 @@
 package com.debubble.app.ui.screens
 
+import com.debubble.app.ui.components.PrimaryButton
+import com.debubble.app.ui.components.Pill
+import com.debubble.app.ui.components.PixelSwitch
+import com.debubble.app.ui.components.MeHead
+import com.debubble.app.ui.components.PageHeader
 import android.Manifest
 import android.content.Intent
 import android.provider.Settings
@@ -100,6 +105,14 @@ fun ProfileScreen(
             .padding(top = 18.dp, bottom = 28.dp),
         verticalArrangement = Arrangement.spacedBy(Space.gap)
     ) {
+        PageHeader(
+            art = art,
+            icon = World.TAB_HOME,
+            title = "You",
+            subtitle = "Day $dayIndex · level ${state.level}",
+            sign = { MeHead(art = art, look = state.home.look, pixelScale = pixelScale(1.6f)) }
+        )
+
         if (showTip) {
             PageTip(
                 art = art,
@@ -114,7 +127,7 @@ fun ProfileScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .panel(fill = Ink.Room.wash, border = Ink.Room.copy(alpha = 0.55f))
+                .panel(fill = Ink.Room.wash)
                 .clickable(role = Role.Button, onClick = onOpenWardrobe)
                 .padding(16.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -128,7 +141,7 @@ fun ProfileScreen(
                     color = Ink.Primary,
                     style = MaterialTheme.typography.headlineMedium
                 )
-                ProgressTrack(state.levelProgress, Ink.Gold, height = 8)
+                ProgressTrack(state.levelProgress, Ink.Gold, height = 10)
                 Label("${Progress.xpIntoLevel(state.xp)} / ${Progress.XP_PER_LEVEL} to level ${state.level + 1}")
                 if (nextHat != null) {
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -137,8 +150,8 @@ fun ProfileScreen(
                     }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Label("Wardrobe", color = Ink.Gold, strong = true)
-                    Glyph(Glyphs.ArrowRight, colour = Ink.Gold, size = 15)
+                    Label("Wardrobe", color = Ink.Primary, strong = true)
+                    Glyph(Glyphs.ArrowRight, colour = Ink.Primary, size = 15)
                 }
             }
         }
@@ -165,7 +178,7 @@ fun ProfileScreen(
                 Text("How it works", color = Ink.Primary, style = MaterialTheme.typography.titleMedium)
                 Label("Take the tour of your home screen again")
             }
-            Glyph(Glyphs.ArrowRight, colour = Ink.Muted, size = 18)
+            Glyph(Glyphs.ArrowRight, colour = Ink.Primary, size = 18)
         }
 
         VSpace(14)
@@ -214,14 +227,14 @@ fun ProfileScreen(
                     text = if (state.debuffs.isEmpty()) "Check your habits"
                     else "${state.debuffs.size} habit${if (state.debuffs.size == 1) "" else "s"} to work on",
                     color = Ink.Primary,
-                    style = MaterialTheme.typography.bodyLarge
+                    style = MaterialTheme.typography.titleMedium
                 )
                 Label(
-                    if (state.debuffs.isEmpty()) "Mark habits that keep you inside, and get extras and reading for each."
-                    else "Each one brings its own extras and reading, in turn."
+                    if (state.debuffs.isEmpty()) "Mark habits that keep you inside, and get extras and a page for each."
+                    else "Each one brings its own extras and a page, in turn."
                 )
             }
-            Glyph(Glyphs.ArrowRight, colour = Ink.Muted, size = 18)
+            Glyph(Glyphs.ArrowRight, colour = Ink.Primary, size = 18)
         }
 
         VSpace(14)
@@ -233,7 +246,6 @@ fun ProfileScreen(
                 detail = t.detail,
                 selected = state.budget == t,
                 single = true,
-                accent = Ink.Activity,
                 onToggle = { onSetBudget(t) }
             )
         }
@@ -282,15 +294,19 @@ private fun Notifications() {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .panel(border = if (on) Ink.Activity else Ink.Gold)
+            .panel(fill = if (on) Ink.Surface else Ink.Gold.wash)
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text(
-            text = if (on) "Notifications are on" else "Notifications are off",
-            color = if (on) Ink.Activity else Ink.Gold,
-            style = MaterialTheme.typography.titleMedium
-        )
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = if (on) "Notifications are on" else "Notifications are off",
+                modifier = Modifier.weight(1f),
+                color = Ink.Primary,
+                style = MaterialTheme.typography.titleMedium
+            )
+            Pill(if (on) "On" else "Off", if (on) Ink.Activity else Ink.Gold, filled = true)
+        }
         Text(
             text = if (on) "A reminder arrives at the time you picked, unless it's already done."
             else "Reminders still show in the app and on your widget, but not as notifications.",
@@ -298,7 +314,7 @@ private fun Notifications() {
             style = MaterialTheme.typography.bodyMedium
         )
         if (!on) {
-            SecondaryButton("Turn them on", colour = Ink.Gold) {
+            PrimaryButton("Turn them on") {
                 if (needs) {
                     ask.launch(Manifest.permission.POST_NOTIFICATIONS)
                 } else {
@@ -326,23 +342,16 @@ private fun SettingRow(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = Space.tap)
-            .panel(border = if (on) Ink.Activity else Ink.Border)
+            .panel()
             .toggleable(value = on, role = Role.Switch, onValueChange = { onToggle() })
             .padding(horizontal = 14.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        CheckBox(selected = on, accent = Ink.Activity)
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = label, color = Ink.Primary, style = MaterialTheme.typography.bodyLarge)
-            Text(text = detail, color = Ink.Muted, style = MaterialTheme.typography.bodyMedium)
+            Text(text = label, color = Ink.Primary, style = MaterialTheme.typography.titleMedium)
+            Text(text = detail, color = Ink.Secondary, style = MaterialTheme.typography.bodyMedium)
         }
-        Box {
-            Text(
-                text = if (on) "On" else "Off",
-                color = if (on) Ink.Activity else Ink.Muted,
-                style = MaterialTheme.typography.labelLarge
-            )
-        }
+        PixelSwitch(checked = on)
     }
 }

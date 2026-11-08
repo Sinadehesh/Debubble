@@ -36,6 +36,10 @@ import com.debubble.app.ui.theme.Cut
 import com.debubble.app.ui.theme.Ink
 import com.debubble.app.ui.theme.fill
 import kotlin.math.roundToInt
+import kotlin.math.floor
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.draw.drawBehind
 
 /**
  * A text box: a white page with a plum outline and plum ink, the same on a card and on a
@@ -146,5 +150,93 @@ fun NerveSlider(
                 )
             }
         }
+    }
+}
+
+/**
+ * A number on a slider, the way the room would draw one: a sunken track with a plum edge,
+ * filled in its colour up to a block you drag, with − and + blocks either side for the last
+ * step. Tap anywhere on the track to jump there. TalkBack sees an ordinary slider.
+ */
+@Composable
+fun PixelSlider(
+    value: Int,
+    range: IntRange,
+    onChange: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    step: Int = 1,
+    accent: Color = Ink.Gold,
+    description: String = "",
+    /** What TalkBack says for the value: "12 km from home". */
+    valueText: String = value.toString()
+) {
+    val set by rememberUpdatedState(onChange)
+    val span = (range.last - range.first).coerceAtLeast(1)
+    val stride = step.coerceAtLeast(1)
+    fun snapValue(v: Float): Int =
+        (range.first + ((v - range.first) / stride).roundToInt() * stride).coerceIn(range.first, range.last)
+    fun snapFraction(f: Float): Int = snapValue(range.first + f.coerceIn(0f, 1f) * span)
+    val fraction = ((value - range.first) / span.toFloat()).coerceIn(0f, 1f)
+    val fillColour = accent.fill
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconBlock(
+            glyph = Glyphs.Minus,
+            description = "Less",
+            onClick = { set((value - stride).coerceAtLeast(range.first)) },
+            enabled = value > range.first,
+            size = 40
+        )
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(40.dp)
+                .semantics {
+                    contentDescription = description
+                    stateDescription = valueText
+                    progressBarRangeInfo = ProgressBarRangeInfo(
+                        value.toFloat(),
+                        range.first.toFloat()..range.last.toFloat(),
+                        steps = (span / stride - 1).coerceAtLeast(0)
+                    )
+                    setProgress { target ->
+                        set(snapValue(target))
+                        true
+                    }
+                }
+                .pointerInput(range, stride) {
+                    detectTapGestures { p -> set(snapFraction(p.x / size.width)) }
+                }
+                .pointerInput(range, stride) {
+                    detectHorizontalDragGestures { change, _ -> set(snapFraction(change.position.x / size.width)) }
+                }
+                .drawBehind {
+                    val line = floor(2.dp.toPx()).coerceAtLeast(1f)
+                    val thumbW = floor(20.dp.toPx())
+                    val track = floor(14.dp.toPx())
+                    val top = floor((size.height - track) / 2f)
+                    val x = floor((size.width - thumbW) * fraction)
+                    // The track, sunk into the page, filled to the middle of the block.
+                    drawRect(Ink.Border, topLeft = Offset(0f, top), size = Size(size.width, track))
+                    drawRect(Ink.Well, topLeft = Offset(line, top + line), size = Size(size.width - line * 2, track - line * 2))
+                    drawRect(fillColour, topLeft = Offset(line, top + line), size = Size(x + thumbW / 2f - line, track - line * 2))
+                    // The block: plum lip below, paper face, two grip lines.
+                    drawRect(Ink.Border, topLeft = Offset(x, 0f), size = Size(thumbW, size.height))
+                    drawRect(Ink.Surface, topLeft = Offset(x + line, line), size = Size(thumbW - line * 2, size.height - line * 4))
+                    val grip = floor(thumbW / 2f - line * 1.5f)
+                    drawRect(Ink.Border, topLeft = Offset(x + grip, size.height * 0.3f), size = Size(line, size.height * 0.3f))
+                    drawRect(Ink.Border, topLeft = Offset(x + grip + line * 2, size.height * 0.3f), size = Size(line, size.height * 0.3f))
+                }
+        )
+        IconBlock(
+            glyph = Glyphs.Plus,
+            description = "More",
+            onClick = { set((value + stride).coerceAtMost(range.last)) },
+            enabled = value < range.last,
+            size = 40
+        )
     }
 }
