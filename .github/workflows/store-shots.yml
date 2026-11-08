@@ -1,7 +1,8 @@
 name: Store screenshots
 
-# The Google Play screenshots, taken from the real app on an emulator. Runs when the
-# screenshot test or this workflow changes, or by hand from the Actions tab.
+# The Google Play screenshots, and a picture of every screen for design review, taken from
+# the real app on an emulator. Runs when the screenshot tests or this workflow change, or by
+# hand from the Actions tab.
 on:
   workflow_dispatch:
   push:
@@ -67,12 +68,21 @@ jobs:
           script: |
             ./gradlew :app:connectedDebugAndroidTest --stacktrace
             adb pull /data/local/tmp/debubble-shots shots
+            adb pull /data/local/tmp/debubble-design design
 
       - name: Upload screenshots
         uses: actions/upload-artifact@v7
         with:
           name: store-screenshots-raw
           path: android/shots/*.png
+          if-no-files-found: error
+
+      # Every screen in the app, for reviewing the design as a whole (androidTest/DesignTour).
+      - name: Upload design review
+        uses: actions/upload-artifact@v7
+        with:
+          name: design-review
+          path: android/design/*.png
           if-no-files-found: error
 
       - name: Upload test reports

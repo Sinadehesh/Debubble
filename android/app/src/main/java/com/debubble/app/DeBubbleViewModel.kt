@@ -2,6 +2,7 @@ package com.debubble.app
 
 import android.app.Application
 import android.text.format.DateFormat
+import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.debubble.app.data.AppState
@@ -285,6 +286,10 @@ class DeBubbleViewModel(private val app: Application) : AndroidViewModel(app) {
     // ------------------------------------------------------------------ navigation
 
     fun goDashboard() { _route.value = Route.Dashboard }
+
+    /** Any screen, directly. Only the design-review screenshots use it (androidTest/DesignTour). */
+    @VisibleForTesting
+    internal fun show(route: Route) { _route.value = route }
     fun goWardrobe(fromYou: Boolean) { _route.value = Route.Wardrobe(fromYou) }
 
     /** The road today's one mission outside comes from. */
