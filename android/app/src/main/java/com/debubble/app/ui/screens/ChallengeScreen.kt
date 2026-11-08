@@ -71,6 +71,7 @@ import com.debubble.app.ui.components.rememberHaptics
 import com.debubble.app.ui.theme.Ink
 import com.debubble.app.ui.theme.Space
 import com.debubble.app.ui.theme.accent
+import com.debubble.app.ui.theme.Cut
 
 /**
  * A mission, as the letter you were holding in the room.
@@ -116,7 +117,7 @@ fun ChallengeScreen(
     }
     DisposableEffect(Unit) { onDispose { sound.stopBed() } }
 
-    Box(modifier = Modifier.fillMaxSize().background(Ink.Void)) {
+    Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize().imePadding()) {
             TopBar(
                 title = if (served.kind == "MISSION") "Your journey" else "Today's letter",
@@ -249,7 +250,7 @@ private fun Facts(served: Served) {
 private fun Tag(text: String) {
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(50))
+            .clip(Cut.small)
             .background(Ink.PaperShade)
             .padding(horizontal = 12.dp, vertical = 6.dp)
     ) {

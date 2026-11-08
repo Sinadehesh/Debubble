@@ -84,6 +84,8 @@ import com.debubble.app.ui.theme.centered
 import com.debubble.app.ui.theme.roomGround
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import com.debubble.app.ui.theme.wash
+import com.debubble.app.ui.theme.Cut
 
 /**
  * Home: your room, and today.
@@ -146,7 +148,6 @@ fun DashboardScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(roomGround())
             .tourViewport(scroll)
             .verticalScroll(scroll)
     ) {
@@ -288,7 +289,7 @@ private fun TopLine(art: RoomArt, state: AppState, dayIndex: Long, onOpenWardrob
         Row(
             modifier = Modifier
                 .heightIn(min = Space.tap)
-                .panel(fill = Ink.Surface, shape = RoundedCornerShape(Space.radius))
+                .panel(fill = Ink.Surface, shape = Cut.card)
                 .clickable(role = Role.Button, onClick = onOpenWardrobe)
                 .padding(horizontal = 10.dp, vertical = 6.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -417,8 +418,8 @@ private fun LetterRow(
         Box(
             modifier = Modifier
                 .size(40.dp)
-                .clip(RoundedCornerShape(Space.radius))
-                .background(accent.copy(alpha = 0.16f)),
+                .clip(Cut.card)
+                .background(accent.wash),
             contentAlignment = Alignment.Center
         ) {
             SpriteIcon(art, icon, pixelScale = pixelScale(1.8f))
@@ -651,7 +652,7 @@ fun TabBar(
                 modifier = Modifier
                     .weight(1f)
                     .heightIn(min = Space.tap)
-                    .clip(RoundedCornerShape(Space.radius))
+                    .clip(Cut.card)
                     .clickable(role = Role.Tab) { onSelect(tab) }
                     .semantics { selected = on }
                     .padding(vertical = 4.dp),

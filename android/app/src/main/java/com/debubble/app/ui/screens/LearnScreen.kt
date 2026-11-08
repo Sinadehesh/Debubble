@@ -48,6 +48,8 @@ import com.debubble.app.ui.components.pixelScale
 import com.debubble.app.ui.theme.Ink
 import com.debubble.app.ui.theme.Space
 import com.debubble.app.ui.theme.roomGround
+import com.debubble.app.ui.theme.wash
+import com.debubble.app.ui.theme.Cut
 
 /**
  * The Learn tab.
@@ -77,7 +79,6 @@ fun LearnScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(roomGround())
             .verticalScroll(rememberScrollState())
     ) {
         Row(
@@ -109,7 +110,7 @@ fun LearnScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .panel(fill = Ink.SurfaceHigh, shape = RoundedCornerShape(Space.radiusLarge))
+                    .panel(fill = Ink.SurfaceHigh, shape = Cut.large)
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(9.dp)
             ) {
@@ -249,7 +250,7 @@ private fun LessonCard(
                 modifier = Modifier
                     .size(28.dp)
                     .clip(CircleShape)
-                    .background(if (locked) Ink.SurfaceHigh else accent.copy(alpha = 0.18f)),
+                    .background(if (locked) Ink.SurfaceHigh else accent.wash),
                 contentAlignment = Alignment.Center
             ) {
                 Glyph(
@@ -294,7 +295,6 @@ fun LessonScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(roomGround())
     ) {
         TopBar(
             title = if (lesson.isTargeted) "For you" else "Day ${lesson.day}",

@@ -42,6 +42,8 @@ import com.debubble.app.ui.components.VSpace
 import com.debubble.app.ui.components.panel
 import com.debubble.app.ui.theme.Ink
 import com.debubble.app.ui.theme.Space
+import com.debubble.app.ui.theme.wash
+import com.debubble.app.ui.theme.Cut
 
 /**
  * The Systems Audit.
@@ -76,7 +78,6 @@ fun AuditScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Ink.Void)
     ) {
         TopBar(
             title = "Systems audit",
@@ -96,7 +97,7 @@ fun AuditScreen(
                     modifier = Modifier
                         .padding(horizontal = Space.gutter)
                         .fillMaxWidth()
-                        .panel(fill = Ink.SurfaceHigh, shape = RoundedCornerShape(Space.radiusLarge))
+                        .panel(fill = Ink.SurfaceHigh, shape = Cut.large)
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(9.dp)
                 ) {
@@ -144,8 +145,8 @@ fun AuditScreen(
                         modifier = Modifier
                             .heightIn(min = Space.tap)
                             .panel(
-                                shape = RoundedCornerShape(50),
-                                fill = if (on) Ink.Access.copy(alpha = 0.18f) else Ink.Surface,
+                                shape = Cut.small,
+                                fill = if (on) Ink.Access.wash else Ink.Surface,
                                 border = if (on) Ink.Access else Ink.Border,
                                 borderWidth = if (on) 2.dp else 1.dp
                             )

@@ -26,6 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.debubble.app.ui.theme.Ink
 import com.debubble.app.ui.theme.Space
+import com.debubble.app.ui.theme.Cut
 
 /**
  * A small Markdown renderer.
@@ -100,7 +101,7 @@ fun Markdown(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 6.dp)
-                            .clip(RoundedCornerShape(Space.radius))
+                            .clip(Cut.card)
                             .background(Ink.SurfaceHigh)
                             .padding(14.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)

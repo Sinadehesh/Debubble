@@ -25,6 +25,7 @@ import com.debubble.app.engine.RepType
 import com.debubble.app.ui.theme.Ink
 import com.debubble.app.ui.theme.NumberFamily
 import com.debubble.app.ui.theme.Space
+import com.debubble.app.ui.theme.Cut
 
 /**
  * Reps: the unlimited half of the app.
@@ -54,7 +55,7 @@ fun RepTracker(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .panel(shape = RoundedCornerShape(Space.radiusLarge))
+            .panel(shape = Cut.large)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {

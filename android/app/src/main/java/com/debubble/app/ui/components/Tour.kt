@@ -45,6 +45,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.alpha
@@ -79,6 +82,10 @@ import com.debubble.app.engine.Tour
 import com.debubble.app.engine.TourAction
 import com.debubble.app.engine.TourSpot
 import com.debubble.app.engine.TourStep
+import com.debubble.app.ui.theme.Cut
+import com.debubble.app.ui.theme.fill
+import com.debubble.app.ui.theme.wash
+import com.debubble.app.ui.theme.NumberFamily
 import com.debubble.app.ui.theme.Ink
 import com.debubble.app.ui.theme.Space
 import kotlinx.coroutines.flow.first
@@ -246,7 +253,9 @@ fun TourOverlay(
                 .fillMaxSize()
                 .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
         ) {
-            drawRect(Ink.Void.copy(alpha = 0.84f))
+            // Plum, not cream: the dark of the room's own outline, so the lit spot is the
+            // only bright thing left and the eye goes straight to it.
+            drawRect(Ink.Primary.copy(alpha = 0.72f))
             if (hole != null) {
                 val corner = CornerRadius(12.dp.toPx())
                 drawRoundRect(
@@ -257,17 +266,17 @@ fun TourOverlay(
                     blendMode = BlendMode.Clear
                 )
                 drawRoundRect(
-                    color = accent,
+                    color = accent.fill,
                     topLeft = lit.topLeft,
                     size = lit.size,
                     cornerRadius = corner,
-                    style = Stroke(width = 2.5.dp.toPx())
+                    style = Stroke(width = 4.dp.toPx())
                 )
                 // A ring that breathes outwards, so the eye finds the spot before the words.
                 if (!reduced) {
                     val grow = glow * 10.dp.toPx()
                     drawRoundRect(
-                        color = accent.copy(alpha = (1f - glow) * 0.6f),
+                        color = accent.fill.copy(alpha = (1f - glow) * 0.8f),
                         topLeft = lit.topLeft - Offset(grow, grow),
                         size = Size(lit.width + grow * 2, lit.height + grow * 2),
                         cornerRadius = CornerRadius(12.dp.toPx() + grow),
@@ -342,7 +351,7 @@ private fun TourCard(
 ) {
     Column(
         modifier = modifier
-            .panel(fill = Ink.SurfaceHigh, border = accent, borderWidth = 2.dp)
+            .panel(fill = Ink.Surface, borderWidth = 3.dp, shadow = Ink.Border)
             .semantics {
                 paneTitle = "Tour"
                 liveRegion = LiveRegionMode.Polite
@@ -360,7 +369,7 @@ private fun TourCard(
                 Box(
                     modifier = Modifier
                         .heightIn(min = 40.dp)
-                        .clip(RoundedCornerShape(Space.radius))
+                        .clip(Cut.small)
                         .clickable(role = Role.Button, onClick = onSkip)
                         .padding(horizontal = 10.dp, vertical = 8.dp),
                     contentAlignment = Alignment.Center
@@ -370,17 +379,7 @@ private fun TourCard(
             }
         }
         // Where you are in it, as segments: the end in sight is what keeps people going.
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-            repeat(of) { i ->
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(4.dp)
-                        .clip(CircleShape)
-                        .background(if (i < number) accent else Ink.Faint)
-                )
-            }
-        }
+        Ticks(total = of, done = number, accent = accent, height = 8)
         Row(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -389,8 +388,9 @@ private fun TourCard(
                 Box(
                     modifier = Modifier
                         .size(48.dp)
-                        .clip(RoundedCornerShape(Space.radius))
-                        .background(accent.copy(alpha = 0.16f)),
+                        .clip(Cut.small)
+                        .background(accent.wash)
+                        .border(BorderStroke(2.dp, Ink.Border), Cut.small),
                     contentAlignment = Alignment.Center
                 ) {
                     val tall = (art.rect(step.icon)?.get(3) ?: 0) > 14
@@ -411,7 +411,7 @@ private fun TourCard(
             if (onBack != null) {
                 Box(modifier = Modifier.weight(1f)) { SecondaryButton("Back", onClick = onBack) }
             }
-            Box(modifier = Modifier.weight(2f)) { PrimaryButton(step.button, accent = accent, onClick = onNext) }
+            Box(modifier = Modifier.weight(2f)) { PrimaryButton(step.button, onClick = onNext) }
         }
         if (onLater != null) {
             TextAction(
@@ -439,7 +439,7 @@ fun FirstTimeSteps(steps: List<String>, accent: Color, modifier: Modifier = Modi
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .panel(fill = accent.copy(alpha = 0.10f), border = accent.copy(alpha = 0.6f))
+            .panel(fill = accent.wash, lift = 0.dp)
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
@@ -451,12 +451,13 @@ fun FirstTimeSteps(steps: List<String>, accent: Color, modifier: Modifier = Modi
             ) {
                 Box(
                     modifier = Modifier
-                        .size(24.dp)
-                        .clip(CircleShape)
-                        .background(accent),
+                        .size(26.dp)
+                        .clip(Cut.small)
+                        .background(accent.fill)
+                        .border(BorderStroke(2.dp, Ink.Border), Cut.small),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("${i + 1}", color = Ink.OnAccent, style = MaterialTheme.typography.labelMedium)
+                    Text("${i + 1}", color = Ink.OnAccent, style = MaterialTheme.typography.titleSmall.copy(fontFamily = NumberFamily, fontSize = 20.sp))
                 }
                 Text(
                     text = s,

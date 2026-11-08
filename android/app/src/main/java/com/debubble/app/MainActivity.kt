@@ -64,6 +64,7 @@ import com.debubble.app.ui.screens.Tab
 import com.debubble.app.ui.screens.TabBar
 import com.debubble.app.ui.screens.TranscendenceScreen
 import com.debubble.app.ui.theme.DeBubbleTheme
+import com.debubble.app.ui.components.wallpaper
 import com.debubble.app.ui.theme.Ink
 import com.debubble.app.ui.theme.LocalStage
 import com.debubble.app.ui.components.rememberRoomArt
@@ -90,11 +91,12 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // The app is always dark, so the clock and battery are always drawn light. Left to
-        // follow the phone's own setting, a phone in light mode drew them dark on our dark.
+        // The app is always the room's cream, so the clock and battery are always drawn dark.
+        // Left to follow the phone's own setting, a phone in dark mode drew them light on
+        // cream, where they all but vanished.
         enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
-            navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
+            statusBarStyle = SystemBarStyle.light(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.light(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT)
         )
         widgetLink = linkOf(intent)
         addOnNewIntentListener { next -> widgetLink = linkOf(next) }
@@ -148,15 +150,13 @@ private fun DeBubbleApp(
         }
     }
 
-    // The ground under every screen follows the habitat, so the room is the app rather than
-    // a screen inside it. Screens that paint their own background — the action screen is a
-    // locked focus surface — keep Ink.Void and are unaffected. The stage palette is solved
-    // against the WCAG floors, so no stage can make a sentence unreadable.
+    // Every screen stands on the room's wallpaper, so the app is the inside of the room you
+    // are looking after rather than a dashboard with a picture of it on.
     CompositionLocalProvider(LocalStage provides state.stage) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(state.stage.ground))
+                .wallpaper()
                 .statusBarsPadding()
         ) {
             when (val r = route) {

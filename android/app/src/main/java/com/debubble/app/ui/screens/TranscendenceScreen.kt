@@ -62,7 +62,6 @@ fun TranscendenceScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Ink.Void)
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             val centre = Offset(size.width / 2f, size.height * 0.42f)

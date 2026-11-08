@@ -57,6 +57,7 @@ import com.debubble.app.ui.components.pixelScale
 import com.debubble.app.ui.theme.Ink
 import com.debubble.app.ui.theme.Space
 import com.debubble.app.ui.theme.roomGround
+import com.debubble.app.ui.theme.wash
 
 /**
  * You: the character you made, what your level has earned, and the settings.
@@ -94,7 +95,6 @@ fun ProfileScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(roomGround())
             .verticalScroll(rememberScrollState())
             .padding(horizontal = Space.gutter)
             .padding(top = 18.dp, bottom = 28.dp),
@@ -114,7 +114,7 @@ fun ProfileScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .panel(fill = Ink.Room.copy(alpha = 0.12f), border = Ink.Room.copy(alpha = 0.55f))
+                .panel(fill = Ink.Room.wash, border = Ink.Room.copy(alpha = 0.55f))
                 .clickable(role = Role.Button, onClick = onOpenWardrobe)
                 .padding(16.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),

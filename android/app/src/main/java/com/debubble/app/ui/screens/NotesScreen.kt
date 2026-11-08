@@ -53,6 +53,8 @@ import com.debubble.app.ui.components.pixelScale
 import com.debubble.app.ui.theme.Ink
 import com.debubble.app.ui.theme.Space
 import com.debubble.app.ui.theme.roomGround
+import com.debubble.app.ui.theme.wash
+import com.debubble.app.ui.theme.Cut
 
 /**
  * The Notes tab.
@@ -83,7 +85,6 @@ fun NotesScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(roomGround())
     ) {
         Row(
             modifier = Modifier
@@ -127,7 +128,7 @@ fun NotesScreen(
                     )
                 },
                 singleLine = true,
-                shape = RoundedCornerShape(Space.radius),
+                shape = Cut.card,
                 textStyle = MaterialTheme.typography.bodyLarge,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = Ink.Primary,
@@ -153,8 +154,8 @@ fun NotesScreen(
                         modifier = Modifier
                             .heightIn(min = Space.tap)
                             .panel(
-                                shape = RoundedCornerShape(50),
-                                fill = if (on) Ink.Access.copy(alpha = 0.18f) else Ink.Surface,
+                                shape = Cut.small,
+                                fill = if (on) Ink.Access.wash else Ink.Surface,
                                 border = if (on) Ink.Access else Ink.Border,
                                 borderWidth = if (on) 2.dp else 1.dp
                             )
@@ -216,7 +217,7 @@ private fun EmptyState(title: String, body: String) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .panel(fill = Ink.SurfaceHigh, shape = RoundedCornerShape(Space.radiusLarge))
+            .panel(fill = Ink.SurfaceHigh, shape = Cut.large)
             .padding(18.dp),
         verticalArrangement = Arrangement.spacedBy(9.dp)
     ) {
@@ -310,7 +311,6 @@ fun NoteEditorScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(roomGround())
             .imePadding()
     ) {
         TopBar(
@@ -322,7 +322,7 @@ fun NoteEditorScreen(
                     modifier = Modifier
                         .heightIn(min = Space.tap)
                         .panel(
-                            fill = if (preview) Ink.Access.copy(alpha = 0.18f) else Ink.Surface,
+                            fill = if (preview) Ink.Access.wash else Ink.Surface,
                             border = if (preview) Ink.Access else Ink.Border
                         )
                         .clickable(role = Role.Button) { preview = !preview }
@@ -388,7 +388,7 @@ fun NoteEditorScreen(
                         )
                     },
                     textStyle = MaterialTheme.typography.bodyLarge,
-                    shape = RoundedCornerShape(Space.radius),
+                    shape = Cut.card,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = Ink.Primary,
                         unfocusedTextColor = Ink.Primary,
@@ -413,7 +413,7 @@ fun NoteEditorScreen(
                         )
                     },
                     singleLine = true,
-                    shape = RoundedCornerShape(Space.radius),
+                    shape = Cut.card,
                     textStyle = MaterialTheme.typography.bodyMedium,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = Ink.Primary,

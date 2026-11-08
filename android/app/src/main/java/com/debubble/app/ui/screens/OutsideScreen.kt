@@ -66,6 +66,8 @@ import com.debubble.app.ui.theme.Ink
 import com.debubble.app.ui.theme.Space
 import com.debubble.app.ui.theme.accent
 import com.debubble.app.ui.theme.roomGround
+import com.debubble.app.ui.theme.wash
+import com.debubble.app.ui.theme.Cut
 
 /**
  * Outside: everything past your walls.
@@ -94,7 +96,6 @@ fun OutsideScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(roomGround())
             .verticalScroll(rememberScrollState())
             .padding(horizontal = Space.gutter)
             .padding(top = 18.dp, bottom = 28.dp),
@@ -179,10 +180,10 @@ private fun Stages(current: Stage, cleared: Int) {
                 modifier = Modifier.width(132.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Shell(
+                RoomShell(
                     st,
                     modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
+                        .clip(Cut.card)
                         .alpha(if (reached) 1f else 0.35f)
                         .drawWithContent {
                             drawContent()
@@ -209,26 +210,6 @@ private fun Stages(current: Stage, cleared: Int) {
                 )
             }
         }
-    }
-}
-
-/** A room shell, drawn whole and crisp at the largest whole scale that fits 132dp. */
-@Composable
-private fun Shell(stage: Stage, modifier: Modifier = Modifier) {
-    val image = ImageBitmap.imageResource(RoomPainter.shellFor(stage))
-    val density = LocalDensity.current
-    val scale = with(density) { (132.dp.toPx() / image.width).toInt().coerceAtLeast(1) }
-    val w = with(density) { (image.width * scale).toDp() }
-    val h = with(density) { (image.height * scale).toDp() }
-    Canvas(modifier = modifier.size(w, h)) {
-        drawImage(
-            image = image,
-            srcOffset = IntOffset.Zero,
-            srcSize = IntSize(image.width, image.height),
-            dstOffset = IntOffset.Zero,
-            dstSize = IntSize(image.width * scale, image.height * scale),
-            filterQuality = FilterQuality.None
-        )
     }
 }
 
@@ -259,8 +240,8 @@ private fun RoadRow(
             Box(
                 modifier = Modifier
                     .size(44.dp)
-                    .clip(RoundedCornerShape(Space.radius))
-                    .background(accent.copy(alpha = 0.16f)),
+                    .clip(Cut.card)
+                    .background(accent.wash),
                 contentAlignment = Alignment.Center
             ) {
                 SpriteIcon(art, World.road(pillar), pixelScale = pixelScale(2f))

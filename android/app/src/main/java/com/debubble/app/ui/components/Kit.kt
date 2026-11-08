@@ -4,85 +4,146 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.ImageShader
+import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.ShaderBrush
+import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.graphics.drawOutline
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.debubble.app.ui.theme.ButtonText
+import com.debubble.app.ui.theme.Cut
 import com.debubble.app.ui.theme.Ink
 import com.debubble.app.ui.theme.NumberFamily
 import com.debubble.app.ui.theme.Space
+import com.debubble.app.ui.theme.fill
+import com.debubble.app.ui.theme.onFill
+import com.debubble.app.ui.theme.wash
+import kotlin.math.roundToInt
 
 /* ==================================================================== surfaces
 
-   Everything you can touch looks like it. A card has a fill and a visible border; a selected
-   card has an accent-tinted fill, a two-pixel accent border and a checkmark. There is no
-   state in this app you have to infer from a four-percent change in brightness.            */
-
-/** A plain panel. Filled and outlined, so it is unambiguously an object on the page. */
-fun Modifier.panel(
-    shape: Shape = RoundedCornerShape(Space.radius),
-    fill: Color = Ink.Surface,
-    border: Color = Ink.Border,
-    borderWidth: androidx.compose.ui.unit.Dp = 1.dp
-): Modifier = this
-    .clip(shape)
-    .background(fill)
-    .border(BorderStroke(borderWidth, border), shape)
+   Everything is drawn the way the room is drawn: a fill, a plum outline, corners stepped in
+   whole pixels, and a hard shadow with no blur. A card stands off the wall and casts the
+   wall's own shade; a button stands off the page on a plum lip and sinks onto it when it is
+   pressed. Something flat, on the ground colour, with a faint edge, is done or passive.     */
 
 /**
- * A panel whose selected state is impossible to miss: accent fill, accent border at double
- * width, and (wherever it is used) a checkmark supplied by the caller.
+ * A card. Paper, outlined, standing a few pixels off the wall.
+ *
+ * It lies flat when it is on the ground colour or has only a faint edge: that is a thing that
+ * is done, or only there to be read, and a shadow under it would say it can be picked up.
+ */
+fun Modifier.panel(
+    shape: Shape = Cut.card,
+    fill: Color = Ink.Surface,
+    border: Color = Ink.Border,
+    borderWidth: Dp = 2.dp,
+    lift: Dp = 3.dp,
+    shadow: Color = Ink.Shadow
+): Modifier {
+    val flat = fill == Ink.Void || border == Ink.Faint || border.alpha == 0f
+    return this
+        .then(if (flat || lift == 0.dp) Modifier else Modifier.castShadow(shape, lift, shadow))
+        .clip(shape)
+        .background(fill)
+        .border(BorderStroke(borderWidth, border), shape)
+}
+
+/** The shadow alone, below and behind: the same shape, moved down, in one solid colour. */
+fun Modifier.castShadow(shape: Shape = Cut.card, lift: Dp = 3.dp, colour: Color = Ink.Shadow): Modifier =
+    this.drawBehind {
+        val outline = shape.createOutline(size, layoutDirection, this)
+        translate(top = lift.toPx().roundToInt().toFloat()) { drawOutline(outline, colour) }
+    }
+
+/**
+ * A choice that is impossible to miss when chosen: its colour's wash behind it, a heavier
+ * outline, and (wherever it is used) a tick supplied by the caller.
  */
 fun Modifier.selectablePanel(
     selected: Boolean,
     accent: Color,
-    shape: Shape = RoundedCornerShape(Space.radius)
+    shape: Shape = Cut.card
 ): Modifier = this.panel(
     shape = shape,
-    fill = if (selected) accent.copy(alpha = 0.16f) else Ink.Surface,
-    border = if (selected) accent else Ink.Border,
-    borderWidth = if (selected) 2.dp else 1.dp
+    fill = if (selected) accent.wash else Ink.Surface,
+    border = Ink.Border,
+    borderWidth = if (selected) 3.dp else 2.dp
 )
 
-/** An inset well — progress tracks, counters, anything that should read as recessed. */
-fun Modifier.well(shape: Shape = RoundedCornerShape(Space.radius)): Modifier = this
+/** An inset well — tracks, counters, anything that should read as pressed into the page. */
+fun Modifier.well(shape: Shape = Cut.small): Modifier = this
     .clip(shape)
     .background(Ink.Well)
 
+/**
+ * The room's wallpaper: the wall's cream with its little diamonds, two dp to a pixel. Every
+ * screen stands on it, so the app is the inside of the room you are looking after.
+ */
+fun Modifier.wallpaper(): Modifier = this.drawWithCache {
+    val px = (2.dp.toPx()).roundToInt().coerceAtLeast(1)
+    // One tile: two rows of diamonds, the second offset by half, as room.py draws the wall.
+    val tile = ImageBitmap(8 * px, 12 * px)
+    val canvas = androidx.compose.ui.graphics.Canvas(tile)
+    canvas.drawRect(0f, 0f, tile.width.toFloat(), tile.height.toFloat(), Paint().apply { color = Ink.Void })
+    val dot = Paint().apply { color = Ink.Wallpaper }
+    fun diamond(cx: Int, cy: Int) {
+        listOf(cx to cy - 1, cx - 1 to cy, cx to cy, cx + 1 to cy, cx to cy + 1).forEach { (x, y) ->
+            canvas.drawRect(
+                (x * px).toFloat(), (y * px).toFloat(), ((x + 1) * px).toFloat(), ((y + 1) * px).toFloat(), dot
+            )
+        }
+    }
+    diamond(2, 2)
+    diamond(6, 8)
+    val brush = ShaderBrush(ImageShader(tile, TileMode.Repeated, TileMode.Repeated))
+    onDrawBehind { drawRect(brush) }
+}
+
 /* ==================================================================== text */
 
-/**
- * A small label. Sentence case at 13sp, not tracked capitals at 10 — the old labels were the
- * single least readable thing in the app and every screen was built out of them.
- */
+/** A small label. Sentence case, rounded and bold, never tracked capitals. */
 @Composable
 fun Label(
     text: String,
@@ -99,7 +160,7 @@ fun Label(
     )
 }
 
-/** A section heading with an optional value on the right. */
+/** A section heading, in the pixel face, with an optional value on the right. */
 @Composable
 fun SectionHeader(
     title: String,
@@ -114,14 +175,15 @@ fun SectionHeader(
     ) {
         Text(
             text = title,
+            modifier = Modifier.weight(1f, fill = false).semantics { heading() },
             color = accent,
-            style = MaterialTheme.typography.titleMedium
+            style = MaterialTheme.typography.titleLarge
         )
         if (trailing != null) Label(trailing)
     }
 }
 
-/** A number set in the monospace face, for figures that sit in columns. */
+/** A number, in the pixel face, as though the room counted it. */
 @Composable
 fun Figure(
     text: String,
@@ -143,61 +205,76 @@ fun tierCode(tier: Int): String = tier.toString().padStart(3, '0')
 /* ==================================================================== buttons */
 
 /**
- * The main action on a screen. Filled with the accent colour at full strength — a button
- * that needs a border to be visible is not a primary button.
+ * The button, in every size and colour the app has: a stepped block on a plum lip, with its
+ * word in the pixel face. Pressing sinks it onto the lip, the way a key goes down. No ripple:
+ * the movement is the feedback, and haptics come from whoever handles the click.
+ */
+@Composable
+fun BlockButton(
+    text: String,
+    modifier: Modifier = Modifier,
+    fill: Color = Ink.Primary,
+    ink: Color = fill.onFill,
+    enabled: Boolean = true,
+    small: Boolean = false,
+    onClick: () -> Unit
+) {
+    val source = remember { MutableInteractionSource() }
+    val pressed by source.collectIsPressedAsState()
+    val lift = if (small) 3.dp else Space.lift
+    val sink = if (pressed && enabled) lift else 0.dp
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(bottom = lift)
+            .heightIn(min = if (small) 44.dp else Space.tap)
+            .offset(y = sink)
+            .then(if (enabled && sink == 0.dp) Modifier.castShadow(Cut.card, lift, Ink.Border) else Modifier)
+            .clip(Cut.card)
+            .background(if (enabled) fill else Ink.Well)
+            .border(BorderStroke(2.dp, if (enabled) Ink.Border else Ink.Faint), Cut.card)
+            .clickable(
+                interactionSource = source,
+                indication = null,
+                enabled = enabled,
+                role = Role.Button,
+                onClick = onClick
+            )
+            .padding(horizontal = 16.dp, vertical = if (small) 6.dp else 9.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            color = if (enabled) ink else Ink.Muted,
+            style = if (small) MaterialTheme.typography.labelLarge else ButtonText,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+/**
+ * The main action on a screen. Plum, always, whatever the screen is about: the colours are
+ * for what things are (a road, a domain, a spark), never for which button to press, so the
+ * one to press always looks the same. A colour is passed only where the action belongs to
+ * one of those things, and then the button is filled with it.
  */
 @Composable
 fun PrimaryButton(
     text: String,
     modifier: Modifier = Modifier,
-    accent: Color = Ink.Access,
+    accent: Color = Ink.Primary,
     enabled: Boolean = true,
     onClick: () -> Unit
-) {
-    Button(
-        onClick = onClick,
-        enabled = enabled,
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = Space.tap),
-        shape = RoundedCornerShape(Space.radius),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = accent,
-            contentColor = Ink.OnAccent,
-            disabledContainerColor = Ink.SurfaceHigh,
-            disabledContentColor = Ink.Muted
-        )
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
-        )
-    }
-}
+) = BlockButton(text, modifier, fill = accent.fill, enabled = enabled, onClick = onClick)
 
-/** Secondary action: outlined, same size and weight of presence, lower commitment. */
+/** The other choice: paper on the same lip, the same size, a smaller commitment. */
 @Composable
 fun SecondaryButton(
     text: String,
     modifier: Modifier = Modifier,
     colour: Color = Ink.Primary,
     onClick: () -> Unit
-) {
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = Space.tap)
-            .panel(border = Ink.Border)
-            .clickable(role = Role.Button, onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = text,
-            color = colour,
-            style = MaterialTheme.typography.labelLarge
-        )
-    }
-}
+) = BlockButton(text, modifier, fill = Ink.Surface, ink = colour, onClick = onClick)
 
 /** The quiet exit. Still a full-height target — quiet is about weight, not about size. */
 @Composable
@@ -207,21 +284,66 @@ fun TextAction(
     colour: Color = Ink.Muted,
     onClick: () -> Unit
 ) {
-    TextButton(
-        onClick = onClick,
-        modifier = modifier.fillMaxWidth().heightIn(min = Space.tap),
-        shape = RoundedCornerShape(Space.radius)
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = Space.tap)
+            .clip(Cut.card)
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = 12.dp),
+        contentAlignment = Alignment.Center
     ) {
-        Text(text = text, color = colour, style = MaterialTheme.typography.labelMedium)
+        Text(text = text, color = colour, style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center)
+    }
+}
+
+/**
+ * A small square button with a pixel glyph on it: back, plus, minus. The same block as every
+ * other button, at icon size.
+ */
+@Composable
+fun IconBlock(
+    glyph: Glyphs,
+    description: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    fill: Color = Ink.Surface,
+    enabled: Boolean = true,
+    size: Int = 44
+) {
+    val source = remember { MutableInteractionSource() }
+    val pressed by source.collectIsPressedAsState()
+    val sink = if (pressed && enabled) 3.dp else 0.dp
+    Box(
+        modifier = modifier
+            .padding(bottom = 3.dp)
+            .size(size.dp)
+            .offset(y = sink)
+            .then(if (enabled && sink == 0.dp) Modifier.castShadow(Cut.small, 3.dp, Ink.Border) else Modifier)
+            .clip(Cut.small)
+            .background(if (enabled) fill else Ink.Well)
+            .border(BorderStroke(2.dp, if (enabled) Ink.Border else Ink.Faint), Cut.small)
+            .clickable(interactionSource = source, indication = null, enabled = enabled, role = Role.Button, onClick = onClick)
+            .semantics { contentDescription = description },
+        contentAlignment = Alignment.Center
+    ) {
+        Glyph(
+            glyph,
+            colour = when {
+                !enabled -> Ink.Muted
+                fill == Ink.Primary -> Ink.Cream
+                else -> Ink.Primary
+            },
+            size = (size * 0.46f).toInt()
+        )
     }
 }
 
 /* ==================================================================== navigation */
 
 /**
- * The standard top bar. Every screen that is not the dashboard gets one, with a real back
- * arrow at a real touch size — the old design expected people to find an unlabelled word at
- * the bottom of a scroll.
+ * The top of every screen that is not a tab: a back block, the title in the pixel face, and
+ * a line under it. The same on every one of them, so there is one way back out of anything.
  */
 @Composable
 fun TopBar(
@@ -235,29 +357,22 @@ fun TopBar(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+            .padding(horizontal = 14.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         if (onBack != null) {
-            Box(
-                modifier = Modifier
-                    .size(Space.tap)
-                    .clip(CircleShape)
-                    .clickable(role = Role.Button, onClick = onBack)
-                    .semantics { contentDescription = "Go back" },
-                contentAlignment = Alignment.Center
-            ) {
-                Glyph(Glyphs.ArrowLeft, colour = Ink.Primary, size = 22)
-            }
+            IconBlock(Glyphs.ArrowLeft, description = "Go back", onClick = onBack)
         } else {
             Spacer(modifier = Modifier.width(4.dp))
         }
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
-                color = accent,
-                style = MaterialTheme.typography.titleMedium
+                modifier = Modifier.semantics { heading() },
+                color = if (accent == Ink.Primary) Ink.Primary else accent,
+                style = MaterialTheme.typography.titleLarge,
+                maxLines = 2
             )
             if (subtitle != null) Label(subtitle)
         }
@@ -268,8 +383,8 @@ fun TopBar(
 /* ==================================================================== controls */
 
 /**
- * One multi-select option: a full-width row with a checkbox that is visibly ticked, a label,
- * and a plain sentence explaining what picking it means.
+ * One option: a full-width card with a tick that is visibly ticked, a label, and a plain
+ * sentence explaining what picking it means.
  */
 @Composable
 fun SelectRow(
@@ -278,7 +393,7 @@ fun SelectRow(
     onToggle: () -> Unit,
     modifier: Modifier = Modifier,
     detail: String? = null,
-    accent: Color = Ink.Access,
+    accent: Color = Ink.Gold,
     single: Boolean = false
 ) {
     Row(
@@ -304,13 +419,13 @@ fun SelectRow(
                 text = label,
                 color = Ink.Primary,
                 style = MaterialTheme.typography.bodyLarge.copy(
-                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
+                    fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.SemiBold
                 )
             )
             if (detail != null) {
                 Text(
                     text = detail,
-                    color = Ink.Muted,
+                    color = Ink.Secondary,
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
@@ -318,25 +433,24 @@ fun SelectRow(
     }
 }
 
-/** The tick itself. Filled and checked when on, hollow and outlined when off. */
+/**
+ * The tick: a pixel box, filled in its colour and ticked when on, empty paper when off. A
+ * single choice gets a pixel dot instead of a tick, so the two kinds still read differently.
+ */
 @Composable
 fun CheckBox(
     selected: Boolean,
     accent: Color,
     modifier: Modifier = Modifier,
     round: Boolean = false,
-    size: Int = 24
+    size: Int = 26
 ) {
-    val shape = if (round) CircleShape else RoundedCornerShape(7.dp)
     Box(
         modifier = modifier
             .size(size.dp)
-            .clip(shape)
-            .background(if (selected) accent else Color.Transparent)
-            .border(
-                BorderStroke(2.dp, if (selected) accent else Ink.Border),
-                shape
-            )
+            .clip(Cut.small)
+            .background(if (selected) accent.fill else Ink.Surface)
+            .border(BorderStroke(2.dp, Ink.Border), Cut.small)
             // The row already announces its own selected state; a second announcement here
             // just makes TalkBack say "selected" twice.
             .clearAndSetSemantics { },
@@ -344,22 +458,41 @@ fun CheckBox(
     ) {
         if (selected) {
             if (round) {
-                Box(
-                    modifier = Modifier
-                        .size((size * 0.42f).dp)
-                        .clip(CircleShape)
-                        .background(Ink.OnAccent)
-                )
+                Box(modifier = Modifier.size((size * 0.38f).dp).background(Ink.Primary, RectangleShape))
             } else {
-                Glyph(Glyphs.Check, colour = Ink.OnAccent, size = (size * 0.62f).toInt())
+                Glyph(Glyphs.Check, colour = Ink.Primary, size = (size * 0.7f).toInt())
             }
         }
     }
 }
 
+/** An on/off: a pixel track with a block that slides across, filled in its colour when on. */
+@Composable
+fun PixelSwitch(checked: Boolean, modifier: Modifier = Modifier, accent: Color = Ink.Gold) {
+    Box(
+        modifier = modifier
+            .size(width = 54.dp, height = 30.dp)
+            .clip(Cut.small)
+            .background(if (checked) accent.fill else Ink.Well)
+            .border(BorderStroke(2.dp, Ink.Border), Cut.small)
+            .clearAndSetSemantics { }
+            .padding(4.dp),
+        contentAlignment = if (checked) Alignment.CenterEnd else Alignment.CenterStart
+    ) {
+        Box(
+            modifier = Modifier
+                .size(22.dp)
+                .clip(Cut.small)
+                .background(Ink.Surface)
+                .border(BorderStroke(2.dp, Ink.Border), Cut.small)
+        )
+    }
+}
+
 /**
- * A round icon button — the +/- on a counter, and anything else that needs to be tappable
- * without carrying a word.
+ * A square button with a glyph: the +/- on a counter, and anything else that needs to be
+ * tappable without carrying a word. The same block as [IconBlock], filled in its colour
+ * when it is the one to press.
  */
 @Composable
 fun RoundButton(
@@ -371,72 +504,52 @@ fun RoundButton(
     enabled: Boolean = true,
     filled: Boolean = false,
     size: Int = 44
-) {
-    val live = enabled
-    Box(
-        modifier = modifier
-            .size(size.dp)
-            .clip(CircleShape)
-            .background(
-                when {
-                    !live -> Color.Transparent
-                    filled -> accent
-                    else -> accent.copy(alpha = 0.14f)
-                }
-            )
-            .border(
-                BorderStroke(if (filled) 0.dp else 1.5.dp, if (live) accent else Ink.Faint),
-                CircleShape
-            )
-            .then(
-                if (live) Modifier.clickable(role = Role.Button, onClick = onClick)
-                else Modifier
-            )
-            .semantics { contentDescription = description },
-        contentAlignment = Alignment.Center
-    ) {
-        Glyph(
-            glyph,
-            colour = when {
-                !live -> Ink.Faint
-                filled -> Ink.OnAccent
-                else -> accent
-            },
-            size = (size * 0.42f).toInt()
-        )
-    }
-}
+) = IconBlock(
+    glyph = glyph,
+    description = description,
+    onClick = onClick,
+    modifier = modifier,
+    fill = if (filled) accent.fill else Ink.Surface,
+    enabled = enabled,
+    size = size
+)
 
 /* ==================================================================== progress */
 
 /**
- * A progress bar with a visible track. The track is a well rather than a faint tint, so an
- * empty bar still shows how far there is to go.
+ * A progress bar the way a game draws one: a recessed track with a plum outline, filled in
+ * its colour, with a lighter line along the top of the fill so it reads as a solid thing.
  */
 @Composable
 fun ProgressTrack(
     fraction: Float,
     accent: Color,
     modifier: Modifier = Modifier,
-    height: Int = 10
+    height: Int = 12
 ) {
+    val h = height.coerceAtLeast(10)
+    val f = fraction.coerceIn(0f, 1f)
+    val fillColour = accent.fill
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(height.dp)
-            .well(RoundedCornerShape(50))
-            .border(BorderStroke(1.dp, Ink.Faint), RoundedCornerShape(50))
-    ) {
-        if (fraction > 0f) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(fraction.coerceIn(0f, 1f))
-                    .height(height.dp)
-                    .clip(RoundedCornerShape(50))
-                    .background(accent)
-            )
-        }
-    }
+            .height(h.dp)
+            .clip(Cut.small)
+            .background(Ink.Well)
+            .drawBehind {
+                if (f > 0f) {
+                    val inset = 2.dp.toPx()
+                    val w = (size.width - inset * 2) * f
+                    drawRect(fillColour, topLeft = Offset(inset, inset), size = Size(w, size.height - inset * 2))
+                    drawRect(
+                        Color.White.copy(alpha = 0.45f),
+                        topLeft = Offset(inset, inset),
+                        size = Size(w, ((size.height - inset * 2) / 3f).coerceAtLeast(1f))
+                    )
+                }
+            }
+            .border(BorderStroke(2.dp, Ink.Border), Cut.small)
+    )
 }
 
 /** A labelled bar with its own caption and figure. */
@@ -456,11 +569,11 @@ fun LabelledProgress(
             Label(label, color = accent, strong = true)
             Label(value)
         }
-        ProgressTrack(fraction = fraction, accent = accent, height = 8)
+        ProgressTrack(fraction = fraction, accent = accent)
     }
 }
 
-/** A labelled statistic. */
+/** A labelled number on a card. */
 @Composable
 fun StatTile(
     label: String,
@@ -471,8 +584,8 @@ fun StatTile(
     Column(
         modifier = modifier
             .panel()
-            .padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(5.dp)
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
         Label(label)
         Figure(value, color = accent)
@@ -487,17 +600,17 @@ fun VSpace(height: Int) = Spacer(modifier = Modifier.height(height.dp))
 @Composable
 fun HSpace(width: Int) = Spacer(modifier = Modifier.width(width.dp))
 
+/** A pixel dot: square, as everything this small is in the room. */
 @Composable
 fun Dot(colour: Color, size: Int = 8) {
     Box(
         modifier = Modifier
             .size(size.dp)
-            .clip(CircleShape)
-            .background(colour)
+            .background(colour, RectangleShape)
     )
 }
 
-/** A small filled pill carrying one word of status. */
+/** A small tag carrying one or two words: its colour's wash, its ink, a thin outline. */
 @Composable
 fun Pill(
     text: String,
@@ -507,15 +620,38 @@ fun Pill(
 ) {
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(50))
-            .background(if (filled) colour else colour.copy(alpha = 0.16f))
-            .border(BorderStroke(1.dp, colour.copy(alpha = if (filled) 0f else 0.5f)), RoundedCornerShape(50))
-            .padding(horizontal = 10.dp, vertical = 5.dp)
+            .clip(Cut.small)
+            .background(if (filled) colour.fill else colour.wash)
+            .border(BorderStroke(1.5.dp, if (filled) Ink.Border else colour.copy(alpha = 0.55f)), Cut.small)
+            .padding(horizontal = 9.dp, vertical = 4.dp)
     ) {
         Text(
             text = text,
-            color = if (filled) Ink.OnAccent else colour,
-            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold)
+            color = if (filled) colour.onFill else colour,
+            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.ExtraBold)
         )
     }
+}
+
+/** A row of ticks: done ones filled, the rest recessed. A day's four, a week, a set. */
+@Composable
+fun Ticks(total: Int, done: Int, accent: Color, modifier: Modifier = Modifier, height: Int = 12) {
+    Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+        repeat(total) { i ->
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(height.dp)
+                    .clip(Cut.small)
+                    .background(if (i < done) accent.fill else Ink.Well)
+                    .border(BorderStroke(2.dp, if (i < done) Ink.Border else Ink.Faint), Cut.small)
+            )
+        }
+    }
+}
+
+/** A tall thin edge in a colour, for marking which road a row belongs to. */
+@Composable
+fun EdgeMark(colour: Color, modifier: Modifier = Modifier) {
+    Box(modifier = modifier.width(6.dp).fillMaxHeight().background(colour.fill))
 }

@@ -38,6 +38,9 @@ import com.debubble.app.engine.Quest
 import com.debubble.app.engine.Scene
 import com.debubble.app.engine.Today
 import com.debubble.app.engine.World
+import com.debubble.app.ui.theme.Cut
+import com.debubble.app.ui.theme.fill
+import com.debubble.app.ui.theme.wash
 import com.debubble.app.ui.theme.Ink
 import com.debubble.app.ui.theme.Space
 import com.debubble.app.ui.theme.accent
@@ -80,10 +83,10 @@ fun TodayHeader(quests: List<Quest>, modifier: Modifier = Modifier) {
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .height(8.dp)
-                        .clip(RoundedCornerShape(50))
-                        .background(if (q.done) q.accent else Ink.Well)
-                        .border(BorderStroke(1.dp, if (q.done) q.accent else Ink.Faint), RoundedCornerShape(50))
+                        .height(12.dp)
+                        .clip(Cut.small)
+                        .background(if (q.done) q.accent.fill else Ink.Well)
+                        .border(BorderStroke(2.dp, if (q.done) Ink.Border else Ink.Faint), Cut.small)
                 )
             }
         }
@@ -117,13 +120,10 @@ fun QuestRow(
         modifier = modifier
             .fillMaxWidth()
             .panel(
-                fill = if (quest.done) Ink.Void else if (next) Ink.SurfaceHigh else Ink.Surface,
-                border = when {
-                    quest.done -> Ink.Faint
-                    next -> accent
-                    else -> Ink.Border
-                },
-                borderWidth = if (next && !quest.done) 2.dp else 1.dp
+                fill = if (quest.done) Ink.Void else if (next) accent.wash else Ink.Surface,
+                border = if (quest.done) Ink.Faint else Ink.Border,
+                borderWidth = if (next && !quest.done) 3.dp else 2.dp,
+                shadow = if (next && !quest.done) Ink.Border else Ink.Shadow
             )
             .clickable(role = Role.Button, onClick = onClick)
             .semantics { stateDescription = if (quest.done) "Done today" else "To do" }
@@ -134,8 +134,9 @@ fun QuestRow(
         Box(
             modifier = Modifier
                 .size(52.dp)
-                .clip(RoundedCornerShape(Space.radius))
-                .background(if (quest.done) Ink.Well else accent.copy(alpha = 0.16f)),
+                .clip(Cut.small)
+                .background(if (quest.done) Ink.Well else if (next) Ink.Surface else accent.wash)
+                .border(BorderStroke(2.dp, if (quest.done) Ink.Faint else Ink.Border), Cut.small),
             contentAlignment = Alignment.Center
         ) {
             SpriteIcon(art, quest.icon, pixelScale = scale)
@@ -155,7 +156,7 @@ fun QuestRow(
             Text(
                 text = quest.title,
                 color = if (quest.done) Ink.Secondary else Ink.Primary,
-                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
+                style = MaterialTheme.typography.titleMedium,
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis
             )
@@ -212,7 +213,7 @@ fun LookPicker(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .panel(fill = Ink.Room.copy(alpha = 0.14f), border = Ink.Room.copy(alpha = 0.5f))
+                    .panel(fill = Ink.Room.wash)
                     .padding(vertical = 12.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -237,12 +238,9 @@ private fun Swatches(name: String, ramps: List<List<String>>, picked: Int, onPic
                         .weight(1f)
                         .aspectRatio(1f)
                         .heightIn(min = 40.dp)
-                        .clip(RoundedCornerShape(Space.radius))
-                        .background(if (on) Ink.SurfaceHigh else Ink.Surface)
-                        .border(
-                            BorderStroke(if (on) 2.dp else 1.dp, if (on) Ink.Primary else Ink.Border),
-                            RoundedCornerShape(Space.radius)
-                        )
+                        .clip(Cut.small)
+                        .background(if (on) Ink.Gold.wash else Ink.Surface)
+                        .border(BorderStroke(if (on) 3.dp else 2.dp, Ink.Border), Cut.small)
                         .clickable(role = Role.RadioButton) { onPick(i) }
                         .semantics {
                             selected = on
@@ -253,9 +251,9 @@ private fun Swatches(name: String, ramps: List<List<String>>, picked: Int, onPic
                     Box(
                         modifier = Modifier
                             .size(24.dp)
-                            .clip(CircleShape)
+                            .clip(Cut.small)
                             .background(Color(Looks.argb(ramp[1])))
-                            .border(BorderStroke(2.dp, Color(Looks.argb(ramp[0]))), CircleShape)
+                            .border(BorderStroke(2.dp, Ink.Border), Cut.small)
                     )
                 }
             }

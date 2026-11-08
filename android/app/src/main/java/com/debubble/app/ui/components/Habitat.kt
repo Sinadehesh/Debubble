@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import com.debubble.app.engine.Habitat
 import com.debubble.app.engine.Stage
 import com.debubble.app.ui.theme.Ink
+import com.debubble.app.ui.theme.wash
 
 /**
  * The room's name, and how far off the next one is.
@@ -28,7 +29,7 @@ fun HabitatRow(stage: Stage, cleared: Int, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .panel(fill = Color(stage.ground), border = Color(stage.structure))
+            .panel()
             .padding(horizontal = 15.dp, vertical = 13.dp),
         verticalArrangement = Arrangement.spacedBy(9.dp)
     ) {
@@ -40,7 +41,7 @@ fun HabitatRow(stage: Stage, cleared: Int, modifier: Modifier = Modifier) {
             Text(
                 text = stage.label,
                 color = Ink.Primary,
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleLarge
             )
             Label("$cleared cleared")
         }
@@ -49,7 +50,7 @@ fun HabitatRow(stage: Stage, cleared: Int, modifier: Modifier = Modifier) {
             color = Ink.Secondary,
             style = MaterialTheme.typography.bodyMedium
         )
-        ProgressTrack(Habitat.progress(cleared), Ink.Secondary, height = 6)
+        ProgressTrack(Habitat.progress(cleared), Ink.Gold)
         Label(Habitat.caption(cleared))
     }
 }
@@ -66,7 +67,7 @@ fun HabitatAnnouncement(stage: Stage, onDismiss: () -> Unit, modifier: Modifier 
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .panel(fill = Color(stage.horizon), border = Ink.Gold)
+            .panel(fill = Ink.Gold.wash, borderWidth = 3.dp, shadow = Ink.Border)
             .padding(15.dp),
         verticalArrangement = Arrangement.spacedBy(9.dp)
     ) {

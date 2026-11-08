@@ -19,6 +19,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -48,6 +49,7 @@ import com.debubble.app.engine.RoomTap
 import com.debubble.app.engine.Scene
 import com.debubble.app.engine.Spot
 import com.debubble.app.engine.Stage
+import com.debubble.app.ui.theme.Cut
 import com.debubble.app.ui.theme.Ink
 import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
@@ -169,7 +171,7 @@ fun HouseScene(
         val density = LocalDensity.current
         val width = with(density) { (room.w * scale).toDp() }
         val height = with(density) { (room.h * scale).toDp() }
-        val shape = RoundedCornerShape(10.dp)
+        val shape = Cut.large
 
         if (tour != null) {
             val at = canvasAt
@@ -247,8 +249,9 @@ fun HouseScene(
                     if (tour == null) Modifier
                     else Modifier.onGloballyPositioned { canvasAt = it.positionInRoot() }
                 )
+                .castShadow(shape, 4.dp, Ink.Shadow)
                 .clip(shape)
-                .border(2.dp, Ink.RoomFrame, shape)
+                .border(3.dp, Ink.RoomFrame, shape)
                 .then(gestures)
                 .semantics { contentDescription = description }
         ) {
@@ -325,6 +328,26 @@ fun SpriteIcon(
             srcSize = IntSize(r[2], r[3]),
             dstOffset = IntOffset.Zero,
             dstSize = IntSize(r[2] * pixelScale, r[3] * pixelScale),
+            filterQuality = FilterQuality.None
+        )
+    }
+}
+
+/** A room shell on its own, whole and crisp at the largest whole scale that fits [width]. */
+@Composable
+fun RoomShell(stage: Stage, modifier: Modifier = Modifier, width: Dp = 132.dp) {
+    val image = ImageBitmap.imageResource(RoomPainter.shellFor(stage))
+    val density = LocalDensity.current
+    val scale = with(density) { (width.toPx() / image.width).toInt().coerceAtLeast(1) }
+    val w = with(density) { (image.width * scale).toDp() }
+    val h = with(density) { (image.height * scale).toDp() }
+    Canvas(modifier = modifier.size(w, h)) {
+        drawImage(
+            image = image,
+            srcOffset = IntOffset.Zero,
+            srcSize = IntSize(image.width, image.height),
+            dstOffset = IntOffset.Zero,
+            dstSize = IntSize(image.width * scale, image.height * scale),
             filterQuality = FilterQuality.None
         )
     }

@@ -92,7 +92,7 @@ fun JourneyScreen(
     val accent = goal.homePillar.accent
     val complete = Goals.isComplete(state)
 
-    Column(modifier = Modifier.fillMaxSize().background(Ink.Void)) {
+    Column(modifier = Modifier.fillMaxSize()) {
         TopBar(
             title = goal.display,
             subtitle = if (complete) "Arrived" else "Stop ${state.step} of ${Goals.CAMPAIGN_LENGTH} · ${track.phaseOf(state.step)}",

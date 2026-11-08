@@ -40,6 +40,8 @@ import com.debubble.app.ui.components.panel
 import com.debubble.app.ui.components.pixelScale
 import com.debubble.app.ui.theme.Ink
 import com.debubble.app.ui.theme.Space
+import com.debubble.app.ui.theme.wash
+import com.debubble.app.ui.theme.Cut
 
 /**
  * The wardrobe: how you look, and the hats your levels have earned.
@@ -58,7 +60,7 @@ fun WardrobeScreen(
     onBack: () -> Unit
 ) {
     val hats = art.catalogue.hats
-    Column(modifier = Modifier.fillMaxSize().background(Ink.Void)) {
+    Column(modifier = Modifier.fillMaxSize()) {
         TopBar(title = "Wardrobe", subtitle = "Level $level", onBack = onBack)
         Column(
             modifier = Modifier
@@ -71,7 +73,7 @@ fun WardrobeScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .panel(fill = Ink.Room.copy(alpha = 0.14f), border = Ink.Room.copy(alpha = 0.5f))
+                    .panel(fill = Ink.Room.wash, border = Ink.Room.copy(alpha = 0.5f))
                     .padding(vertical = 18.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -91,11 +93,11 @@ fun WardrobeScreen(
                             modifier = Modifier
                                 .weight(1f)
                                 .aspectRatio(1f)
-                                .clip(RoundedCornerShape(Space.radius))
+                                .clip(Cut.card)
                                 .background(if (on) Ink.SurfaceHigh else Ink.Surface)
                                 .border(
                                     BorderStroke(if (on) 2.dp else 1.dp, if (on) Ink.Gold else Ink.Border),
-                                    RoundedCornerShape(Space.radius)
+                                    Cut.card
                                 )
                                 .clickable(role = Role.RadioButton, enabled = open) { onLook(look.copy(hat = index)) }
                                 .semantics {

@@ -127,24 +127,4 @@ class HabitatTest {
         assertEquals(1f, Stage.all.last().openness, 1e-5f)
         assertEquals(Stage.all.size, Stage.all.map { it.label }.distinct().size)
     }
-
-    /**
-     * The colours are solved against the WCAG floors by android/tools/check_habitat.py, which
-     * is where the real check lives. This only holds the shape, so a hand-edit that drops the
-     * alpha byte cannot ship a transparent ground that renders as whatever is behind it.
-     */
-    @Test
-    fun `every stage colour is fully opaque`() {
-        Stage.all.forEach { s ->
-            listOf("ground" to s.ground, "horizon" to s.horizon, "structure" to s.structure)
-                .forEach { (name, value) ->
-                    assertEquals(
-                        "${s.label} $name is not opaque",
-                        0xFFL,
-                        (value ushr 24) and 0xFFL
-                    )
-                    assertTrue("${s.label} $name is out of range", value in 0xFF000000..0xFFFFFFFF)
-                }
-        }
-    }
 }

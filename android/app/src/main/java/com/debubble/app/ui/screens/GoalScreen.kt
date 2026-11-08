@@ -46,6 +46,7 @@ import com.debubble.app.ui.components.selectablePanel
 import com.debubble.app.ui.theme.Ink
 import com.debubble.app.ui.theme.Space
 import com.debubble.app.ui.theme.accent
+import com.debubble.app.ui.theme.Cut
 
 /**
  * Picking what you are actually aiming at.
@@ -67,7 +68,6 @@ fun GoalPickerScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Ink.Void)
     ) {
         TopBar(
             title = if (firstRun) "Pick a journey" else "Change your journey",
@@ -112,7 +112,7 @@ fun GoalPickerScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = Space.gap)
-                        .selectablePanel(on, accent, RoundedCornerShape(Space.radiusLarge))
+                        .selectablePanel(on, accent, Cut.large)
                         .clickable(role = Role.Checkbox) { onToggle(goal) }
                         .semantics {
                             stateDescription = if (on) "Selected" else "Not selected"
@@ -181,7 +181,6 @@ fun PrincipleScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Ink.Void)
     ) {
         TopBar(
             title = goal.display,

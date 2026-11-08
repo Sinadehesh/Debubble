@@ -55,6 +55,7 @@ import com.debubble.app.ui.components.selectablePanel
 import com.debubble.app.ui.theme.Ink
 import com.debubble.app.ui.theme.Space
 import com.debubble.app.ui.theme.accent
+import com.debubble.app.ui.theme.Cut
 
 /**
  * Setup. Six questions, then the result.
@@ -103,7 +104,6 @@ fun CalibrationScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Ink.Void)
     ) {
         TopBar(
             title = if (isRecalibration) "Update your setup" else "Setting you up",
@@ -125,7 +125,7 @@ fun CalibrationScreen(
                     modifier = Modifier
                         .weight(1f)
                         .height(4.dp)
-                        .clip(RoundedCornerShape(50))
+                        .clip(Cut.small)
                         .background(if (i <= step) Ink.Primary else Ink.Faint)
                 )
             }

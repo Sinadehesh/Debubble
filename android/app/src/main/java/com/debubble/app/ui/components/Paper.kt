@@ -37,6 +37,9 @@ import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.material3.TimePickerDefaults
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -67,33 +70,33 @@ import com.debubble.app.engine.Reminders
 import com.debubble.app.engine.Scene
 import com.debubble.app.engine.World
 import com.debubble.app.notify.Reminding
+import com.debubble.app.ui.theme.Cut
+import com.debubble.app.ui.theme.fill
+import com.debubble.app.ui.theme.wash
 import com.debubble.app.ui.theme.Ink
 import com.debubble.app.ui.theme.Space
 import java.time.LocalTime
+import kotlin.math.roundToInt
 
 /* ==================================================================== paper
 
-   Letters, postcards and plans are paper: the room's wall cream with the room's plum
-   outline. Everything else stays on the dark ground. One light surface, used only for
-   things that are written, so a mission looks like something that arrived rather than one
-   more card in a list.                                                                    */
+   Letters and postcards: the same paper as every card, but written on — an envelope flap,
+   a seal, a postmark — so a mission still reads as something that arrived.               */
 
-/** A sheet of paper. */
+/** A sheet of paper, standing off the wall like a card. */
 fun Modifier.paper(
-    shape: Shape = RoundedCornerShape(Space.radius),
+    shape: Shape = Cut.card,
     fill: Color = Ink.Paper
-): Modifier = this
-    .clip(shape)
-    .background(fill)
-    .border(BorderStroke(2.dp, Ink.PaperText), shape)
+): Modifier = this.panel(shape = shape, fill = fill)
 
+/** What a letter says. Heavy and round: it is a sentence, so it is never set in pixels. */
 @Composable
 fun PaperTitle(text: String, modifier: Modifier = Modifier) {
     Text(
         text = text,
         modifier = modifier.semantics { heading() },
         color = Ink.PaperText,
-        style = MaterialTheme.typography.headlineMedium
+        style = MaterialTheme.typography.headlineSmall
     )
 }
 
@@ -129,14 +132,15 @@ fun LetterCard(
                 .fillMaxWidth()
                 .height(40.dp)
                 .drawBehind {
-                    val flap = Path().apply {
-                        moveTo(0f, 0f)
-                        lineTo(size.width / 2f, size.height)
-                        lineTo(size.width, 0f)
-                        close()
+                    // The flap, stepped in whole pixels like the letter you hold in the room.
+                    val px = 3.dp.toPx().roundToInt().toFloat()
+                    val rows = (size.height / px).toInt()
+                    for (r in 0 until rows) {
+                        val inset = (size.width / 2f) * (r / rows.toFloat())
+                        drawRect(Ink.PaperShade, topLeft = Offset(inset, r * px), size = Size(size.width - inset * 2, px))
+                        drawRect(Ink.PaperEdge, topLeft = Offset(inset, r * px), size = Size(px, px))
+                        drawRect(Ink.PaperEdge, topLeft = Offset(size.width - inset - px, r * px), size = Size(px, px))
                     }
-                    drawPath(flap, Ink.PaperShade)
-                    drawPath(flap, Ink.PaperEdge, style = Stroke(width = 2.dp.toPx()))
                 },
             contentAlignment = Alignment.BottomCenter
         ) {
@@ -144,10 +148,13 @@ fun LetterCard(
                 modifier = Modifier
                     .offset(y = 12.dp)
                     .size(26.dp)
-                    .clip(CircleShape)
-                    .background(accent)
-                    .border(BorderStroke(2.dp, Ink.PaperText), CircleShape)
-            )
+                    .clip(Cut.small)
+                    .background(accent.fill)
+                    .border(BorderStroke(2.dp, Ink.PaperText), Cut.small),
+                contentAlignment = Alignment.Center
+            ) {
+                Glyph(Glyphs.Spark, colour = Ink.PaperText, size = 14)
+            }
         }
         Column(
             modifier = Modifier
@@ -189,9 +196,10 @@ fun DoneBar(
                 .width(92.dp)
                 .heightIn(min = 64.dp)
                 .panel(
-                    fill = if (reminder != null) Ink.SurfaceHigh else Ink.Surface,
-                    border = if (reminder != null) Ink.Gold else Ink.BorderStrong,
-                    borderWidth = if (reminder != null) 2.dp else 1.dp
+                    fill = if (reminder != null) Ink.Gold.wash else Ink.Surface,
+                    border = Ink.Border,
+                    borderWidth = if (reminder != null) 3.dp else 2.dp,
+                    shadow = Ink.Border
                 )
                 .clickable(role = Role.Button, onClick = onRemind)
                 .semantics {
@@ -205,7 +213,7 @@ fun DoneBar(
             Text(
                 text = reminder ?: "Remind me",
                 color = if (reminder != null) Ink.Gold else Ink.Primary,
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.labelLarge,
                 textAlign = TextAlign.Center,
                 maxLines = 2
             )
@@ -308,8 +316,11 @@ fun RemindSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheet,
+        shape = Cut.large,
         containerColor = Ink.Surface,
-        contentColor = Ink.Primary
+        contentColor = Ink.Primary,
+        scrimColor = Ink.Primary.copy(alpha = 0.45f),
+        dragHandle = { SheetHandle() }
     ) {
         Column(
             modifier = Modifier
@@ -330,7 +341,7 @@ fun RemindSheet(
                         text = "When will you do it?",
                         modifier = Modifier.semantics { heading() },
                         color = Ink.Primary,
-                        style = MaterialTheme.typography.titleLarge
+                        style = MaterialTheme.typography.headlineMedium
                     )
                     Label(what)
                 }
@@ -340,7 +351,7 @@ fun RemindSheet(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .panel(fill = Ink.SurfaceHigh, border = Ink.Gold)
+                        .panel(fill = Ink.Gold.wash, lift = 0.dp)
                         .padding(start = 14.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -350,8 +361,8 @@ fun RemindSheet(
                         color = Ink.Gold,
                         strong = true
                     )
-                    TextButton(onClick = onRemove) {
-                        Text("Remove", color = Ink.Primary, style = MaterialTheme.typography.labelLarge)
+                    Box(modifier = Modifier.width(110.dp)) {
+                        BlockButton("Remove", fill = Ink.Surface, small = true, onClick = onRemove)
                     }
                 }
             }
@@ -371,11 +382,7 @@ fun RemindSheet(
                         Text(dailyOption, color = Ink.Primary, style = MaterialTheme.typography.titleMedium)
                         Label(if (daily) "At the same time, until you turn it off" else "Just this once")
                     }
-                    Switch(
-                        checked = daily,
-                        onCheckedChange = { daily = it },
-                        colors = SwitchDefaults.colors(checkedTrackColor = Ink.Gold, checkedThumbColor = Ink.OnAccent)
-                    )
+                    PixelSwitch(checked = daily)
                 }
             }
 
@@ -426,8 +433,8 @@ fun OptionRow(label: String, onClick: () -> Unit) {
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(label, color = Ink.Primary, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-        Glyph(Glyphs.ArrowRight, colour = Ink.Muted, size = 16)
+        Text(label, color = Ink.Primary, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+        Glyph(Glyphs.ArrowRight, colour = Ink.Primary, size = 16)
     }
 }
 
@@ -442,17 +449,33 @@ private fun TimePickDialog(h24: Boolean, initialMinute: Int, onPick: (Int) -> Un
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
-            TextButton(onClick = { onPick(state.hour * 60 + state.minute) }) {
-                Text("Set", color = Ink.Gold, style = MaterialTheme.typography.labelLarge)
+            Box(modifier = Modifier.width(110.dp)) {
+                BlockButton("Set", small = true, onClick = { onPick(state.hour * 60 + state.minute) })
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel", color = Ink.Primary, style = MaterialTheme.typography.labelLarge)
+            Box(modifier = Modifier.width(110.dp)) {
+                BlockButton("Cancel", fill = Ink.Surface, small = true, onClick = onDismiss)
             }
         },
-        title = { Text("Pick a time", color = Ink.Primary) },
-        text = { TimePicker(state = state) },
+        title = { Text("Pick a time", color = Ink.Primary, style = MaterialTheme.typography.headlineMedium) },
+        text = {
+            TimePicker(
+                state = state,
+                colors = TimePickerDefaults.colors(
+                    clockDialColor = Ink.Well,
+                    selectorColor = Ink.Primary,
+                    containerColor = Ink.Surface,
+                    timeSelectorSelectedContainerColor = Ink.Gold.fill,
+                    timeSelectorUnselectedContainerColor = Ink.Well,
+                    timeSelectorSelectedContentColor = Ink.Primary,
+                    timeSelectorUnselectedContentColor = Ink.Primary,
+                    periodSelectorSelectedContainerColor = Ink.Gold.fill,
+                    periodSelectorBorderColor = Ink.Border
+                )
+            )
+        },
+        shape = Cut.large,
         containerColor = Ink.Surface
     )
 }
@@ -474,8 +497,8 @@ fun PageTip(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .panel(fill = Ink.SurfaceHigh, border = Ink.Heart.copy(alpha = 0.75f))
-            .padding(start = 14.dp, end = 6.dp, top = 12.dp, bottom = 6.dp),
+            .panel(fill = Ink.Heart.wash)
+            .padding(start = 14.dp, end = 10.dp, top = 12.dp, bottom = 10.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         SpriteIcon(art, Scene.buddy(0), pixelScale = pixelScale(2.4f), modifier = Modifier.padding(top = 2.dp))
@@ -483,8 +506,8 @@ fun PageTip(
             Text(title, color = Ink.Primary, style = MaterialTheme.typography.titleMedium)
             Text(body, color = Ink.Secondary, style = MaterialTheme.typography.bodyMedium)
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
-                TextButton(onClick = onDismiss) {
-                    Text("Got it", color = Ink.Heart, style = MaterialTheme.typography.labelLarge)
+                Box(modifier = Modifier.width(120.dp)) {
+                    BlockButton("Got it", fill = Ink.Surface, small = true, onClick = onDismiss)
                 }
             }
         }
@@ -592,7 +615,7 @@ fun CourageJar(art: RoomArt, friction: Int, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .panel(fill = Ink.SurfaceHigh, border = Ink.Ember.copy(alpha = 0.8f))
+            .panel(fill = Ink.Ember.wash)
             .padding(14.dp),
         horizontalArrangement = Arrangement.spacedBy(14.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -607,7 +630,7 @@ fun CourageJar(art: RoomArt, friction: Int, modifier: Modifier = Modifier) {
                 Text(
                     text = if (friction == 1) "1 spark of courage" else "$friction sparks of courage",
                     color = Ink.Ember,
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleLarge
                 )
             }
             Text(
@@ -643,17 +666,61 @@ fun SetupSteps(art: RoomArt, step: Int, modifier: Modifier = Modifier) {
                 color = Ink.Heart,
                 strong = true
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                names.indices.forEach { i ->
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(5.dp)
-                            .clip(CircleShape)
-                            .background(if (i < step) Ink.Heart else Ink.Faint)
-                    )
-                }
-            }
+            Ticks(total = names.size, done = step.coerceIn(0, names.size), accent = Ink.Heart, height = 10)
         }
+    }
+}
+
+/** The grip at the top of a sheet: a short plum bar, in pixels. */
+@Composable
+fun SheetHandle() {
+    Box(
+        modifier = Modifier
+            .padding(top = 12.dp, bottom = 8.dp)
+            .size(width = 44.dp, height = 6.dp)
+            .background(Ink.Border)
+    )
+}
+
+/**
+ * The top of a tab: its sign, its name in the pixel face, a line about it, and anything
+ * that belongs in the corner. Home, Outside, Journal, Library and You all open the same way.
+ */
+@Composable
+fun PageHeader(
+    art: RoomArt,
+    icon: String,
+    title: String,
+    modifier: Modifier = Modifier,
+    subtitle: String? = null,
+    trailing: (@Composable () -> Unit)? = null,
+    sign: (@Composable () -> Unit)? = null
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = Space.gutter)
+            .padding(top = 14.dp, bottom = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .panel(fill = Ink.Surface, lift = 2.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            if (sign != null) sign() else SpriteIcon(art, icon, pixelScale = pixelScale(2.2f))
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                modifier = Modifier.semantics { heading() },
+                color = Ink.Primary,
+                style = MaterialTheme.typography.headlineMedium
+            )
+            if (subtitle != null) Label(subtitle)
+        }
+        trailing?.invoke()
     }
 }

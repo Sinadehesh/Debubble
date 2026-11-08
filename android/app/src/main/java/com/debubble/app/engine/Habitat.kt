@@ -21,10 +21,9 @@ package com.debubble.app.engine
  * take, a thing you keep opening to protect a number, while still giving the surface a
  * visible memory of how far someone has come.
  *
- * Everything here is pure. The stage colours still shade the app's own chrome, and are
- * verified against the WCAG floors by android/tools/check_habitat.py — but the room itself
- * is now a picture with nothing written on it, so its palette is not rationed by contrast
- * the way the old procedural backdrop's was. That is why it can be sunny.
+ * Everything here is pure. A stage is drawn by the room itself — its walls, its window, its
+ * door — and not by tinting the app around it, so the app stays one colour on every stage
+ * and nothing written on it can lose its contrast as the room opens.
  */
 enum class Stage(
     /** Cleared rungs needed to reach this stage. */
@@ -32,24 +31,6 @@ enum class Stage(
     val label: String,
     /** One line, shown when it is reached and in the profile. Describes the room, not a score. */
     val note: String,
-    /*
-     * The ground, as ARGB. These are not free choices.
-     *
-     * In a dark theme with these inks the usable brightness range is narrow: Muted text needs
-     * 4.5:1 and a panel's border needs 3.0:1 against whatever is behind it, and both fall as
-     * the ground lifts. The solver in android/tools/check_habitat.py found the ceiling, and
-     * it is reached at the last stage with about 0.2 of margin left. So the ground barely
-     * changes across seven stages, and that is correct — the room opening is carried by the
-     * geometry the backdrop draws, not by brightness, because geometry is not rationed.
-     */
-    val ground: Long,
-    val horizon: Long,
-    /**
-     * Walls, a frame, a skyline. Brighter than the ground, because it is only ever drawn in
-     * the top band where the ring sits and no text goes — which is the whole reason it is
-     * allowed to be bright enough to see.
-     */
-    val structure: Long,
     /** How far the walls have gone, 0f..1f. The backdrop reads this, not the ordinal. */
     val openness: Float
 ) {
@@ -57,63 +38,42 @@ enum class Stage(
         threshold = 0,
         label = "Sealed room",
         note = "Four walls and a ceiling. Everyone starts here, and it is not a verdict.",
-        ground = 0xFF140E16,
-        horizon = 0xFF150E17,
-        structure = 0xFF2C1B30,
         openness = 0f
     ),
     WINDOW(
         threshold = 6,
         label = "One window",
         note = "Something to look out of. You have been outside enough times to have a view.",
-        ground = 0xFF160F18,
-        horizon = 0xFF1A111C,
-        structure = 0xFF39233F,
         openness = 0.16f
     ),
     DOOR(
         threshold = 20,
         label = "Door open",
         note = "The door stands open now. It has opened enough times to stop being a question.",
-        ground = 0xFF17101A,
-        horizon = 0xFF1F1523,
-        structure = 0xFF462B4D,
         openness = 0.33f
     ),
     STREET(
         threshold = 45,
         label = "The street",
         note = "No walls on one side. What used to be the edge of your world is the middle of it.",
-        ground = 0xFF19111B,
-        horizon = 0xFF221726,
-        structure = 0xFF53335B,
         openness = 0.50f
     ),
     OPEN(
         threshold = 90,
         label = "Open ground",
         note = "Ground in every direction. Fifty rungs ago this view did not exist for you.",
-        ground = 0xFF1A121D,
-        horizon = 0xFF281B2D,
-        structure = 0xFF623C6B,
         openness = 0.67f
     ),
     HORIZON(
         threshold = 150,
         label = "Horizon",
         note = "You can see the far edge from here. It is further out than the whole room was.",
-        ground = 0xFF1C131E,
-        horizon = 0xFF2D1E32,
-        structure = 0xFF70457A,
         openness = 0.84f
     ),
     UNWALLED(
         threshold = 240,
         label = "No walls",
         note = "There is no room any more. There is just where you are and where you go next.",
-        ground = 0xFF1D1420,
-        horizon = 0xFF312237,
-        structure = 0xFF7D4D89,
         openness = 1f
     );
 
