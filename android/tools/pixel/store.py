@@ -273,6 +273,7 @@ CAPTIONS = {
     "5-journey": ("Pick a journey.", "Walk it one stop at a time."),
     "6-wardrobe": ("Level up,", "and dress your little you"),
     "7-journal": ("Keep a postcard", "from every step"),
+    "8-training": ("A move for right now,", "sized to what you did last time"),
 }
 
 

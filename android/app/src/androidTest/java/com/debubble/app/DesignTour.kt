@@ -74,9 +74,15 @@ class DesignTour : Camera() {
         at("31-habit", Route.HabitPage(HabitKind.BODY))
         at("32-pack", Route.Pack("sleep"))
         at("33-paywall", Route.Paywall(back = Route.Profile))
+        sh("input swipe 540 1600 540 300 500")
+        settle(1200)
+        shot(OUT, "33b-paywall-price")
         reseed { it.copy(premium = PremiumState(active = true, since = System.currentTimeMillis() - 9L * 86_400_000L), plan = "first_pushup", planDone = 4) }
         at("34-training-plan", Route.Train())
         at("35-insights", Route.HabitList())
+        sh("input swipe 540 1600 540 300 500")
+        settle(1200)
+        shot(OUT, "35b-insights-lower")
         at("36-premium-on", Route.Paywall(back = Route.Profile))
         vm.readingRoom.pack("sleep")?.lessons?.getOrNull(1)?.let { at("37-reading-room-page", Route.ReadLesson(it.id)) }
     }

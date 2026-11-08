@@ -10,8 +10,8 @@ import org.junit.runner.RunWith
 
 /**
  * The Google Play screenshots, taken from the real app rather than drawn: someone three
- * weeks in (a furnished room, a journey under way, a reminder set for this evening), seven
- * screens. Not a test of behaviour: it fails only if a screen cannot be reached.
+ * weeks in (a furnished room, a journey under way, a reminder set for this evening), eight
+ * screens, the most Play shows. Not a test of behaviour: it fails only if a screen cannot be reached.
  */
 @RunWith(AndroidJUnit4::class)
 class StoreShots : Camera() {
@@ -45,6 +45,10 @@ class StoreShots : Camera() {
         scenario.onActivity { vm.selectTab(Tab.JOURNAL) }
         settle()
         shot(OUT, "7-journal")
+
+        scenario.onActivity { vm.openTraining() }
+        settle()
+        shot(OUT, "8-training")
     }
 
     private companion object {
