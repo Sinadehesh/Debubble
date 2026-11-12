@@ -61,6 +61,10 @@ jobs:
           target: google_apis
           arch: x86_64
           profile: pixel_2
+          # All four of the runner's cores and more memory: the emulator draws in software
+          # here, and every frame it draws faster is a smoother advert.
+          cores: 4
+          ram-size: 4096M
           disable-animations: false
           working-directory: ./android
           script: |

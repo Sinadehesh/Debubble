@@ -32,34 +32,17 @@ import java.io.File
 import java.time.LocalDate
 
 /**
- * What the screenshot tests share: someone three weeks in, a tidy status bar, and a camera.
+ * What the screenshot tests and the advert's footage share: someone three weeks in, a tidy
+ * status bar, and a shell.
  *
  * Pictures are copied to a folder under /data/local/tmp, which the workflow pulls before
  * the emulator shuts down; the app's own storage goes when the test uninstalls it.
  */
-abstract class Camera {
-
-    @get:Rule
-    val compose = createEmptyComposeRule()
+abstract class Seeds {
 
     protected val instrumentation = InstrumentationRegistry.getInstrumentation()
     protected val context = instrumentation.targetContext
     protected val today = LocalDate.now().toEpochDay()
-
-    /** Seeds [state], opens the app on it, and waits for the first screen to draw. */
-    protected fun withApp(out: String, state: AppState, body: (ActivityScenario<MainActivity>, DeBubbleViewModel) -> Unit) {
-        tidyStatusBar(out)
-        runBlocking { Repository(context).update { state } }
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            lateinit var vm: DeBubbleViewModel
-            scenario.onActivity { vm = ViewModelProvider(it)[DeBubbleViewModel::class.java] }
-            // A first launch on a fresh emulator is slow: wait for home to be on screen, then
-            // a little longer for the room's pictures.
-            waitFor("Journal")
-            settle(3000)
-            body(scenario, vm)
-        }
-    }
 
     /** Change the saved state while the app is open; the screens follow it. */
     protected fun reseed(transform: (AppState) -> AppState) {
@@ -212,7 +195,7 @@ abstract class Camera {
     // ------------------------------------------------------------------ the camera
 
     /** Demo mode: a fixed clock, full bars and battery, no notification icons, gesture bar. */
-    private fun tidyStatusBar(out: String) {
+    protected fun tidyStatusBar(out: String) {
         // SystemUI ignores demo commands until it has seen the setting and entered demo mode,
         // so the first two get a moment each.
         sh("settings put global sysui_demo_allowed 1")
@@ -228,6 +211,38 @@ abstract class Camera {
             "cmd overlay enable com.android.internal.systemui.navbar.gestural",
             "mkdir -p $out"
         ).forEach(::sh)
+    }
+
+    protected fun sh(command: String) {
+        // Reading the output to the end is what waits for the command to finish.
+        val pfd = instrumentation.uiAutomation.executeShellCommand(command)
+        ParcelFileDescriptor.AutoCloseInputStream(pfd).use { it.readBytes() }
+    }
+}
+
+/**
+ * The screenshot tests: [Seeds] with Compose's test rule, which waits for every screen to be
+ * drawn and finished before a picture is taken. The rule also runs the app's clock, so the
+ * room stands still between pictures; the advert's footage (AdReel) runs without it.
+ */
+abstract class Camera : Seeds() {
+
+    @get:Rule
+    val compose = createEmptyComposeRule()
+
+    /** Seeds [state], opens the app on it, and waits for the first screen to draw. */
+    protected fun withApp(out: String, state: AppState, body: (ActivityScenario<MainActivity>, DeBubbleViewModel) -> Unit) {
+        tidyStatusBar(out)
+        runBlocking { Repository(context).update { state } }
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            lateinit var vm: DeBubbleViewModel
+            scenario.onActivity { vm = ViewModelProvider(it)[DeBubbleViewModel::class.java] }
+            // A first launch on a fresh emulator is slow: wait for home to be on screen, then
+            // a little longer for the room's pictures.
+            waitFor("Journal")
+            settle(3000)
+            body(scenario, vm)
+        }
     }
 
     protected fun waitFor(text: String) {
@@ -249,11 +264,5 @@ abstract class Camera {
         val file = File(dir, "$name.png")
         file.outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
         sh("cp ${file.absolutePath} $out/$name.png")
-    }
-
-    protected fun sh(command: String) {
-        // Reading the output to the end is what waits for the command to finish.
-        val pfd = instrumentation.uiAutomation.executeShellCommand(command)
-        ParcelFileDescriptor.AutoCloseInputStream(pfd).use { it.readBytes() }
     }
 }
