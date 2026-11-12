@@ -135,3 +135,23 @@ Google Play cannot give one person a lower price, but it can give them free time
 
 The app needs nothing extra for this: a code redeemed in the Play Store shows up the next time
 DeBubble comes to the front.
+
+## The advert
+
+`store/ad/debubble-ad.mp4`: twenty seconds, 1080x1920 (9:16), H.264 with AAC, for Reels,
+Shorts, TikTok and the like. Day one's messy, sealed room; four ticks and the room comes alive;
+the room through all seven stages; then the real app (a tiny thing done, today's letter,
+training, a habit, the wardrobe); then the end card. The music and sounds are synthesised by
+`android/tools/ad/music.py`, so there is nothing to license. Captions and anything to read stay
+above y = 1500, clear of the buttons those apps put over the bottom of a video.
+
+To make it again:
+
+1. Run the **Ad footage** workflow (Actions tab, or push a change to
+   `androidTest/AdReel.kt`). It films the real app on an emulator and uploads `ad-footage`.
+2. Unzip that artifact somewhere, then
+   `python3 android/tools/ad/make_ad.py <that folder> store/ad/debubble-ad.mp4`.
+   Needs ffmpeg, Pillow and numpy. Captions, timings and which part of each clip is used are
+   at the top of `make_ad.py`.
+
+The end card says "Free on Google Play", so publish the advert once the listing is live.

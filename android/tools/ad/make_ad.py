@@ -52,7 +52,10 @@ INK = {
 }
 
 Z = 6                                   # room pixels to screen pixels: 160x100 -> 960x600
-ROOM_X, ROOM_Y = (W - 160 * Z) // 2, 470
+ROOM_X, ROOM_Y = (W - 160 * Z) // 2, 570
+CAPTION_Y = 168                         # the caption, the same height in every scene
+# Reels, Shorts and TikTok lay their own buttons and text over the bottom fifth, so nothing
+# that has to be read goes below about 1500.
 
 # Today's four, in the order they are ticked, with what each one cleans.
 FOUR = [("Body", "icon_body", "body"), ("Room", "icon_room", "room"),
@@ -164,7 +167,7 @@ def centred(img, layer, y, alpha=1.0, dx=0):
     put(img, layer, (W - layer.width) // 2 + dx, y, alpha)
 
 
-def caption(img, big, small, t0, t, y=118):
+def caption(img, big, small, t0, t, y=CAPTION_Y):
     """The two-line caption, rising into place over a fifth of a second from t0."""
     p = ease_out((t - t0) / 0.22)
     rise = round((1 - p) * 26)
@@ -265,9 +268,10 @@ def room_card(img, t, y=ROOM_Y, end=False, alpha=1.0):
 
 def four_chips(img, ticks, t, alpha=1.0):
     """Today's four under the room, each ticking on its beat."""
-    y0, h, gap = ROOM_Y + 100 * Z + 70, 196, 18
+    y0, h, gap = ROOM_Y + 100 * Z + 74, 250, 18
     w = (160 * Z - 3 * gap) // 4
-    layer = Image.new("RGBA", (W, h + 30), (0, 0, 0, 0))
+    layer = Image.new("RGBA", (W, h + 60), (0, 0, 0, 0))
+    rings = []
     for i, (label, icon, accent) in enumerate(FOUR):
         x = ROOM_X + i * (w + gap)
         done = i < ticks
@@ -276,21 +280,30 @@ def four_chips(img, ticks, t, alpha=1.0):
         fill = INK[f"{accent}_wash"] if done else INK["surface"]
         panel(layer, (x, press, x + w, h - 8 + press), fill, width=5, step=5, lift=0 if press else 8)
         ic = sprite(icon, 5)
-        layer.alpha_composite(ic, (x + (w - ic.width) // 2, 26 + press + (60 - ic.height) // 2))
-        lab = round_text(label, 38, INK["primary"])
+        layer.alpha_composite(ic, (x + (w - ic.width) // 2, 24 + press + (66 - ic.height) // 2))
+        lab = round_text(label, 40, INK["primary"])
         layer.alpha_composite(lab, (x + (w - lab.width) // 2, 98 + press))
-        box = (x + w // 2 - 22, 146 + press - 8, x + w // 2 + 22, 146 + press + 30)
+        cx, cy = x + w // 2, 190 + press
+        box = (cx - 26, cy - 26, cx + 26, cy + 26)
         d = ImageDraw.Draw(layer)
-        d.rectangle((box[0] - 4, box[1] - 4, box[2] + 4, box[3] + 4), fill=INK["primary"])
+        d.rectangle((box[0] - 5, box[1] - 5, box[2] + 5, box[3] + 5), fill=INK["primary"])
         d.rectangle(box, fill=INK[accent] if done else INK["surface"])
         if done:
-            glyph(layer, CHECK, box[0] + 6, box[1] + 5, 4, INK["primary"])
+            glyph(layer, CHECK, box[0] + 10, box[1] + 12, 4, INK["primary"])
+        if 0 <= since < 0.35:
+            rings.append((cx, cy, since / 0.35))
+    for cx, cy, p in rings:
+        r = round(34 + 46 * ease_out(p))
+        ring = Image.new("RGBA", layer.size, (0, 0, 0, 0))
+        dr = ImageDraw.Draw(ring)
+        dr.rectangle((cx - r, cy - r, cx + r, cy + r), outline=INK["primary"] + (round(255 * (1 - p)),), width=6)
+        layer.alpha_composite(ring)
     put(img, layer, 0, y0, alpha)
 
 
 def stage_strip(img, stage_i, t, alpha=1.0):
     """The room's name, and seven squares for the seven stages, filling as it opens."""
-    y0 = ROOM_Y + 100 * Z + 70
+    y0 = ROOM_Y + 100 * Z + 74
     layer = Image.new("RGBA", (W, 230), (0, 0, 0, 0))
     panel(layer, (ROOM_X, 0, ROOM_X + 160 * Z, 190), INK["surface"], width=5, step=5, lift=8)
     since = (t / BEAT - (T_STAGE[stage_i - 1] if stage_i else T_STAGES)) * BEAT
@@ -337,7 +350,7 @@ class Clip:
         return self.last
 
 
-PHONE_W, PHONE_Y, RADIUS, EDGE = 920, 380, 48, 12
+PHONE_W, PHONE_Y, RADIUS, EDGE = 920, 440, 48, 12
 STATUS = round(store.STATUS_BAR * PHONE_W / 1080)
 
 
@@ -370,19 +383,19 @@ def end_card(img, t):
     ImageDraw.Draw(framed).polygon(stepped((0, 8, 195, 203), 13), fill=INK["shadow"])
     ImageDraw.Draw(framed).polygon(stepped((0, 0, 195, 195), 13), fill=INK["primary"])
     framed.alpha_composite(icon, (10, 10))
-    centred(img, framed, 96 + round((1 - p(0)) * 30), p(0))
-    centred(img, pixel_text("DeBubble", 150, "k", shadow="v"), 300 + round((1 - p(0.06)) * 30), p(0.06))
+    centred(img, framed, 150 + round((1 - p(0)) * 30), p(0))
+    centred(img, pixel_text("DeBubble", 150, "k", shadow="v"), 356 + round((1 - p(0.06)) * 30), p(0.06))
     centred(img, round_text("Look after yourself. Watch your world grow.", 44, INK["secondary"], "bold"),
-            470, p(0.12))
-    room_card(img, t, y=600, end=True, alpha=p(0.18))
+            526, p(0.12))
+    room_card(img, t, y=656, end=True, alpha=p(0.18))
     cta = Image.new("RGBA", (W, 170), (0, 0, 0, 0))
     words = pixel_text("Free on Google Play", 84, "k")
     bw = words.width + 120
     panel(cta, ((W - bw) // 2, 0, (W + bw) // 2, 120), INK["gold"], width=6, step=6, lift=10, shadow=INK["primary"])
     cta.alpha_composite(words, ((W - words.width) // 2, 10))
-    put(img, cta, 0, 1312 + round((1 - p(0.3)) * 40), p(0.3))
+    put(img, cta, 0, 1350 + round((1 - p(0.3)) * 40), p(0.3))
     centred(img, round_text("No ads. No account. Nothing leaves your phone.", 38, INK["muted"], "bold"),
-            1490, p(0.42))
+            1526, p(0.42))
 
 
 # ----------------------------------------------------------------------------- frames
@@ -415,11 +428,6 @@ def frame_at(t, clips):
                 phone(img, clips[i].frame(k) if clips else None, PHONE_Y)
                 break
             at += length
-        if b > T_END - 0.5:
-            fade = ease_out((t - beats(T_END) + 0.25) / 0.25)
-            over = wall()
-            end_card(over, beats(T_END))
-            img = Image.blend(img, over, fade * 0.0)
         return img
     end_card(img, t)
     return img
@@ -434,11 +442,52 @@ def open_clips(footage):
     return clips
 
 
+# ----------------------------------------------------------------------------- sound
+
+def sounds():
+    """The music, with the picture's own little sounds on top, each where its thing happens:
+    a blip for every tick, a pop as each thing lands, a chime as the room opens, a soft rush
+    as the phone comes up, and a sparkle on the end card."""
+    import numpy as np
+    mix = music.render()
+    fx = np.zeros_like(mix)
+
+    def at(sec, sig):
+        music.place(fx, sec, sig)
+
+    for b in T_TICKS:
+        at(beats(b), music.note(music.midi(84), 0.035, "pulse", 0.20, duty=0.5, decay=0.03, release=0.02))
+        at(beats(b) + 0.045, music.note(music.midi(91), 0.06, "pulse", 0.16, duty=0.5, decay=0.05, release=0.04))
+    landings = [T_ARRIVE + k * 0.25 for k in range(STAGE_ITEMS[0])]
+    for st in range(1, len(STAGE_ITEMS)):
+        landings += [T_STAGE[st - 1] + 0.15 + j * 0.2 for j in range(STAGE_ITEMS[st] - STAGE_ITEMS[st - 1])]
+    for b in landings:
+        n = int(0.06 * music.RATE)
+        tt = np.arange(n) / music.RATE
+        f = 900 * np.exp(-tt * 30) + 260
+        pop = 0.16 * np.sin(2 * np.pi * np.cumsum(f) / music.RATE) * np.exp(-tt * 45)
+        at(beats(b) + 0.22, pop)
+    chord = [72, 76, 79, 84]
+    for i, b in enumerate(T_STAGE):
+        for k, m in enumerate(chord):
+            at(beats(b) + k * 0.035, music.note(music.midi(m + (i % 2) * 2), 0.09, "pulse", 0.08,
+                                                duty=0.125, decay=0.08, release=0.12))
+    n = int(0.4 * music.RATE)
+    tt = np.arange(n) / music.RATE
+    rush = music.lowpass(np.random.default_rng(5).uniform(-1, 1, n), 1800) * np.sin(np.pi * tt / 0.4) * 0.35
+    at(beats(T_APP) - 0.32, rush)
+    for k, m in enumerate([84, 88, 91, 96]):
+        at(beats(T_END) + 0.05 + k * 0.06, music.note(music.midi(m), 0.12, "pulse", 0.07, duty=0.125,
+                                                      decay=0.1, release=0.25))
+    out = mix + fx
+    return 0.89 * out / max(1e-9, float(np.max(np.abs(out))))
+
+
 def render(footage, out):
     total = int(round(DURATION * FPS))
     with tempfile.TemporaryDirectory() as tmp:
         wav = pathlib.Path(tmp) / "music.wav"
-        music.write(wav, music.render())
+        music.write(wav, sounds())
         enc = subprocess.Popen(
             ["ffmpeg", "-loglevel", "error", "-y",
              "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-",

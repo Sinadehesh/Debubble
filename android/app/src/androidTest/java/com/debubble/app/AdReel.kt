@@ -3,6 +3,7 @@ package com.debubble.app
 import android.graphics.Rect
 import android.os.ParcelFileDescriptor
 import android.os.SystemClock
+import android.view.accessibility.AccessibilityNodeInfo
 import androidx.lifecycle.ViewModelProvider
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -50,7 +51,9 @@ class AdReel : Seeds() {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             lateinit var vm: DeBubbleViewModel
             scenario.onActivity { vm = ViewModelProvider(it)[DeBubbleViewModel::class.java] }
-            waitForText("Journal")
+            // The home screen's tab bar, or, if the tree cannot be read, long enough for a first
+            // launch on a fresh emulator.
+            if (!waitForText("Journal", 30_000)) Thread.sleep(10_000)
             Thread.sleep(4000)
 
             val items = Repository(context).loadItems()
@@ -89,7 +92,7 @@ class AdReel : Seeds() {
             clip("3-care") {
                 scenario.onActivity { vm.openCare(Domain.BODY) }
                 Thread.sleep(2200)
-                hold("I did it", 3400)
+                hold("I did it", 3400, fallback = 660 to 1745)
                 Thread.sleep(4500)
                 scenario.onActivity { vm.recordFeeling(Domain.BODY, Feel.BETTER) }
                 Thread.sleep(3500)
@@ -166,28 +169,46 @@ class AdReel : Seeds() {
         Thread.sleep(800)
     }
 
-    /** Where [text] is on screen, found the way a screen reader finds it. */
+    /**
+     * Where [text] is on screen, found the way a screen reader finds it: by walking the
+     * accessibility tree. Compose does not answer the framework's search-by-text, so the walk
+     * is done here, as UI Automator does it.
+     */
     private fun centreOf(text: String): Pair<Int, Int>? {
         val root = instrumentation.uiAutomation.rootInActiveWindow ?: return null
-        val node = root.findAccessibilityNodeInfosByText(text).firstOrNull() ?: return null
-        val r = Rect()
-        node.getBoundsInScreen(r)
-        return r.centerX() to r.centerY()
+        val queue = ArrayDeque<AccessibilityNodeInfo>().apply { add(root) }
+        var seen = 0
+        while (queue.isNotEmpty() && seen < 4000) {
+            val node = queue.removeFirst()
+            seen++
+            val words = listOfNotNull(node.text?.toString(), node.contentDescription?.toString())
+            if (words.any { it.contains(text) }) {
+                val r = Rect()
+                node.getBoundsInScreen(r)
+                if (!r.isEmpty) return r.centerX() to r.centerY()
+            }
+            for (i in 0 until node.childCount) node.getChild(i)?.let { queue.add(it) }
+        }
+        return null
     }
 
-    private fun waitForText(text: String, timeout: Long = 60_000) {
+    /** True once [text] is on screen; false if it never turns up, which the caller decides about. */
+    private fun waitForText(text: String, timeout: Long = 60_000): Boolean {
         val until = SystemClock.uptimeMillis() + timeout
         while (SystemClock.uptimeMillis() < until) {
-            if (centreOf(text) != null) return
+            if (centreOf(text) != null) return true
             Thread.sleep(250)
         }
-        error("\"$text\" never appeared")
+        return false
     }
 
-    /** Press and hold, as a finger would, so a hold-to-commit button fills and fires. */
-    private fun hold(text: String, millis: Int) {
-        waitForText(text, 10_000)
-        val (x, y) = centreOf(text) ?: error("no \"$text\" to hold")
+    /**
+     * Press and hold, as a finger would, so a hold-to-commit button fills and fires. [fallback]
+     * is where the button is on the pixel_2 screen, for if the tree cannot be read.
+     */
+    private fun hold(text: String, millis: Int, fallback: Pair<Int, Int>) {
+        waitForText(text, 8_000)
+        val (x, y) = centreOf(text) ?: fallback
         taps.append("$clipName ${SystemClock.uptimeMillis() - clipStart} $x $y $millis\n")
         sh("input swipe $x $y $x $y $millis")
     }
