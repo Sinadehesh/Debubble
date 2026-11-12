@@ -1,0 +1,83 @@
+name: Ad footage
+
+# Films the real app on an emulator for the advert (androidTest/AdReel.kt): the room at every
+# stage, a tiny thing done, and the main screens. Animations stay on, so the room moves. The
+# edit is made from this footage by android/tools/ad/make_ad.py.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'android/app/src/androidTest/java/com/debubble/app/AdReel.kt'
+      - '.github/workflows/ad-footage.yml'
+
+concurrency:
+  group: ad-footage-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  film:
+    name: Film the app
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # See android.yml for why packages is empty.
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4.0.1
+        with:
+          packages: ''
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Build the app and the test
+        run: ./gradlew :app:assembleDebug :app:assembleDebugAndroidTest --stacktrace
+
+      # pixel_2 is 1080x1920, the 9:16 an advert is cut at. Animations on: the footage is of
+      # the app moving.
+      - name: Film
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: false
+          working-directory: ./android
+          script: |
+            ./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.debubble.app.AdReel -Pandroid.testInstrumentationRunnerArguments.adReel=true --stacktrace
+            adb pull /data/local/tmp/debubble-ad footage
+
+      - name: Upload footage
+        uses: actions/upload-artifact@v7
+        with:
+          name: ad-footage
+          path: android/footage/
+          if-no-files-found: error
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ad-footage-reports
+          path: android/app/build/reports/androidTests/
+          if-no-files-found: ignore
