@@ -142,8 +142,9 @@ DeBubble comes to the front.
 Shorts, TikTok and the like. Day one's messy, sealed room; four ticks and the room comes alive;
 the room through all seven stages; then the real app (a tiny thing done, today's letter,
 training, a habit, the wardrobe); then the end card. The music and sounds are synthesised by
-`android/tools/ad/music.py`, so there is nothing to license. Captions and anything to read stay
-above y = 1500, clear of the buttons those apps put over the bottom of a video.
+`android/tools/ad/music.py`, so there is nothing to license. The captions sit at the top, clear
+of the buttons those apps lay over the bottom of a video; the first frame already has its
+caption, because a feed shows it before the video plays.
 
 To make it again:
 

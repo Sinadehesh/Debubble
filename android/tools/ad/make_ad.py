@@ -54,8 +54,8 @@ INK = {
 Z = 6                                   # room pixels to screen pixels: 160x100 -> 960x600
 ROOM_X, ROOM_Y = (W - 160 * Z) // 2, 570
 CAPTION_Y = 168                         # the caption, the same height in every scene
-# Reels, Shorts and TikTok lay their own buttons and text over the bottom fifth, so nothing
-# that has to be read goes below about 1500.
+# Reels, Shorts and TikTok lay their own buttons and text over the bottom fifth, so the
+# captions are at the top, and the room scenes and the end card finish above about 1550.
 
 # Today's four, in the order they are ticked, with what each one cleans.
 FOUR = [("Body", "icon_body", "body"), ("Room", "icon_room", "room"),
@@ -84,16 +84,21 @@ T_STAGE = [9, 10, 11, 12, 13, 14]       # window, door, street, open, horizon, n
 T_APP = 16                              # the phone
 T_END = 28                              # the end card
 
-# The app, filmed: (caption, small line, clip, start in the clip, seconds used, beats shown).
-# Seconds used longer than beats shown plays it faster, which is how a three-second hold
-# fits in two bars.
+# The app, filmed: (caption, small line, beats shown, [(clip, from, to, beats)]). Each piece of
+# a clip plays at whatever speed fits it into its beats, which is how a three-second hold fits
+# in two; a piece with no times is the clip's last frame, held. The times are seconds into
+# the footage AdReel films, where each clip opens on the screen before for about a second.
 SHOTS = [
-    ("Two minutes counts", "for your body, your room and your heart", "3-care", 2.2, 4.6, 4),
-    ("One brave step a day", "sized just right for you", "4-letter", 1.2, 1.4, 2),
-    ("Train anywhere", "a move sized to what you did last time", "6-training", 1.2, 1.6, 2),
-    ("Every day adds up", "and none of it can be lost", "7-habit", 2.2, 1.8, 2),
-    ("Level up", "and dress your little you", "9-wardrobe", 1.2, 1.4, 2),
+    ("Two minutes counts", "for your body, your room and your heart", 4,
+     [("3-care", 3.25, 6.85, 2.25), ("3-care", 6.95, 8.4, 1.75)]),
+    ("One brave step a day", "sized just right for you", 2, [("4-letter", 3.55, 5.12, 2)]),
+    ("Train anywhere", "a move sized to what you did last time", 2, [("6-training", 3.6, 5.06, 2)]),
+    ("Every day adds up", "no streaks to break", 2, [("7-habit", 3.05, 4.77, 2)]),
+    ("Level up", "and dress your little you", 2, [("9-wardrobe", None, None, 2)]),
 ]
+
+# Where the finger is while "I did it" is held, from taps.txt, in the care clip's seconds.
+HOLD = ("3-care", 3.36, 6.76, 674, 1741)
 
 
 # ----------------------------------------------------------------------------- drawing
@@ -324,24 +329,36 @@ def stage_strip(img, stage_i, t, alpha=1.0):
 # ----------------------------------------------------------------------------- the app
 
 class Clip:
-    """One filmed clip, read a frame at a time, in order, at the advert's frame rate."""
+    """A stretch of one filmed clip, played to fit [frames] frames of the advert.
 
-    def __init__(self, path, start, seconds, frames, width):
+    screenrecord only writes a frame when the screen changes, so the footage is read from its
+    start at a steady 30 a second (a still screen repeats its frame), and the stretch is
+    picked out of that by frame number. Reading is in order, one frame held at a time."""
+
+    def __init__(self, path, start, end, frames, width):
         self.n = frames
+        self.start, self.end = start, end
+        self.speed = 0 if end is None else (end - start) * FPS / max(1, frames - 1)
         self.width = width
         self.height = round(1920 * width / 1080)
-        rate = seconds / max(1, frames) * FPS          # source seconds per output frame, x FPS
-        vf = f"setpts=PTS/{rate:.6f},fps={FPS},scale={width}:{self.height}:flags=lanczos"
+        vf = f"fps={FPS},scale={width}:{self.height}:flags=lanczos"
         self.proc = subprocess.Popen(
-            ["ffmpeg", "-loglevel", "error", "-ss", f"{start:.3f}", "-t", f"{seconds + 0.5:.3f}",
-             "-i", str(path), "-vf", vf, "-f", "rawvideo", "-pix_fmt", "rgb24", "-"],
+            ["ffmpeg", "-loglevel", "error", "-i", str(path), "-vf", vf,
+             "-f", "rawvideo", "-pix_fmt", "rgb24", "-"],
             stdout=subprocess.PIPE)
         self.last = None
         self.read = 0
 
+    def source(self, k):
+        """Seconds into the clip that frame k of this stretch shows."""
+        if self.end is None:
+            return None
+        return self.start + min(k, self.n - 1) * self.speed / FPS
+
     def frame(self, k):
+        target = 10 ** 9 if self.end is None else int(round(self.source(k) * FPS))
         size = self.width * self.height * 3
-        while self.read <= k:
+        while self.read <= target:
             buf = self.proc.stdout.read(size)
             if len(buf) < size:
                 break
@@ -350,24 +367,61 @@ class Clip:
         return self.last
 
 
-PHONE_W, PHONE_Y, RADIUS, EDGE = 920, 440, 48, 12
-STATUS = round(store.STATUS_BAR * PHONE_W / 1080)
+class Shot:
+    """One caption's worth of the app: its stretches of footage, one after another."""
+
+    def __init__(self, footage, pieces, width):
+        self.pieces = []
+        for name, start, end, length in pieces:
+            frames = int(round(beats(length) * FPS))
+            self.pieces.append((name, Clip(pathlib.Path(footage) / f"{name}.mp4", start, end, frames + 1, width), frames))
+
+    def at(self, k):
+        """(clip name, seconds into it or None, frame) for frame k of the shot."""
+        for i, (name, clip, frames) in enumerate(self.pieces):
+            if k < frames or i == len(self.pieces) - 1:
+                return name, clip.source(k), clip.frame(k)
+            k -= frames
+
+
+# The whole phone, not store.framed's phone running off the bottom: the buttons that are
+# pressed in the footage are at the bottom of the screen.
+PHONE_W, PHONE_Y, RADIUS, EDGE = 780, 404, 42, 12
+PHONE_H = round(1920 * PHONE_W / 1080)
+SCALE = PHONE_W / 1080
+STATUS = round(store.STATUS_BAR * SCALE)
 
 
 def phone(img, shot, y):
-    """store.framed's phone: the screen, rounded, in a plum edge, running off the bottom."""
+    """store.framed's phone: the screen, rounded, in a plum edge, on a hard shadow."""
     if shot is None:
         return
     x = (W - PHONE_W) // 2
+    y = int(y)
     d = ImageDraw.Draw(img)
-    d.rounded_rectangle((x - EDGE, y - EDGE, x + PHONE_W + EDGE - 1, H + RADIUS + 400),
+    d.rounded_rectangle((x - EDGE, y - EDGE + 14, x + PHONE_W + EDGE - 1, y + PHONE_H + EDGE + 13),
+                        radius=RADIUS + EDGE, fill=INK["shadow"] + (255,))
+    d.rounded_rectangle((x - EDGE, y - EDGE, x + PHONE_W + EDGE - 1, y + PHONE_H + EDGE - 1),
                         radius=RADIUS + EDGE, fill=INK["primary"] + (255,))
     screen = shot.copy()
     fill = screen.getpixel((screen.width // 2, STATUS // 2))
     ImageDraw.Draw(screen).rectangle((0, 0, screen.width, STATUS), fill=fill)
     mask = Image.new("L", screen.size, 0)
-    ImageDraw.Draw(mask).rounded_rectangle((0, 0, screen.width - 1, screen.height + RADIUS), radius=RADIUS, fill=255)
-    img.paste(screen, (x, int(y)), mask)
+    ImageDraw.Draw(mask).rounded_rectangle((0, 0, screen.width - 1, screen.height - 1), radius=RADIUS, fill=255)
+    img.paste(screen, (x, y), mask)
+
+
+def finger(img, sx, sy, held):
+    """Where a finger is pressing, in screen pixels of the footage: a soft pixel disc that
+    breathes a little while it is held."""
+    x = (W - PHONE_W) // 2 + sx * SCALE
+    y = PHONE_Y + sy * SCALE
+    r = 26 + 3 * math.sin(held * 9)
+    layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(layer)
+    d.ellipse((x - r - 5, y - r - 5, x + r + 5, y + r + 5), fill=INK["primary"] + (120,))
+    d.ellipse((x - r, y - r, x + r, y + r), fill=(255, 255, 255, 110))
+    img.alpha_composite(layer)
 
 
 # ----------------------------------------------------------------------------- the end
@@ -406,7 +460,8 @@ def frame_at(t, clips):
     if b < T_APP:
         out = 1 - ease_out((t - beats(T_APP) + 0.25) / 0.25) if b > T_APP - 0.5 else 1.0
         if b < T_STAGES:
-            caption(img, "Four tiny things a day", "and your room comes alive", 0.05, t)
+            # Already in place on the first frame, which is what a feed shows before it plays.
+            caption(img, "Four tiny things a day", "and your room comes alive", -1.0, t)
         else:
             caption(img, "Step outside your bubble", "and watch your world open up", beats(T_STAGES), t)
         s = room_card(img, t, alpha=out)
@@ -417,15 +472,20 @@ def frame_at(t, clips):
             stage_strip(img, s["stage"], t, alpha=ease_out((t - beats(T_STAGES)) / 0.25) * out)
         if b > T_APP - 0.5:
             slide = ease_out((t - beats(T_APP) + 0.3) / 0.3)
-            phone(img, clips[0].frame(0) if clips else None, PHONE_Y + (1 - slide) * (H - PHONE_Y))
+            phone(img, clips[0].at(0)[2] if clips else None, PHONE_Y + (1 - slide) * (H - PHONE_Y))
         return img
     if b < T_END:
         at = T_APP
-        for i, (big, small, _, _, _, length) in enumerate(SHOTS):
+        for i, (big, small, length, _) in enumerate(SHOTS):
             if b < at + length or i == len(SHOTS) - 1:
                 caption(img, big, small, beats(at), t)
                 k = int(round((t - beats(at)) * FPS))
-                phone(img, clips[i].frame(k) if clips else None, PHONE_Y)
+                if clips:
+                    name, sec, shot = clips[i].at(k)
+                    phone(img, shot, PHONE_Y)
+                    hold_clip, h0, h1, hx, hy = HOLD
+                    if name == hold_clip and sec is not None and h0 <= sec <= h1:
+                        finger(img, hx, hy, sec - h0)
                 break
             at += length
         return img
@@ -434,12 +494,7 @@ def frame_at(t, clips):
 
 
 def open_clips(footage):
-    clips = []
-    for _, _, name, start, seconds, length in SHOTS:
-        path = pathlib.Path(footage) / f"{name}.mp4"
-        frames = int(round(beats(length) * FPS)) + 2
-        clips.append(Clip(path, start, seconds, frames, PHONE_W))
-    return clips
+    return [Shot(footage, pieces, PHONE_W) for _, _, _, pieces in SHOTS]
 
 
 # ----------------------------------------------------------------------------- sound
